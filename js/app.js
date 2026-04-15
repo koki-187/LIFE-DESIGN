@@ -21,7 +21,9 @@ var App = (function () {
     financialResults: null,
     isDirty: false,
     activeFinancialTab: 0,
-    financialCharts: {}
+    financialCharts: {},
+    remoteSettings: null,
+    remoteSessions: []
   };
 
   // ---------------------------------------------------------------------------
@@ -59,7 +61,8 @@ var App = (function () {
     'psychology':   '心理分析',
     'financial':    'ファイナンシャル分析',
     'lifeplan':     'ライフプラン',
-    'report':       'レポート出力'
+    'report':       'レポート出力',
+    'remoteset':    'リモート設定'
   };
 
   function showSection(sectionId) {
@@ -102,6 +105,7 @@ var App = (function () {
       case 'financial':    renderFinancial();    break;
       case 'lifeplan':     renderLifePlan();     break;
       case 'report':       renderReport();       break;
+      case 'remoteset':    renderRemoteSet();    break;
     }
 
     updateNavBadges();
@@ -1979,7 +1983,9 @@ var App = (function () {
         clients:          state.clients,
         currentClientId:  state.currentClient ? state.currentClient.id : null,
         psychologyResults: state.psychologyResults,
-        financialResults:  state.financialResults
+        financialResults:  state.financialResults,
+        remoteSettings:    state.remoteSettings,
+        remoteSessions:    state.remoteSessions
       };
       localStorage.setItem('lifedesign_data', JSON.stringify(data));
     } catch (e) {
@@ -2001,11 +2007,15 @@ var App = (function () {
       }
       state.psychologyResults = data.psychologyResults || null;
       state.financialResults  = data.financialResults  || null;
+      state.remoteSettings    = data.remoteSettings    || null;
+      state.remoteSessions    = data.remoteSessions    || [];
     } catch (e) {
       state.clients           = [];
       state.currentClient     = null;
       state.psychologyResults = null;
       state.financialResults  = null;
+      state.remoteSettings    = null;
+      state.remoteSessions    = [];
     }
   }
 
@@ -2209,6 +2219,212 @@ var App = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // リモート設定
+  // ---------------------------------------------------------------------------
+
+  function renderRemoteSet() {
+    var settings = state.remoteSettings || {};
+    var setVal = function(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; };
+
+    // Restore form values
+    setVal('remote-platform', settings.platform);
+    setVal('remote-meeting-url', settings.meetingUrl);
+    setVal('remote-meeting-id', settings.meetingId);
+    setVal('remote-meeting-password', settings.meetingPassword);
+    setVal('remote-date', settings.date);
+    setVal('remote-time-start', settings.timeStart || '10:00');
+    setVal('remote-time-end', settings.timeEnd || '11:00');
+    setVal('remote-client-email', settings.clientEmail);
+    setVal('remote-shared-docs', settings.sharedDocs);
+    setVal('remote-session-notes', settings.sessionNotes);
+
+    // Toggle states
+    var modeToggle = document.getElementById('remote-mode-toggle');
+    var reminderToggle = document.getElementById('remote-reminder-toggle');
+    var details = document.getElementById('remoteset-details');
+
+    if (settings.enabled) {
+      if (modeToggle) {
+        modeToggle.classList.add('active');
+        modeToggle.querySelector('.toggle-label-text').textContent = '有効';
+      }
+      if (details) details.style.display = 'block';
+    } else {
+      if (modeToggle) {
+        modeToggle.classList.remove('active');
+        modeToggle.querySelector('.toggle-label-text').textContent = '無効';
+      }
+      if (details) details.style.display = 'none';
+    }
+
+    if (settings.reminderEnabled && reminderToggle) {
+      reminderToggle.classList.add('active');
+      reminderToggle.querySelector('.toggle-label-text').textContent = '有効';
+    }
+
+    // Render session history
+    renderRemoteSessionHistory();
+  }
+
+  function toggleRemoteMode() {
+    var toggle = document.getElementById('remote-mode-toggle');
+    var details = document.getElementById('remoteset-details');
+    if (!toggle) return;
+
+    var isActive = toggle.classList.toggle('active');
+    toggle.querySelector('.toggle-label-text').textContent = isActive ? '有効' : '無効';
+
+    if (details) {
+      details.style.display = isActive ? 'block' : 'none';
+    }
+  }
+
+  function toggleRemoteReminder() {
+    var toggle = document.getElementById('remote-reminder-toggle');
+    if (!toggle) return;
+
+    var isActive = toggle.classList.toggle('active');
+    toggle.querySelector('.toggle-label-text').textContent = isActive ? '有効' : '無効';
+  }
+
+  function saveRemoteSettings() {
+    var modeToggle = document.getElementById('remote-mode-toggle');
+    var reminderToggle = document.getElementById('remote-reminder-toggle');
+
+    var settings = {
+      enabled:         modeToggle ? modeToggle.classList.contains('active') : false,
+      platform:        (document.getElementById('remote-platform').value || ''),
+      meetingUrl:      (document.getElementById('remote-meeting-url').value || '').trim(),
+      meetingId:       (document.getElementById('remote-meeting-id').value || '').trim(),
+      meetingPassword: (document.getElementById('remote-meeting-password').value || '').trim(),
+      date:            (document.getElementById('remote-date').value || ''),
+      timeStart:       (document.getElementById('remote-time-start').value || '10:00'),
+      timeEnd:         (document.getElementById('remote-time-end').value || '11:00'),
+      reminderEnabled: reminderToggle ? reminderToggle.classList.contains('active') : false,
+      clientEmail:     (document.getElementById('remote-client-email').value || '').trim(),
+      sharedDocs:      (document.getElementById('remote-shared-docs').value || '').trim(),
+      sessionNotes:    (document.getElementById('remote-session-notes').value || '').trim(),
+      updatedAt:       new Date().toISOString()
+    };
+
+    // Archive current session to history if there are meaningful details
+    if (settings.date && settings.meetingUrl) {
+      var session = {
+        id: Date.now().toString(),
+        clientName: state.currentClient ? state.currentClient.name : '未選択',
+        platform: settings.platform,
+        date: settings.date,
+        timeStart: settings.timeStart,
+        timeEnd: settings.timeEnd,
+        meetingUrl: settings.meetingUrl,
+        notes: settings.sessionNotes,
+        savedAt: new Date().toISOString()
+      };
+      state.remoteSessions.unshift(session);
+      if (state.remoteSessions.length > 50) {
+        state.remoteSessions = state.remoteSessions.slice(0, 50);
+      }
+    }
+
+    state.remoteSettings = settings;
+    saveData();
+    renderRemoteSessionHistory();
+    showAlert('リモート設定を保存しました。', 'success');
+  }
+
+  function resetRemoteSettings() {
+    state.remoteSettings = null;
+    saveData();
+    renderRemoteSet();
+    showAlert('リモート設定をリセットしました。', 'info');
+  }
+
+  function copyMeetingLink() {
+    var urlEl = document.getElementById('remote-meeting-url');
+    var url = urlEl ? urlEl.value.trim() : '';
+    if (!url) {
+      showAlert('ミーティングURLが設定されていません。', 'warning');
+      return;
+    }
+
+    var platformEl = document.getElementById('remote-platform');
+    var platform = platformEl ? platformEl.options[platformEl.selectedIndex].text : '';
+    var dateEl = document.getElementById('remote-date');
+    var startEl = document.getElementById('remote-time-start');
+    var endEl = document.getElementById('remote-time-end');
+    var idEl = document.getElementById('remote-meeting-id');
+    var pwEl = document.getElementById('remote-meeting-password');
+
+    var text = 'リモート相談のご案内\n';
+    if (platform && platform !== '選択してください') text += 'プラットフォーム: ' + platform + '\n';
+    if (dateEl && dateEl.value) text += '日時: ' + dateEl.value + ' ' + (startEl ? startEl.value : '') + ' ~ ' + (endEl ? endEl.value : '') + '\n';
+    text += 'URL: ' + url + '\n';
+    if (idEl && idEl.value.trim()) text += 'ミーティングID: ' + idEl.value.trim() + '\n';
+    if (pwEl && pwEl.value.trim()) text += 'パスコード: ' + pwEl.value.trim() + '\n';
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        showAlert('ミーティング情報をクリップボードにコピーしました。', 'success');
+      }).catch(function() {
+        _fallbackCopy(text);
+      });
+    } else {
+      _fallbackCopy(text);
+    }
+  }
+
+  function _fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      showAlert('ミーティング情報をクリップボードにコピーしました。', 'success');
+    } catch (e) {
+      showAlert('コピーに失敗しました。手動でコピーしてください。', 'warning');
+    }
+    document.body.removeChild(ta);
+  }
+
+  function renderRemoteSessionHistory() {
+    var container = document.getElementById('remote-session-history');
+    if (!container) return;
+
+    if (!state.remoteSessions || state.remoteSessions.length === 0) {
+      container.innerHTML = '<p class="text-secondary text-center p-4">リモート相談の履歴はまだありません。</p>';
+      return;
+    }
+
+    var PLATFORM_LABELS = {
+      'zoom': 'Zoom', 'teams': 'Microsoft Teams',
+      'google-meet': 'Google Meet', 'webex': 'Cisco Webex', 'other': 'その他'
+    };
+
+    var html = '<div class="remote-history-list">';
+    state.remoteSessions.forEach(function(s) {
+      html += '<div class="remote-history-item">';
+      html += '  <div class="remote-history-header">';
+      html += '    <span class="material-icons">videocam</span>';
+      html += '    <div class="remote-history-meta">';
+      html += '      <div class="remote-history-client">' + _escape(s.clientName) + ' 様</div>';
+      html += '      <div class="remote-history-date">' + _escape(s.date) + ' ' + _escape(s.timeStart || '') + ' ~ ' + _escape(s.timeEnd || '') + '</div>';
+      html += '    </div>';
+      html += '    <span class="remote-history-platform">' + _escape(PLATFORM_LABELS[s.platform] || s.platform || '-') + '</span>';
+      html += '  </div>';
+      if (s.notes) {
+        html += '  <div class="remote-history-notes">' + _escape(s.notes).replace(/\n/g, '<br>') + '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  // ---------------------------------------------------------------------------
   // 公開API
   // ---------------------------------------------------------------------------
 
@@ -2267,7 +2483,14 @@ var App = (function () {
     formatMan:      formatMan,
 
     // アラート
-    showAlert: showAlert
+    showAlert: showAlert,
+
+    // リモート設定
+    toggleRemoteMode:     toggleRemoteMode,
+    toggleRemoteReminder: toggleRemoteReminder,
+    saveRemoteSettings:   saveRemoteSettings,
+    resetRemoteSettings:  resetRemoteSettings,
+    copyMeetingLink:      copyMeetingLink
   };
 }());
 
