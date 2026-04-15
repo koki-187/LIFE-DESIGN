@@ -103,6 +103,30 @@ var App = (function () {
       case 'lifeplan':     renderLifePlan();     break;
       case 'report':       renderReport();       break;
     }
+
+    updateNavBadges();
+  }
+
+  function updateNavBadges() {
+    var badges = {
+      'client-input': state.currentClient,
+      'psychology':   state.psychologyResults,
+      'financial':    state.financialResults && Object.keys(state.financialResults).length > 0,
+      'lifeplan':     state.financialResults && state.currentClient,
+      'report':       state.financialResults && state.currentClient
+    };
+    Object.keys(badges).forEach(function(section) {
+      var navItem = document.querySelector('.nav-item[data-section="' + section + '"]');
+      if (!navItem) return;
+      var existing = navItem.querySelector('.nav-progress-icon');
+      if (existing) existing.remove();
+      if (badges[section]) {
+        var icon = document.createElement('span');
+        icon.className = 'material-icons nav-progress-icon';
+        icon.textContent = 'check_circle';
+        navItem.appendChild(icon);
+      }
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -145,6 +169,24 @@ var App = (function () {
     }).length;
 
     var html = '';
+
+    // ウェルカムバナー（クライアント未登録時）
+    if (state.clients.length === 0) {
+      html += '<div class="welcome-banner">';
+      html += '<h2>LIFE DESIGN PARTNERへようこそ</h2>';
+      html += '<p>クライアントのライフプランニングを4ステップでサポートします。</p>';
+      html += '<div class="workflow-steps">';
+      html += '<div class="step-item"><div class="step-num">1</div><div class="step-label">クライアント情報登録</div></div>';
+      html += '<div class="step-arrow">→</div>';
+      html += '<div class="step-item"><div class="step-num">2</div><div class="step-label">心理分析</div></div>';
+      html += '<div class="step-arrow">→</div>';
+      html += '<div class="step-item"><div class="step-num">3</div><div class="step-label">ファイナンシャル分析</div></div>';
+      html += '<div class="step-arrow">→</div>';
+      html += '<div class="step-item"><div class="step-num">4</div><div class="step-label">レポート出力</div></div>';
+      html += '</div>';
+      html += '<button class="btn-primary btn-large" onclick="App.newClient()" style="position:relative;z-index:1">新規クライアントを登録する</button>';
+      html += '</div>';
+    }
 
     // 統計カード
     html += '<div class="stats-grid">';
@@ -336,6 +378,7 @@ var App = (function () {
     state.isDirty = false;
     saveData();
     updateHeader();
+    updateNavBadges();
     showAlert(client.name + ' 様の情報を保存しました。', 'success');
   }
 
@@ -575,7 +618,9 @@ var App = (function () {
     html += '<div class="card-header"><h2>ファイナンシャル分析</h2></div>';
     html += '<div class="tab-bar">';
     FINANCIAL_TABS.forEach(function (tab, idx) {
-      html += '<button class="tab-btn' + (idx === state.activeFinancialTab ? ' active' : '') + '" onclick="App.switchFinancialTab(' + idx + ')">' + tab.label + '</button>';
+      var tabResultKey = { ie:'incomeExpense', afford:'affordability', rvb:'rentVsBuy', ins:'insurance', tax:'taxBenefits', rate:'interestRate', asset:'assetProjection' };
+      var isDone = state.financialResults && state.financialResults[tabResultKey[tab.id]];
+      html += '<button class="tab-btn' + (idx === state.activeFinancialTab ? ' active' : '') + '" onclick="App.switchFinancialTab(' + idx + ')">' + tab.label + (isDone ? '<span class="tab-done"> ✓</span>' : '') + '</button>';
     });
     html += '</div>';
     html += '<div class="card-body" id="financial-tab-content">';
@@ -1347,29 +1392,71 @@ var App = (function () {
     container.innerHTML = html;
   }
 
-  function generateReport() {
-    if (!state.currentClient || !state.financialResults) {
-      showAlert('レポート生成に必要なデータが不足しています。', 'warning');
-      return;
-    }
+  function _showPdfOverlay(message) {
+    var existing = document.getElementById('pdf-loading-overlay');
+    if (existing) existing.remove();
+    var overlay = document.createElement('div');
+    overlay.id = 'pdf-loading-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);'
+      + 'z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;';
+    var spinner = document.createElement('div');
+    spinner.style.cssText = 'width:48px;height:48px;border:5px solid rgba(255,255,255,0.3);'
+      + 'border-top-color:#c9a84c;border-radius:50%;animation:pdf-spin 0.8s linear infinite;';
+    var style = document.createElement('style');
+    style.textContent = '@keyframes pdf-spin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(style);
+    var label = document.createElement('div');
+    label.style.cssText = 'color:#fff;font-size:15px;letter-spacing:1px;';
+    label.textContent = message || 'PDFを生成しています...';
+    overlay.appendChild(spinner);
+    overlay.appendChild(label);
+    document.body.appendChild(overlay);
+    return overlay;
+  }
 
-    if (typeof ReportGenerator === 'undefined') {
-      showAlert('ReportGeneratorが読み込まれていません。', 'error');
-      return;
-    }
+  function _hidePdfOverlay() {
+    var overlay = document.getElementById('pdf-loading-overlay');
+    if (overlay) overlay.remove();
+  }
 
+  function _buildReportData() {
     var reportData = FinancialEngine.generateReportData(state.currentClient, state.financialResults);
     reportData.clientName = state.currentClient.name;
     reportData.lifeStage  = state.psychologyResults
       ? state.psychologyResults.lifeStage
       : PsychologyEngine.analyzeLifeStage(state.currentClient);
+    return reportData;
+  }
 
-    showAlert('PDFレポートを生成しています...', 'info');
-    try {
-      ReportGenerator.download(reportData);
-    } catch (e) {
-      showAlert('レポート生成中にエラーが発生しました: ' + e.message, 'error');
+  function generateReport() {
+    if (!state.currentClient || !state.financialResults) {
+      showAlert('レポート生成に必要なデータが不足しています。', 'warning');
+      return;
     }
+    if (typeof ReportGenerator === 'undefined') {
+      showAlert('ReportGeneratorが読み込まれていません。', 'error');
+      return;
+    }
+
+    var reportData = _buildReportData();
+
+    // html2pdf が利用できない場合は印刷ダイアログにフォールバック
+    if (typeof html2pdf === 'undefined') {
+      showAlert('PDFライブラリが利用できないため、印刷ダイアログを開きます。', 'warning');
+      ReportGenerator.printFallback(reportData);
+      return;
+    }
+
+    var overlay = _showPdfOverlay('PDFレポートを生成しています...');
+    ReportGenerator.download(reportData).then(function () {
+      _hidePdfOverlay();
+      showAlert('PDFレポートのダウンロードが完了しました。', 'success');
+    }).catch(function (e) {
+      _hidePdfOverlay();
+      showAlert('PDF生成に失敗しました。印刷ダイアログを開きます。', 'warning');
+      ReportGenerator.printFallback(reportData);
+      console.error('ReportGenerator.download error:', e);
+    });
   }
 
   function previewReport() {
@@ -1379,15 +1466,23 @@ var App = (function () {
     }
     if (typeof ReportGenerator === 'undefined') return;
 
-    var reportData = FinancialEngine.generateReportData(state.currentClient, state.financialResults);
-    reportData.clientName = state.currentClient.name;
-    reportData.lifeStage  = state.psychologyResults
-      ? state.psychologyResults.lifeStage
-      : PsychologyEngine.analyzeLifeStage(state.currentClient);
+    var reportData = _buildReportData();
 
-    if (typeof ReportGenerator.preview === 'function') {
-      ReportGenerator.preview(reportData);
+    // html2pdf が利用できない場合はHTMLプレビューにフォールバック
+    if (typeof html2pdf === 'undefined') {
+      ReportGenerator.htmlPreviewFallback(reportData);
+      return;
     }
+
+    var overlay = _showPdfOverlay('プレビューを生成しています...');
+    ReportGenerator.preview(reportData).then(function () {
+      _hidePdfOverlay();
+    }).catch(function (e) {
+      _hidePdfOverlay();
+      showAlert('PDFプレビューに失敗しました。HTMLプレビューを表示します。', 'warning');
+      ReportGenerator.htmlPreviewFallback(reportData);
+      console.error('ReportGenerator.preview error:', e);
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -1596,6 +1691,7 @@ var App = (function () {
     } catch (e) {
       showAlert('データの保存に失敗しました: ' + e.message, 'error');
     }
+    updateNavBadges();
   }
 
   function loadData() {
@@ -1633,16 +1729,44 @@ var App = (function () {
   }
 
   function deleteClient(clientId) {
-    if (!confirm('このクライアントデータを削除しますか？\nこの操作は取り消せません。')) return;
-    state.clients = state.clients.filter(function (c) { return c.id !== clientId; });
+    var client = state.clients.find(function(c) { return c.id === clientId; });
+    var name = client ? _escape(client.name) : 'このクライアント';
+    var backdrop = document.getElementById('modal-backdrop');
+    var modal = document.getElementById('modal-content');
+    if (!backdrop || !modal) {
+      if (confirm(client ? client.name + ' 様のデータを削除しますか？' : '削除しますか？')) {
+        _doDeleteClient(clientId);
+      }
+      return;
+    }
+    modal.innerHTML =
+      '<div class="modal-header"><h3>クライアント削除の確認</h3></div>' +
+      '<div class="modal-body">' +
+      '<p style="margin-bottom:8px"><strong>' + name + '</strong> 様のすべてのデータを削除します。</p>' +
+      '<p class="text-danger" style="font-size:12px">この操作は取り消すことができません。</p>' +
+      '</div>' +
+      '<div class="modal-footer">' +
+      '<button class="btn-secondary" onclick="App.closeModal()">キャンセル</button>' +
+      '<button class="btn-danger" onclick="App._doDeleteClient(\'' + clientId + '\');App.closeModal();">削除する</button>' +
+      '</div>';
+    backdrop.classList.remove('hidden');
+  }
+
+  function _doDeleteClient(clientId) {
+    state.clients = state.clients.filter(function(c) { return c.id !== clientId; });
     if (state.currentClient && state.currentClient.id === clientId) {
       state.currentClient     = null;
       state.psychologyResults = null;
       state.financialResults  = null;
+      updateHeader();
     }
     saveData();
-    updateHeader();
-    renderDashboard();
+    showSection('dashboard');
+  }
+
+  function closeModal() {
+    var backdrop = document.getElementById('modal-backdrop');
+    if (backdrop) backdrop.classList.add('hidden');
   }
 
   function updateHeader() {
@@ -1728,6 +1852,14 @@ var App = (function () {
       .replace(/>/g, '&gt;');
   }
 
+  function toggleSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar) {
+      sidebar.classList.toggle('collapsed');
+      sidebar.classList.toggle('open');
+    }
+  }
+
   function _checked(condition) {
     return condition ? ' checked' : '';
   }
@@ -1794,11 +1926,13 @@ var App = (function () {
     showSection: showSection,
 
     // クライアント操作
-    saveClient:   saveClient,
-    newClient:    newClient,
-    selectClient: selectClient,
-    deleteClient: deleteClient,
-    updateHeader: updateHeader,
+    saveClient:      saveClient,
+    newClient:       newClient,
+    selectClient:    selectClient,
+    deleteClient:    deleteClient,
+    _doDeleteClient: _doDeleteClient,
+    closeModal:      closeModal,
+    updateHeader:    updateHeader,
 
     // 心理分析
     submitPsychology: submitPsychology,
@@ -1814,6 +1948,16 @@ var App = (function () {
     runFinancialAnalysis_Tax:    runFinancialAnalysis_Tax,
     runFinancialAnalysis_Rate:   runFinancialAnalysis_Rate,
     runFinancialAnalysis_Asset:  runFinancialAnalysis_Asset,
+
+    // index.html static onclick aliases (CRITICAL fix)
+    toggleSidebar:      toggleSidebar,
+    runIncomeAnalysis:  runFinancialAnalysis_IE,
+    runAffordability:   runFinancialAnalysis_Afford,
+    runRentVsBuy:       runFinancialAnalysis_RVB,
+    runInsurance:       runFinancialAnalysis_Ins,
+    runTaxBenefit:      runFinancialAnalysis_Tax,
+    runRateAnalysis:    runFinancialAnalysis_Rate,
+    runAssetProjection: runFinancialAnalysis_Asset,
 
     // レポート
     generateReport: generateReport,
@@ -1832,11 +1976,3 @@ var App = (function () {
   };
 }());
 
-// DOMContentLoaded で自動初期化
-(function () {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { App.init(); });
-  } else {
-    App.init();
-  }
-}());

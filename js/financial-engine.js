@@ -595,12 +595,16 @@ var FinancialEngine = (function () {
     var isNewConstruction = params.isNewConstruction || false;
     var moveInYear       = params.moveInYear        || 2024;
 
-    // 2024年度: 新築認定住宅 借入限度額4,500万円・控除率0.7%・控除期間13年
-    //           既存住宅     借入限度額2,000万円・控除率0.7%・控除期間10年
-    var isNew       = isNewConstruction || propertyType === 'new';
-    var limitAmount = isNew ? 45000000 : 20000000;
-    var deductionRate = 0.007; // 0.7%
-    var deductionYears = isNew ? 13 : 10;
+    // 2024年度税制（令和6年以降）住宅ローン控除 借入限度額・控除期間
+    //   新築 長期優良住宅・ZEH水準省エネ住宅: 上限5,000万円 × 0.7% × 13年 → 最大35万円/年
+    //   新築 一般住宅（省エネ基準適合）:       上限3,000万円 × 0.7% × 13年 → 最大21万円/年
+    //   中古住宅:                               上限2,000万円 × 0.7% × 10年 → 最大14万円/年
+    // params.certifiedHousing = true で長期優良住宅/ZEH扱いとする
+    var isNew            = isNewConstruction || propertyType === 'new';
+    var isCertified      = params.certifiedHousing || false; // 長期優良住宅・ZEH
+    var limitAmount      = isNew ? (isCertified ? 50000000 : 30000000) : 20000000;
+    var deductionRate    = 0.007; // 0.7%
+    var deductionYears   = isNew ? 13 : 10;
 
     // 課税所得と所得税額の概算
     var taxableIncome = estimateTaxableIncome(annualIncome);
@@ -642,8 +646,13 @@ var FinancialEngine = (function () {
       });
     }
 
+    var propertyLabel = isNew
+      ? (isCertified ? '新築（長期優良住宅・ZEH）' : '新築（一般住宅）')
+      : '中古住宅';
     var explanation = '【住宅ローン控除（住宅借入金等特別控除）について】\n'
+      + '物件区分: ' + propertyLabel + '\n'
       + '年末のローン残高（上限' + toManEn(limitAmount) + '）の0.7%を所得税・住民税から最大' + deductionYears + '年間控除できます。\n'
+      + '年間最大控除額: ' + toManEn(Math.round(limitAmount * deductionRate)) + '\n'
       + '試算では' + deductionYears + '年間の合計控除メリットは約' + toManEn(totalBenefit) + 'となります。\n'
       + '実際の控除額は確定申告（初年度）および年末調整（2年目以降）で適用されます。';
 

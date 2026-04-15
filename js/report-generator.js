@@ -520,8 +520,13 @@ var ReportGenerator = (function () {
   RG.generate = function (data) {
     var container = document.createElement('div');
     container.innerHTML = RG._buildHtml(data);
-    container.style.position = 'absolute';
-    container.style.left = '-9999px';
+    // Must be in viewport (not off-screen) for html2canvas to render correctly
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.zIndex = '99999';
+    container.style.pointerEvents = 'none';
+    container.style.opacity = '0.01'; // near-invisible but still rendered by browser
     document.body.appendChild(container);
     return container;
   };
@@ -565,6 +570,43 @@ var ReportGenerator = (function () {
       window.open(url, '_blank');
       document.body.removeChild(el);
     });
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* printFallback: open print dialog with PDF-optimised CSS              */
+  /* Triggered when html2pdf is unavailable or fails.                     */
+  /* ------------------------------------------------------------------ */
+  RG.printFallback = function (data) {
+    var d = data || {};
+    var html = RG._buildHtml(d);
+    // Inject @media print rules so the browser "Print to PDF" works well
+    var printCss = '<style>@media print{'
+      + 'body{margin:0;padding:0;}'
+      + '.a4-page{page-break-after:always;width:210mm;min-height:297mm;}'
+      + '.page-break{page-break-before:always;}'
+      + '}</style>';
+    var win = window.open('', '_blank');
+    if (!win) { alert('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。'); return; }
+    win.document.write(html.replace('</head>', printCss + '</head>'));
+    win.document.close();
+    win.focus();
+    // Delay print to allow fonts/images to load
+    setTimeout(function () { win.print(); }, 800);
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* htmlPreviewFallback: open inline HTML preview in a new tab           */
+  /* Triggered when html2pdf is unavailable or fails.                     */
+  /* ------------------------------------------------------------------ */
+  RG.htmlPreviewFallback = function (data) {
+    var d = data || {};
+    var html = RG._buildHtml(d);
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var win  = window.open(url, '_blank');
+    if (!win) { alert('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。'); }
+    // Revoke the object URL after the tab has had time to load
+    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
   };
 
   return RG;
