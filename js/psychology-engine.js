@@ -1023,6 +1023,119 @@ var PsychologyEngine = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // テキスト分析エンジン（会話・発言記録から6次元スコアを算出）
+  // ---------------------------------------------------------------------------
+
+  /**
+   * テキストから6次元スコアを算出する
+   * @param {string} text - 相談者の発言・会話記録
+   * @returns {Object} 6次元スコア（各0〜100）
+   */
+  function scoreFromText(text) {
+    var defaults = {
+      analytical: 50,
+      emotional: 50,
+      social: 40,
+      practical: 50,
+      riskTolerance: 50,
+      futureOrientation: 50
+    };
+
+    if (!text || text.length < 50) {
+      return defaults;
+    }
+
+    var analyticalKw = ['調べてから', '比較', 'データ', '実績', '根拠', '数字', '確認', '慎重', '冷静', '客観',
+      '情報収集', 'シミュレーション', 'じっくり', 'しっかり', '検討', '失敗したくない', 'リスク',
+      '慎重に', '時間をかけて', 'もっと考えて'];
+    var emotionalKw = ['夢', '理想', '憧れ', 'ワクワク', '楽しみ', '素敵', '素晴らしい', '将来', 'こんな暮らし',
+      'ずっと', 'いつか', '希望', 'イメージ', 'ビジョン', '感動', '嬉しい', '子供のため', '家族のため',
+      'ずっと夢', '願い'];
+    var socialKw = ['家族と相談', '妻に', '夫に', '子供と', '親に', '友人が', '知人が', '口コミ', '評判',
+      'みんな', '周り', '近所', 'コミュニティ', '地域', '一緒に決め', '相談してから', '人の意見',
+      'みなさん', 'みんながいい', '友達が買って'];
+    var practicalKw = ['費用対効果', 'コスパ', '実用的', '無駄', '効率', '便利', '通勤', '管理費', '維持費',
+      '月々', '固定費', '現実的', '具体的', '経済的', '節約', 'コスト', 'お得', '価格', '安い',
+      '必要かどうか'];
+    var riskUpKw = ['思い切って', 'チャンス', '積極的', '一歩踏み出す', 'やってみよう', '後悔したくない',
+      '思い切り', '決断', '行動', '今でしょ', 'タイミング', '勢い', 'どんと行きましょ'];
+    var riskDownKw = ['安心', '安定', '不安', '心配', 'リスクが', '怖い', '失敗', '万が一', '保険',
+      '念のため', '慎重', 'もし何かあったら'];
+    var futureKw = ['将来', '老後', '10年後', '20年後', '資産', '長期', '積立', '年金', 'リタイア',
+      '子供の将来', '相続', '老後の安心', '長い目で', '将来的に'];
+
+    function countMatches(keywords) {
+      var count = 0;
+      for (var i = 0; i < keywords.length; i++) {
+        var idx = 0;
+        while ((idx = text.indexOf(keywords[i], idx)) !== -1) {
+          count++;
+          idx += keywords[i].length;
+        }
+      }
+      return count;
+    }
+
+    var analyticalCount      = countMatches(analyticalKw);
+    var emotionalCount       = countMatches(emotionalKw);
+    var socialCount          = countMatches(socialKw);
+    var practicalCount       = countMatches(practicalKw);
+    var riskUpCount          = countMatches(riskUpKw);
+    var riskDownCount        = countMatches(riskDownKw);
+    var futureCount          = countMatches(futureKw);
+
+    function toScore(count, defaultVal) {
+      var base = count * 15;
+      return base > 0 ? Math.min(100, base) : defaultVal;
+    }
+
+    var riskBase = riskUpCount * 15 - riskDownCount * 10;
+    var riskScore = (riskUpCount > 0 || riskDownCount > 0)
+      ? Math.max(0, Math.min(100, 50 + riskBase))
+      : defaults.riskTolerance;
+
+    return {
+      analytical:       toScore(analyticalCount,  defaults.analytical),
+      emotional:        toScore(emotionalCount,    defaults.emotional),
+      social:           toScore(socialCount,       defaults.social),
+      practical:        toScore(practicalCount,    defaults.practical),
+      riskTolerance:    riskScore,
+      futureOrientation: toScore(futureCount,      defaults.futureOrientation)
+    };
+  }
+
+  /**
+   * 会話・発言テキストを全分析する
+   * @param {string} text - 相談者の発言・会話記録
+   * @param {Object} clientInfo - クライアント情報
+   * @returns {Object} 分析結果オブジェクト
+   */
+  function analyzeText(text, clientInfo) {
+    var scores = scoreFromText(text);
+    var personalityType = classifyType(scores);
+    var biases = detectBiases({}, clientInfo);
+    var anxieties = analyzeAnxieties(scores, clientInfo);
+    var salesStrategy = getSalesStrategy({
+      type: personalityType,
+      scores: scores,
+      biases: biases,
+      anxieties: anxieties
+    });
+    var lifeStage = analyzeLifeStage(clientInfo);
+    return {
+      scores: scores,
+      personalityType: personalityType,
+      biases: biases,
+      anxieties: anxieties,
+      salesStrategy: salesStrategy,
+      lifeStage: lifeStage,
+      timestamp: new Date().toISOString(),
+      analysisMode: 'text',
+      disclaimer: '【注意】本分析は営業担当者の内部参考情報です。クライアントへの直接開示・報告書への記載は行わないでください。'
+    };
+  }
+
+  // ---------------------------------------------------------------------------
   // 公開API
   // ---------------------------------------------------------------------------
 
@@ -1034,7 +1147,9 @@ var PsychologyEngine = (function () {
     analyzeAnxieties: analyzeAnxieties,
     getSalesStrategy: getSalesStrategy,
     analyzeLifeStage: analyzeLifeStage,
-    runFullAnalysis: runFullAnalysis
+    runFullAnalysis: runFullAnalysis,
+    scoreFromText: scoreFromText,
+    analyzeText: analyzeText
   };
 
 }());

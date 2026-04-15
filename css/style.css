@@ -4192,3 +4192,86 @@ canvas { max-width: 100%; }
   .model-case-grid { grid-template-columns: repeat(2, 1fr); }
   .buy-advantage-grid { grid-template-columns: 1fr; }
 }
+
+/* =============================================
+   心理分析テキスト入力パネル
+   ============================================= */
+.psych-text-panel {
+  background: var(--surface-2, #f8f7f4);
+  border: 1px solid var(--border, #e8e4dc);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.psych-text-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.psych-text-header .material-icons {
+  font-size: 32px;
+  color: var(--accent, #b8922e);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.psych-text-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary, #0a1628);
+  margin-bottom: 4px;
+}
+.psych-text-sub {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+}
+.psych-textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border, #e0dbd2);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.7;
+  color: var(--primary, #0a1628);
+  background: #fff;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+.psych-textarea:focus {
+  outline: none;
+  border-color: var(--accent, #b8922e);
+  box-shadow: 0 0 0 3px rgba(184, 146, 46, 0.12);
+}
+.psych-textarea::placeholder {
+  color: #aaa;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.psych-hint-row {
+  margin: 12px 0;
+}
+.psych-hint {
+  font-size: 12px;
+  color: #888;
+  background: rgba(184, 146, 46, 0.06);
+  border-left: 3px solid var(--accent, #b8922e);
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+  line-height: 1.6;
+}
+.psych-analyze-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.psych-analyze-btn .material-icons {
+  font-size: 20px;
+}

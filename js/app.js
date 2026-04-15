@@ -699,47 +699,50 @@ var App = (function () {
   }
 
   function renderPsychologyQuestionnaire(container) {
-    var questions = PsychologyEngine.questions;
     var html = '<div class="card">';
     html += '<div class="card-header">';
-    html += '<h2>行動心理分析アセスメント</h2>';
+    html += '<h2>行動心理分析</h2>';
     html += '<p class="text-secondary alert-internal">※ この分析結果は営業支援用です。クライアント向けレポートには含まれません。</p>';
     html += '</div><div class="card-body">';
 
-    questions.forEach(function (q, index) {
-      html += '<div class="question-group" data-question="' + q.id + '">';
-      html += '<p class="question-text"><strong>' + (index + 1) + '.</strong> ' + _escape(q.text) + '</p>';
-      q.options.forEach(function (opt) {
-        html += '<label class="radio-option">';
-        html += '<input type="radio" name="' + q.id + '" value="' + opt.value + '">';
-        html += '<span>' + _escape(opt.text) + '</span>';
-        html += '</label>';
-      });
-      html += '</div>';
-    });
-
-    html += '<div class="form-actions">';
-    html += '<button class="btn-primary btn-large" onclick="App.submitPsychology()">分析を実行する</button>';
+    html += '<div class="psych-text-panel">';
+    html += '<div class="psych-text-header">';
+    html += '<span class="material-icons">record_voice_over</span>';
+    html += '<div>';
+    html += '<div class="psych-text-title">会話・発言記録から分析</div>';
+    html += '<div class="psych-text-sub">相談者の発言ややり取りを入力してください。AIが人物タイプ・思考パターンを自動分析します。</div>';
     html += '</div>';
+    html += '</div>';
+
+    html += '<textarea id="psych-text-input" class="psych-textarea" ';
+    html += 'placeholder="例：&#10;・「もっとよく調べてから決めたいです。他の物件も見てみたい。」&#10;';
+    html += '・「家族と相談しないと決められないですね。」&#10;';
+    html += '・「将来のことを考えると不安で...でも夢のマイホームだから」&#10;';
+    html += '・「月々の支払いが今の家賃より安くなるなら検討したい」&#10;&#10;';
+    html += '商談中のメモや会話の記録をそのまま貼り付けてもOKです。" ';
+    html += 'rows="8"></textarea>';
+
+    html += '<div class="psych-hint-row">';
+    html += '<div class="psych-hint">💡 キーワード例: 慎重派→「調べてから」「比較したい」 / 理想型→「夢」「憧れ」 / 実用型→「月々」「コスト」 / 協調型→「家族と相談」「口コミ」</div>';
+    html += '</div>';
+
+    html += '<button class="btn-primary psych-analyze-btn" onclick="App.submitPsychology()">';
+    html += '<span class="material-icons">psychology</span>';
+    html += '会話を分析する';
+    html += '</button>';
+    html += '</div>';
+
     html += '</div></div>';
     container.innerHTML = html;
   }
 
   function submitPsychology() {
-    var answers = {};
-    PsychologyEngine.questions.forEach(function (q) {
-      var selected = document.querySelector('input[name="' + q.id + '"]:checked');
-      if (selected) {
-        answers[q.id] = parseInt(selected.value, 10);
-      }
-    });
+    if (!state.currentClient) { showAlert('クライアントを選択してください。', 'warning'); return; }
+    var textarea = document.getElementById('psych-text-input');
+    var text = textarea ? textarea.value.trim() : '';
+    if (!text || text.length < 10) { showAlert('会話・発言内容を10文字以上入力してください。', 'warning'); return; }
 
-    if (Object.keys(answers).length < PsychologyEngine.questions.length) {
-      showAlert('すべての質問にお答えください。', 'warning');
-      return;
-    }
-
-    state.psychologyResults = PsychologyEngine.runFullAnalysis(answers, state.currentClient);
+    state.psychologyResults = PsychologyEngine.analyzeText(text, state.currentClient);
     saveData();
 
     var container = document.getElementById('psychology-content');
