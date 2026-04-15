@@ -1,0 +1,1842 @@
+/**
+ * LIFE DESIGN PARTNER - Main Application Controller
+ * AFP (Affiliated Financial Planner) 対応 不動産ライフプランニングシステム
+ *
+ * PsychologyEngine、FinancialEngine、ReportGenerator を統合し、
+ * UI全体のナビゲーション・状態管理・フォーム操作を担当します。
+ */
+
+var App = (function () {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // 状態管理
+  // ---------------------------------------------------------------------------
+
+  var state = {
+    currentSection: 'dashboard',
+    clients: [],
+    currentClient: null,
+    psychologyResults: null,
+    financialResults: null,
+    isDirty: false,
+    activeFinancialTab: 0,
+    financialCharts: {}
+  };
+
+  // ---------------------------------------------------------------------------
+  // 初期化
+  // ---------------------------------------------------------------------------
+
+  function init() {
+    loadData();
+    setupNavigation();
+    setupForms();
+    showSection('dashboard');
+    if (typeof ReportGenerator !== 'undefined' && typeof ReportGenerator.initFont === 'function') {
+      ReportGenerator.initFont();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // ナビゲーション
+  // ---------------------------------------------------------------------------
+
+  function setupNavigation() {
+    var navItems = document.querySelectorAll('[data-section]');
+    navItems.forEach(function (item) {
+      item.addEventListener('click', function (e) {
+        e.preventDefault();
+        var target = item.getAttribute('data-section');
+        showSection(target);
+      });
+    });
+  }
+
+  var SECTION_LABELS = {
+    'dashboard':    'ダッシュボード',
+    'client-input': 'クライアント情報',
+    'psychology':   '心理分析',
+    'financial':    'ファイナンシャル分析',
+    'lifeplan':     'ライフプラン',
+    'report':       'レポート出力'
+  };
+
+  function showSection(sectionId) {
+    // すべてのセクションを非表示
+    var sections = document.querySelectorAll('.section-content');
+    sections.forEach(function (s) {
+      s.style.display = 'none';
+      s.classList.remove('active');
+    });
+
+    // 対象セクションを表示
+    var target = document.getElementById('section-' + sectionId);
+    if (target) {
+      target.style.display = 'block';
+      target.classList.add('active');
+    }
+
+    // サイドバーのアクティブ状態を更新
+    var navItems = document.querySelectorAll('[data-section]');
+    navItems.forEach(function (item) {
+      item.classList.remove('active');
+      if (item.getAttribute('data-section') === sectionId) {
+        item.classList.add('active');
+      }
+    });
+
+    // ヘッダーのパンくずを更新
+    var breadcrumb = document.getElementById('breadcrumb-section');
+    if (breadcrumb) {
+      breadcrumb.textContent = SECTION_LABELS[sectionId] || sectionId;
+    }
+
+    state.currentSection = sectionId;
+
+    // セクション固有の描画
+    switch (sectionId) {
+      case 'dashboard':    renderDashboard();    break;
+      case 'client-input': renderClientInput();  break;
+      case 'psychology':   renderPsychology();   break;
+      case 'financial':    renderFinancial();    break;
+      case 'lifeplan':     renderLifePlan();     break;
+      case 'report':       renderReport();       break;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // フォームセットアップ
+  // ---------------------------------------------------------------------------
+
+  function setupForms() {
+    // クライアント保存ボタン
+    var saveBtn = document.getElementById('btn-save-client');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        saveClient();
+      });
+    }
+
+    // 新規クライアントボタン
+    var newBtn = document.getElementById('btn-new-client');
+    if (newBtn) {
+      newBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        newClient();
+      });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // ダッシュボード
+  // ---------------------------------------------------------------------------
+
+  function renderDashboard() {
+    var container = document.getElementById('dashboard-content');
+    if (!container) return;
+
+    var totalClients  = state.clients.length;
+    var recentCount   = state.clients.filter(function (c) {
+      var d = new Date(c.updatedAt);
+      var now = new Date();
+      return (now - d) < 7 * 24 * 60 * 60 * 1000;
+    }).length;
+
+    var html = '';
+
+    // 統計カード
+    html += '<div class="stats-grid">';
+    html += _statCard('登録クライアント数', totalClients + '名', 'stat-primary');
+    html += _statCard('今週の更新', recentCount + '件', 'stat-secondary');
+    html += _statCard('現在選択中', state.currentClient ? state.currentClient.name + ' 様' : '未選択', 'stat-accent');
+    html += '</div>';
+
+    // クイックアクション
+    html += '<div class="card" style="margin-top:1.5rem">';
+    html += '<div class="card-header"><h2>クイックアクション</h2></div>';
+    html += '<div class="card-body quick-actions">';
+    html += '<button class="btn-primary" onclick="App.showSection(\'client-input\')">新規クライアント入力</button>';
+    if (state.currentClient) {
+      html += '<button class="btn-secondary" onclick="App.showSection(\'psychology\')">心理分析を実行</button>';
+      html += '<button class="btn-secondary" onclick="App.showSection(\'financial\')">ファイナンシャル分析</button>';
+    }
+    html += '</div></div>';
+
+    // クライアント一覧
+    html += '<div class="card" style="margin-top:1.5rem">';
+    html += '<div class="card-header"><h2>クライアント一覧</h2></div>';
+    html += '<div class="card-body">';
+
+    if (state.clients.length === 0) {
+      html += '<p class="text-secondary">登録されているクライアントはいません。まず新規クライアントを入力してください。</p>';
+    } else {
+      html += '<table class="data-table">';
+      html += '<thead><tr><th>お名前</th><th>年齢</th><th>職業</th><th>年収</th><th>目的</th><th>更新日</th><th>操作</th></tr></thead>';
+      html += '<tbody>';
+      state.clients.forEach(function (c) {
+        var purposeLabel = {
+          'buy_first': '初めての購入',
+          'buy_upgrade': '住み替え',
+          'buy_investment': '投資用',
+          'rent': '賃貸検討'
+        }[c.purpose] || c.purpose || '未設定';
+
+        var isActive = state.currentClient && state.currentClient.id === c.id;
+        html += '<tr class="' + (isActive ? 'row-active' : '') + '">';
+        html += '<td><strong>' + _escape(c.name) + '</strong>';
+        if (c.nameKana) html += '<br><small class="text-secondary">' + _escape(c.nameKana) + '</small>';
+        html += '</td>';
+        html += '<td>' + (c.age || '-') + '歳</td>';
+        html += '<td>' + _escape(c.occupation || '-') + '</td>';
+        html += '<td>' + (c.annualIncome ? formatMan(c.annualIncome) : '-') + '</td>';
+        html += '<td>' + purposeLabel + '</td>';
+        html += '<td>' + _formatDate(c.updatedAt) + '</td>';
+        html += '<td class="action-cell">';
+        html += '<button class="btn-sm btn-primary" onclick="App.selectClient(\'' + c.id + '\')">選択</button> ';
+        html += '<button class="btn-sm btn-danger" onclick="App.deleteClient(\'' + c.id + '\')">削除</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+    }
+
+    html += '</div></div>';
+    container.innerHTML = html;
+  }
+
+  function _statCard(label, value, cssClass) {
+    return '<div class="stat-card ' + (cssClass || '') + '">'
+      + '<div class="stat-value">' + value + '</div>'
+      + '<div class="stat-label">' + label + '</div>'
+      + '</div>';
+  }
+
+  // ---------------------------------------------------------------------------
+  // クライアント入力セクション
+  // ---------------------------------------------------------------------------
+
+  function renderClientInput() {
+    var container = document.getElementById('client-input-content');
+    if (!container) return;
+
+    var c = state.currentClient;
+
+    var html = '<div class="card">';
+    html += '<div class="card-header">';
+    html += '<h2>' + (c ? 'クライアント情報の編集' : '新規クライアント登録') + '</h2>';
+    if (c) html += '<p class="text-secondary">現在編集中: <strong>' + _escape(c.name) + '</strong> 様</p>';
+    html += '</div>';
+    html += '<div class="card-body">';
+    html += '<form id="client-form" onsubmit="return false;">';
+
+    // 基本情報
+    html += '<div class="form-section"><h3>基本情報</h3>';
+    html += _formRow('お名前', '<input type="text" id="client-name" class="form-control" placeholder="山田 太郎" value="' + _esc(c && c.name) + '" required>');
+    html += _formRow('フリガナ', '<input type="text" id="client-name-kana" class="form-control" placeholder="ヤマダ タロウ" value="' + _esc(c && c.nameKana) + '">');
+    html += _formRow('年齢', '<input type="number" id="client-age" class="form-control form-control-sm" min="18" max="80" value="' + (c && c.age || '') + '">');
+    html += _formRow('性別',
+      '<label class="radio-inline"><input type="radio" name="gender" value="male"' + _checked(c && c.gender === 'male') + '> 男性</label>' +
+      '<label class="radio-inline"><input type="radio" name="gender" value="female"' + _checked(c && c.gender === 'female') + '> 女性</label>' +
+      '<label class="radio-inline"><input type="radio" name="gender" value="other"' + _checked(c && c.gender === 'other') + '> その他</label>'
+    );
+    html += _formRow('職業', '<input type="text" id="client-occupation" class="form-control" placeholder="会社員、自営業など" value="' + _esc(c && c.occupation) + '">');
+    html += '</div>';
+
+    // 家族構成
+    html += '<div class="form-section"><h3>家族構成</h3>';
+    html += _formRow('婚姻状況',
+      '<label class="radio-inline"><input type="radio" name="marital" value="single"' + _checked(c && c.maritalStatus === 'single') + '> 独身</label>' +
+      '<label class="radio-inline"><input type="radio" name="marital" value="married"' + _checked(c && c.maritalStatus === 'married') + '> 既婚</label>' +
+      '<label class="radio-inline"><input type="radio" name="marital" value="divorced"' + _checked(c && c.maritalStatus === 'divorced') + '> 離別</label>'
+    );
+    html += _formRow('お子様の人数', '<input type="number" id="client-children" class="form-control form-control-sm" min="0" max="10" value="' + (c && c.children || 0) + '">');
+    html += _formRow('お子様の年齢', '<input type="text" id="client-children-ages" class="form-control" placeholder="例: 5歳、8歳" value="' + _esc(c && c.childrenAges) + '">');
+    html += '</div>';
+
+    // 収入・資産
+    html += '<div class="form-section"><h3>収入・資産状況</h3>';
+    html += _formRow('本人年収（万円）', '<input type="number" id="client-income" class="form-control form-control-sm" min="0" placeholder="600" value="' + (c && c.annualIncome ? Math.round(c.annualIncome / 10000) : '') + '">');
+    html += _formRow('配偶者年収（万円）', '<input type="number" id="spouse-income" class="form-control form-control-sm" min="0" placeholder="0" value="' + (c && c.spouseIncome ? Math.round(c.spouseIncome / 10000) : '') + '">');
+    html += _formRow('現在の貯蓄額（万円）', '<input type="number" id="client-savings" class="form-control form-control-sm" min="0" placeholder="200" value="' + (c && c.savings ? Math.round(c.savings / 10000) : '') + '">');
+    html += '</div>';
+
+    // 住まい・希望
+    html += '<div class="form-section"><h3>現在の住まい・ご希望</h3>';
+    html += _formRow('現在の住まい',
+      '<label class="radio-inline"><input type="radio" name="current-housing" value="rent"' + _checked(c && c.currentHousing === 'rent') + '> 賃貸</label>' +
+      '<label class="radio-inline"><input type="radio" name="current-housing" value="own"' + _checked(c && c.currentHousing === 'own') + '> 持ち家</label>' +
+      '<label class="radio-inline"><input type="radio" name="current-housing" value="family"' + _checked(c && c.currentHousing === 'family') + '> 実家・家族と同居</label>'
+    );
+    html += _formRow('現在の家賃（万円/月）', '<input type="number" id="current-rent" class="form-control form-control-sm" min="0" placeholder="8" value="' + (c && c.currentRent ? Math.round(c.currentRent / 10000) : '') + '">');
+    html += _formRow('希望エリア', '<input type="text" id="desired-area" class="form-control" placeholder="東京都世田谷区など" value="' + _esc(c && c.desiredArea) + '">');
+    html += _formRow('検討目的',
+      '<label class="radio-inline"><input type="radio" name="purpose" value="buy_first"' + _checked(c && c.purpose === 'buy_first') + '> 初めての購入</label>' +
+      '<label class="radio-inline"><input type="radio" name="purpose" value="buy_upgrade"' + _checked(c && c.purpose === 'buy_upgrade') + '> 住み替え</label>' +
+      '<label class="radio-inline"><input type="radio" name="purpose" value="buy_investment"' + _checked(c && c.purpose === 'buy_investment') + '> 投資用</label>' +
+      '<label class="radio-inline"><input type="radio" name="purpose" value="rent"' + _checked(c && c.purpose === 'rent') + '> 賃貸検討</label>'
+    );
+    html += _formRow('備考・メモ', '<textarea id="client-notes" class="form-control" rows="3" placeholder="相談内容、要望、注意点など">' + _escape(c && c.notes || '') + '</textarea>');
+    html += '</div>';
+
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary btn-large" onclick="App.saveClient()">保存する</button>';
+    if (c) {
+      html += '<button class="btn-secondary" onclick="App.newClient()" style="margin-left:1rem">新規入力に切り替え</button>';
+    }
+    html += '</div>';
+    html += '</form></div></div>';
+
+    container.innerHTML = html;
+  }
+
+  function saveClient() {
+    var nameEl = document.getElementById('client-name');
+    if (!nameEl || !nameEl.value.trim()) {
+      showAlert('お名前は必須項目です。', 'warning');
+      return;
+    }
+
+    var incomeRaw  = parseFloat(document.getElementById('client-income').value) || 0;
+    var spouseRaw  = parseFloat(document.getElementById('spouse-income').value) || 0;
+    var savingsRaw = parseFloat(document.getElementById('client-savings').value) || 0;
+    var rentRaw    = parseFloat(document.getElementById('current-rent').value) || 0;
+
+    var client = {
+      id:             state.currentClient ? state.currentClient.id : Date.now().toString(),
+      name:           nameEl.value.trim(),
+      nameKana:       (document.getElementById('client-name-kana').value || '').trim(),
+      age:            parseInt(document.getElementById('client-age').value) || 0,
+      gender:         _radioValue('gender'),
+      occupation:     (document.getElementById('client-occupation').value || '').trim(),
+      maritalStatus:  _radioValue('marital'),
+      children:       parseInt(document.getElementById('client-children').value) || 0,
+      childrenAges:   (document.getElementById('client-children-ages').value || '').trim(),
+      annualIncome:   incomeRaw  * 10000,
+      spouseIncome:   spouseRaw  * 10000,
+      savings:        savingsRaw * 10000,
+      currentHousing: _radioValue('current-housing'),
+      currentRent:    rentRaw    * 10000,
+      desiredArea:    (document.getElementById('desired-area').value || '').trim(),
+      purpose:        _radioValue('purpose'),
+      notes:          (document.getElementById('client-notes').value || '').trim(),
+      createdAt:      (state.currentClient && state.currentClient.createdAt) || new Date().toISOString(),
+      updatedAt:      new Date().toISOString()
+    };
+
+    var existingIdx = state.clients.findIndex(function (c) { return c.id === client.id; });
+    if (existingIdx >= 0) {
+      state.clients[existingIdx] = client;
+    } else {
+      state.clients.push(client);
+    }
+
+    state.currentClient = client;
+    state.isDirty = false;
+    saveData();
+    updateHeader();
+    showAlert(client.name + ' 様の情報を保存しました。', 'success');
+  }
+
+  function newClient() {
+    state.currentClient    = null;
+    state.psychologyResults = null;
+    state.financialResults  = null;
+    renderClientInput();
+    updateHeader();
+  }
+
+  // ---------------------------------------------------------------------------
+  // 心理分析セクション
+  // ---------------------------------------------------------------------------
+
+  function renderPsychology() {
+    if (!state.currentClient) {
+      showAlert('先にクライアント情報を登録してください。', 'warning');
+      showSection('client-input');
+      return;
+    }
+
+    var container = document.getElementById('psychology-content');
+    if (!container) return;
+
+    if (state.psychologyResults) {
+      renderPsychologyResults(container);
+    } else {
+      renderPsychologyQuestionnaire(container);
+    }
+  }
+
+  function renderPsychologyQuestionnaire(container) {
+    var questions = PsychologyEngine.questions;
+    var html = '<div class="card">';
+    html += '<div class="card-header">';
+    html += '<h2>行動心理分析アセスメント</h2>';
+    html += '<p class="text-secondary alert-internal">※ この分析結果は営業支援用です。クライアント向けレポートには含まれません。</p>';
+    html += '</div><div class="card-body">';
+
+    questions.forEach(function (q, index) {
+      html += '<div class="question-group" data-question="' + q.id + '">';
+      html += '<p class="question-text"><strong>' + (index + 1) + '.</strong> ' + _escape(q.text) + '</p>';
+      q.options.forEach(function (opt) {
+        html += '<label class="radio-option">';
+        html += '<input type="radio" name="' + q.id + '" value="' + opt.value + '">';
+        html += '<span>' + _escape(opt.text) + '</span>';
+        html += '</label>';
+      });
+      html += '</div>';
+    });
+
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary btn-large" onclick="App.submitPsychology()">分析を実行する</button>';
+    html += '</div>';
+    html += '</div></div>';
+    container.innerHTML = html;
+  }
+
+  function submitPsychology() {
+    var answers = {};
+    PsychologyEngine.questions.forEach(function (q) {
+      var selected = document.querySelector('input[name="' + q.id + '"]:checked');
+      if (selected) {
+        answers[q.id] = parseInt(selected.value, 10);
+      }
+    });
+
+    if (Object.keys(answers).length < PsychologyEngine.questions.length) {
+      showAlert('すべての質問にお答えください。', 'warning');
+      return;
+    }
+
+    state.psychologyResults = PsychologyEngine.runFullAnalysis(answers, state.currentClient);
+    saveData();
+
+    var container = document.getElementById('psychology-content');
+    if (container) renderPsychologyResults(container);
+  }
+
+  function renderPsychologyResults(container) {
+    var r = state.psychologyResults;
+    if (!r) return;
+
+    var pt  = r.personalityType || {};
+    var str = r.salesStrategy   || {};
+    var html = '';
+
+    // パーソナリティタイプカード
+    html += '<div class="card analysis-result analysis-result-primary">';
+    html += '<div class="card-header">';
+    html += '<h2>パーソナリティタイプ: <span class="type-badge">' + _escape(pt.primaryTypeJa || pt.primaryType || '分析済') + '</span></h2>';
+    html += '</div><div class="card-body">';
+    if (pt.description) html += '<p>' + _escape(pt.description) + '</p>';
+
+    if (pt.strengths && pt.strengths.length > 0) {
+      html += '<div class="result-section"><h4>強み</h4><ul>';
+      pt.strengths.forEach(function (s) { html += '<li>' + _escape(s) + '</li>'; });
+      html += '</ul></div>';
+    }
+    if (pt.watchPoints && pt.watchPoints.length > 0) {
+      html += '<div class="result-section"><h4>注意点</h4><ul>';
+      pt.watchPoints.forEach(function (w) { html += '<li>' + _escape(w) + '</li>'; });
+      html += '</ul></div>';
+    }
+    html += '</div></div>';
+
+    // スコアレーダーチャート
+    html += '<div class="card">';
+    html += '<div class="card-header"><h3>スコア分布</h3></div>';
+    html += '<div class="card-body chart-container">';
+    html += '<canvas id="psychology-radar" width="400" height="300"></canvas>';
+    html += '</div></div>';
+
+    // 営業アプローチ推奨
+    if (str && str.communicationStyle) {
+      html += '<div class="card analysis-result analysis-result-secondary">';
+      html += '<div class="card-header"><h3>営業アプローチ推奨</h3></div>';
+      html += '<div class="card-body">';
+      if (str.communicationStyle) {
+        html += '<div class="result-section"><h4>コミュニケーションスタイル</h4>';
+        html += '<p>' + _escape(str.communicationStyle) + '</p></div>';
+      }
+      if (str.keyMessages && str.keyMessages.length > 0) {
+        html += '<div class="result-section"><h4>効果的なメッセージ</h4><ul>';
+        str.keyMessages.forEach(function (m) { html += '<li>' + _escape(m) + '</li>'; });
+        html += '</ul></div>';
+      }
+      if (str.ngActions && str.ngActions.length > 0) {
+        html += '<div class="result-section"><h4>NGアクション</h4><ul class="ng-list">';
+        str.ngActions.forEach(function (n) { html += '<li>' + _escape(n) + '</li>'; });
+        html += '</ul></div>';
+      }
+      if (str.closingTips) {
+        html += '<div class="result-section"><h4>クロージングのポイント</h4>';
+        html += '<p>' + _escape(str.closingTips) + '</p></div>';
+      }
+      html += '</div></div>';
+    }
+
+    // バイアス検出
+    if (r.biases && r.biases.length > 0) {
+      html += '<div class="card">';
+      html += '<div class="card-header"><h3>認知バイアス分析</h3></div>';
+      html += '<div class="card-body">';
+      r.biases.forEach(function (b) {
+        html += '<div class="bias-item">';
+        html += '<span class="bias-name">' + _escape(b.nameJa || b.name) + '</span>';
+        html += '<span class="bias-level level-' + (b.level || 'medium') + '">' + _escape(b.levelJa || b.level || '') + '</span>';
+        if (b.description) html += '<p class="bias-desc">' + _escape(b.description) + '</p>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    // 不安分析
+    if (r.anxieties && r.anxieties.length > 0) {
+      html += '<div class="card">';
+      html += '<div class="card-header"><h3>不安・懸念事項の分析</h3></div>';
+      html += '<div class="card-body">';
+      r.anxieties.forEach(function (ax) {
+        html += '<div class="anxiety-item">';
+        html += '<h4>' + _escape(ax.typeJa || ax.type) + '</h4>';
+        if (ax.description) html += '<p>' + _escape(ax.description) + '</p>';
+        if (ax.countermeasure) html += '<p class="countermeasure"><strong>対応策：</strong>' + _escape(ax.countermeasure) + '</p>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+    }
+
+    // ライフステージ
+    if (r.lifeStage) {
+      var ls = r.lifeStage;
+      html += '<div class="card">';
+      html += '<div class="card-header"><h3>ライフステージ分析</h3></div>';
+      html += '<div class="card-body">';
+      html += '<p><strong>' + _escape(ls.stageJa || ls.stage || '') + '</strong></p>';
+      if (ls.description) html += '<p>' + _escape(ls.description) + '</p>';
+      if (ls.priorities && ls.priorities.length > 0) {
+        html += '<h4>現在の優先事項</h4><ul>';
+        ls.priorities.forEach(function (p) { html += '<li>' + _escape(p) + '</li>'; });
+        html += '</ul>';
+      }
+      html += '</div></div>';
+    }
+
+    // 再分析ボタン
+    html += '<div class="form-actions">';
+    html += '<button class="btn-secondary" onclick="App.resetPsychology()">再分析する</button>';
+    html += '<button class="btn-primary" style="margin-left:1rem" onclick="App.showSection(\'financial\')">ファイナンシャル分析へ進む</button>';
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    // レーダーチャートを描画（DOM更新後）
+    setTimeout(function () {
+      if (r.scores) drawPsychologyRadar(r.scores);
+    }, 100);
+  }
+
+  function resetPsychology() {
+    state.psychologyResults = null;
+    saveData();
+    var container = document.getElementById('psychology-content');
+    if (container) renderPsychologyQuestionnaire(container);
+  }
+
+  // ---------------------------------------------------------------------------
+  // ファイナンシャル分析セクション
+  // ---------------------------------------------------------------------------
+
+  var FINANCIAL_TABS = [
+    { id: 'ie',     label: '収支分析' },
+    { id: 'afford', label: '住宅取得力' },
+    { id: 'rvb',    label: '賃貸 vs 購入' },
+    { id: 'ins',    label: '保険最適化' },
+    { id: 'tax',    label: '税制優遇' },
+    { id: 'rate',   label: '金利シミュレーション' },
+    { id: 'asset',  label: '資産形成' }
+  ];
+
+  function renderFinancial() {
+    if (!state.currentClient) {
+      showAlert('先にクライアント情報を登録してください。', 'warning');
+      showSection('client-input');
+      return;
+    }
+
+    var container = document.getElementById('financial-content');
+    if (!container) return;
+
+    renderFinancialTabs(container);
+  }
+
+  function renderFinancialTabs(container) {
+    var html = '<div class="card">';
+    html += '<div class="card-header"><h2>ファイナンシャル分析</h2></div>';
+    html += '<div class="tab-bar">';
+    FINANCIAL_TABS.forEach(function (tab, idx) {
+      html += '<button class="tab-btn' + (idx === state.activeFinancialTab ? ' active' : '') + '" onclick="App.switchFinancialTab(' + idx + ')">' + tab.label + '</button>';
+    });
+    html += '</div>';
+    html += '<div class="card-body" id="financial-tab-content">';
+    html += renderFinancialTabContent(state.activeFinancialTab);
+    html += '</div></div>';
+
+    container.innerHTML = html;
+    afterFinancialTabRender(state.activeFinancialTab);
+  }
+
+  function switchFinancialTab(idx) {
+    state.activeFinancialTab = idx;
+    var buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(function (btn, i) {
+      btn.classList.toggle('active', i === idx);
+    });
+    var content = document.getElementById('financial-tab-content');
+    if (content) {
+      content.innerHTML = renderFinancialTabContent(idx);
+      afterFinancialTabRender(idx);
+    }
+  }
+
+  function renderFinancialTabContent(idx) {
+    var tabId = FINANCIAL_TABS[idx].id;
+    var c = state.currentClient;
+    var r = state.financialResults;
+    var html = '';
+
+    switch (tabId) {
+      case 'ie':
+        html += _financialInputForm_IE(c, r);
+        break;
+      case 'afford':
+        html += _financialInputForm_Afford(c, r);
+        break;
+      case 'rvb':
+        html += _financialInputForm_RVB(c, r);
+        break;
+      case 'ins':
+        html += _financialInputForm_Ins(c, r);
+        break;
+      case 'tax':
+        html += _financialInputForm_Tax(c, r);
+        break;
+      case 'rate':
+        html += _financialInputForm_Rate(c, r);
+        break;
+      case 'asset':
+        html += _financialInputForm_Asset(c, r);
+        break;
+    }
+    return html;
+  }
+
+  function afterFinancialTabRender(idx) {
+    var tabId = FINANCIAL_TABS[idx].id;
+    if (!state.financialResults) return;
+    var r = state.financialResults;
+    setTimeout(function () {
+      switch (tabId) {
+        case 'ie':
+          if (r.incomeExpense) drawExpensePieChart(r.incomeExpense);
+          break;
+        case 'rvb':
+          if (r.rentVsBuy) drawRentVsBuyChart(r.rentVsBuy);
+          break;
+        case 'asset':
+          if (r.assetProjection) drawAssetProjectionChart(r.assetProjection);
+          break;
+      }
+    }, 100);
+  }
+
+  // --- 収支分析フォーム ---
+  function _financialInputForm_IE(c, r) {
+    var inc = r && r.incomeExpense;
+    var html = '<h3>収支分析</h3>';
+    html += '<div class="form-grid">';
+    html += _financialField('食費（月額・万円）',           'ie-food',           '', '6');
+    html += _financialField('水道光熱費（月額・万円）',     'ie-utilities',      '', '2');
+    html += _financialField('通信費（月額・万円）',         'ie-communication',  '', '1.5');
+    html += _financialField('交通費（月額・万円）',         'ie-transportation', '', '2');
+    html += _financialField('保険料（月額・万円）',         'ie-insurance',      '', '3');
+    html += _financialField('教育費（月額・万円）',         'ie-education',      '', '0');
+    html += _financialField('娯楽費（月額・万円）',         'ie-entertainment',  '', '3');
+    html += _financialField('月次貯蓄額（万円）',           'ie-savings',        '', '5');
+    html += _financialField('その他支出（月額・万円）',     'ie-other',          '', '2');
+    html += '</div>';
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_IE()">収支を分析する</button>';
+    html += '</div>';
+
+    if (inc) {
+      html += '<div class="result-block">';
+      html += '<h4>収支分析結果</h4>';
+      html += '<div class="result-grid">';
+      html += _resultItem('月収総額（額面）',  formatCurrency(inc.monthlyGrossIncome));
+      html += _resultItem('月収（手取概算）',  formatCurrency(inc.monthlyNetIncome));
+      html += _resultItem('月次総支出',        formatCurrency(inc.monthlyTotalExpense));
+      html += _resultItem('月次余剰',          formatCurrency(inc.monthlySurplus));
+      html += _resultItem('貯蓄率',            inc.savingsRate + '%');
+      html += '</div>';
+      html += '<p class="diagnosis">' + _escape(inc.diagnosis) + '</p>';
+      if (inc.recommendations && inc.recommendations.length > 0) {
+        html += '<ul class="recommendations">';
+        inc.recommendations.forEach(function (rec) { html += '<li>' + _escape(rec) + '</li>'; });
+        html += '</ul>';
+      }
+      html += '<div class="chart-container"><canvas id="expense-pie" width="400" height="300"></canvas></div>';
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function runFinancialAnalysis_IE() {
+    var c = state.currentClient;
+    if (!c) return;
+
+    var params = {
+      annualIncome:  c.annualIncome,
+      spouseIncome:  c.spouseIncome,
+      currentRent:   c.currentRent,
+      savings:       _fv('ie-savings') * 10000,
+      expenses: {
+        food:           _fv('ie-food')           * 10000,
+        utilities:      _fv('ie-utilities')      * 10000,
+        communication:  _fv('ie-communication')  * 10000,
+        transportation: _fv('ie-transportation') * 10000,
+        insurance:      _fv('ie-insurance')      * 10000,
+        education:      _fv('ie-education')      * 10000,
+        entertainment:  _fv('ie-entertainment')  * 10000,
+        other:          _fv('ie-other')          * 10000
+      }
+    };
+
+    if (!state.financialResults) state.financialResults = {};
+    state.financialResults.incomeExpense = FinancialEngine.analyzeIncomeExpense(params);
+    saveData();
+    switchFinancialTab(state.activeFinancialTab);
+  }
+
+  // --- 住宅取得力フォーム ---
+  function _financialInputForm_Afford(c, r) {
+    var aff = r && r.affordability;
+    var html = '<h3>住宅取得可能額の試算</h3>';
+    html += '<div class="form-grid">';
+    html += _financialField('既存借入の月返済額（万円）', 'af-existing-debt', '', '0');
+    html += _financialField('希望返済年数',               'af-term',          '', '35');
+    html += _financialField('適用金利（%）',              'af-rate',          '', '1.5');
+    html += '</div>';
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_Afford()">取得可能額を試算する</button>';
+    html += '</div>';
+
+    if (aff) {
+      html += '<div class="result-block">';
+      html += '<h4>住宅取得力診断</h4>';
+      html += '<div class="result-grid">';
+      html += _resultItem('借入可能額（上限）',      formatMan(aff.maxLoanAmount));
+      html += _resultItem('推奨借入額',              formatMan(aff.recommendedLoanAmount));
+      html += _resultItem('月々返済上限額',          formatCurrency(aff.maxMonthlyPayment));
+      html += _resultItem('推奨月々返済額',          formatCurrency(aff.recommendedMonthlyPayment));
+      html += _resultItem('住居費比率',              aff.housingCostRatio + '%');
+      html += _resultItem('リスク判定',              '<span class="risk-badge risk-' + aff.riskLevel + '">' + _escape(aff.riskLevelJa) + '</span>');
+      html += '</div>';
+      html += '<p class="diagnosis">' + _escape(aff.explanation) + '</p>';
+      html += '</div>';
+
+      // ガイドライン
+      if (r.guideline) {
+        var gl = r.guideline;
+        html += '<div class="result-block">';
+        html += '<h4>住居費ガイドライン</h4>';
+        html += '<div class="result-grid">';
+        if (gl.recommendedMonthlyHousing) html += _resultItem('推奨住居費（月額）', formatCurrency(gl.recommendedMonthlyHousing));
+        if (gl.maxMonthlyHousing)         html += _resultItem('住居費上限（月額）', formatCurrency(gl.maxMonthlyHousing));
+        if (gl.maxPurchasePrice)          html += _resultItem('購入可能価格目安',   formatMan(gl.maxPurchasePrice));
+        html += '</div>';
+        if (gl.comment) html += '<p class="diagnosis">' + _escape(gl.comment) + '</p>';
+        html += '</div>';
+      }
+    }
+    return html;
+  }
+
+  function runFinancialAnalysis_Afford() {
+    var c = state.currentClient;
+    if (!c) return;
+    var params = {
+      annualIncome:     c.annualIncome,
+      spouseIncome:     c.spouseIncome,
+      savings:          c.savings,
+      existingDebt:     _fv('af-existing-debt') * 10000,
+      desiredTermYears: _fv('af-term') || 35,
+      interestRate:     (_fv('af-rate') || 1.5) / 100
+    };
+    if (!state.financialResults) state.financialResults = {};
+    state.financialResults.affordability = FinancialEngine.calculateAffordability(params);
+    state.financialResults.guideline      = FinancialEngine.getHousingCostGuideline(c.annualIncome);
+    saveData();
+    switchFinancialTab(state.activeFinancialTab);
+  }
+
+  // --- 賃貸 vs 購入フォーム ---
+  function _financialInputForm_RVB(c, r) {
+    var rvb = r && r.rentVsBuy;
+    var html = '<h3>賃貸 vs 購入 比較分析</h3>';
+    html += '<div class="form-grid">';
+    html += _financialField('現在の家賃（万円/月）',         'rvb-rent',          '', c && c.currentRent ? Math.round(c.currentRent / 10000) : '8');
+    html += _financialField('検討物件価格（万円）',           'rvb-price',         '', '4000');
+    html += _financialField('頭金（万円）',                   'rvb-down',          '', '400');
+    html += _financialField('借入金利（%）',                  'rvb-rate',          '', '1.5');
+    html += _financialField('返済年数',                       'rvb-term',          '', '35');
+    html += _financialField('管理費（万円/月）',              'rvb-mgmt',          '', '1.5');
+    html += _financialField('修繕積立金（万円/月）',          'rvb-repair',        '', '1');
+    html += _financialField('固定資産税（万円/年）',          'rvb-tax',           '', '12');
+    html += _financialField('比較期間（年）',                 'rvb-years',         '', '35');
+    html += '</div>';
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_RVB()">比較分析を実行する</button>';
+    html += '</div>';
+
+    if (rvb) {
+      var isRec = rvb.recommendation === 'buy';
+      html += '<div class="result-block">';
+      html += '<h4>比較分析結果</h4>';
+      html += '<div class="recommendation-badge rec-' + rvb.recommendation + '">';
+      html += isRec ? '購入が有利' : '賃貸が有利';
+      html += '</div>';
+      html += '<div class="result-grid">';
+      html += _resultItem('賃貸 累計コスト', formatMan(rvb.rentTotal));
+      html += _resultItem('購入 累計コスト', formatMan(rvb.buyTotal));
+      if (rvb.breakEvenYear) html += _resultItem('損益分岐点', rvb.breakEvenYear + '年目');
+      html += '</div>';
+      html += '<p class="diagnosis">' + _escape(rvb.analysis) + '</p>';
+      if (rvb.factors && rvb.factors.length > 0) {
+        html += '<ul class="recommendations">';
+        rvb.factors.forEach(function (f) { html += '<li>' + _escape(f) + '</li>'; });
+        html += '</ul>';
+      }
+      html += '<div class="chart-container"><canvas id="rvb-chart" width="500" height="300"></canvas></div>';
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function runFinancialAnalysis_RVB() {
+    var c = state.currentClient;
+    if (!c) return;
+    var price = _fv('rvb-price') * 10000;
+    var down  = _fv('rvb-down')  * 10000;
+    var params = {
+      monthlyRent:        (_fv('rvb-rent') || 8) * 10000,
+      propertyPrice:      price || 40000000,
+      downPayment:        down  || 4000000,
+      loanInterestRate:   (_fv('rvb-rate') || 1.5) / 100,
+      loanTermYears:      _fv('rvb-term')  || 35,
+      managementFee:      (_fv('rvb-mgmt') || 1.5) * 10000,
+      maintenanceFee:     (_fv('rvb-repair') || 1) * 10000,
+      propertyTax:        (_fv('rvb-tax')  || 12) * 10000,
+      comparisonYears:    _fv('rvb-years') || 35
+    };
+    if (!state.financialResults) state.financialResults = {};
+    state.financialResults.rentVsBuy = FinancialEngine.compareRentVsBuy(params);
+    saveData();
+    switchFinancialTab(state.activeFinancialTab);
+  }
+
+  // --- 保険最適化フォーム ---
+  function _financialInputForm_Ins(c, r) {
+    var ins = r && r.insurance;
+    var html = '<h3>保険最適化分析</h3>';
+    html += '<div class="form-grid">';
+    html += _financialField('借入予定額（万円）',           'ins-loan',      '', '3500');
+    html += _financialField('返済年数',                     'ins-term',      '', '35');
+    html += _financialField('現在の生命保険料（万円/月）',  'ins-premium',   '', '1.5');
+    html += _financialField('家族の人数',                   'ins-family',    '', '3');
+    html += '</div>';
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_Ins()">保険を分析する</button>';
+    html += '</div>';
+
+    if (ins) {
+      html += '<div class="result-block">';
+      html += '<h4>保険最適化結果</h4>';
+      html += '<div class="result-grid">';
+      html += _resultItem('団信コスト（年額）',      formatCurrency(ins.danshinCost));
+      html += _resultItem('民間保険コスト（年額）',  formatCurrency(ins.regularInsuranceCost));
+      html += _resultItem('月次節約可能額',          formatCurrency(ins.monthlySavings));
+      html += _resultItem('期間合計節約額',          formatMan(ins.totalSavingsOverTerm));
+      html += '</div>';
+      html += '<p class="diagnosis">' + _escape(ins.recommendation) + '</p>';
+      if (ins.comparisonTable && ins.comparisonTable.length > 0) {
+        html += '<table class="comparison-table data-table"><thead><tr><th>比較項目</th><th>団信</th><th>民間生命保険</th></tr></thead><tbody>';
+        ins.comparisonTable.forEach(function (row) {
+          html += '<tr><td>' + _escape(row.item) + '</td><td>' + _escape(row.danshin) + '</td><td>' + _escape(row.regular) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      if (ins.optimizationPlan) {
+        html += '<pre class="pre-wrap">' + _escape(ins.optimizationPlan) + '</pre>';
+      }
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function runFinancialAnalysis_Ins() {
+    var c = state.currentClient;
+    if (!c) return;
+    var params = {
+      age:                      c.age || 35,
+      loanAmount:               (_fv('ins-loan') || 3500) * 10000,
+      loanTermYears:            _fv('ins-term') || 35,
+      currentInsurancePremium:  (_fv('ins-premium') || 1.5) * 10000,
+      familyMembers:            _fv('ins-family') || 3
+    };
+    if (!state.financialResults) state.financialResults = {};
+    state.financialResults.insurance = FinancialEngine.compareInsurance(params);
+    saveData();
+    switchFinancialTab(state.activeFinancialTab);
+  }
+
+  // --- 税制優遇フォーム ---
+  function _financialInputForm_Tax(c, r) {
+    var tax = r && r.taxBenefits;
+    var html = '<h3>税制優遇シミュレーション（住宅ローン控除）</h3>';
+    html += '<div class="form-grid">';
+    html += _financialField('借入予定額（万円）',     'tax-loan',      '', '3500');
+    html += _financialField('物件種別',               'tax-type',      'new', '', true);
+    html += _financialField('入居予定年度（西暦）',   'tax-year',      '', '2025');
+    html += '</div>';
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_Tax()">控除額を試算する</button>';
+    html += '</div>';
+
+    if (tax) {
+      html += '<div class="result-block">';
+      html += '<h4>住宅ローン控除試算結果</h4>';
+      html += '<div class="result-grid">';
+      html += _resultItem('控除期間合計メリット', formatMan(tax.totalBenefit || 0));
+      html += '</div>';
+      if (tax.explanation) html += '<pre class="pre-wrap">' + _escape(tax.explanation) + '</pre>';
+      if (tax.yearlyDeduction && tax.yearlyDeduction.length > 0) {
+        html += '<table class="data-table"><thead><tr><th>年度</th><th>ローン残高</th><th>控除額</th><th>実際の節税額</th></tr></thead><tbody>';
+        tax.yearlyDeduction.forEach(function (row) {
+          html += '<tr><td>' + row.year + '年</td>';
+          html += '<td>' + formatMan(row.loanBalance) + '</td>';
+          html += '<td>' + formatCurrency(row.deduction) + '</td>';
+          html += '<td>' + formatCurrency(row.actualBenefit) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function runFinancialAnalysis_Tax() {
+    var c = state.currentClient;
+    if (!c) return;
+    var typeEl = document.getElementById('tax-type');
+    var isNew  = typeEl ? typeEl.value === 'new' : false;
+    var params = {
+      loanAmount:          (_fv('tax-loan') || 3500) * 10000,
+      annualIncome:        c.annualIncome,
+      propertyType:        isNew ? 'new' : 'existing',
+      isNewConstruction:   isNew,
+      moveInYear:          _fv('tax-year') || 2025
+    };
+    if (!state.financialResults) state.financialResults = {};
+    state.financialResults.taxBenefits = FinancialEngine.calculateTaxBenefits(params);
+    saveData();
+    switchFinancialTab(state.activeFinancialTab);
+  }
+
+  // --- 金利シミュレーションフォーム ---
+  function _financialInputForm_Rate(c, r) {
+    var rate = r && r.interestRate;
+    var html = '<h3>金利シミュレーション</h3>';
+    html += '<div class="form-grid">';
+    html += _financialField('借入額（万円）',       'rate-loan',  '', '3500');
+    html += _financialField('返済年数',             'rate-term',  '', '35');
+    html += _financialField('基準金利（%）',        'rate-base',  '', '1.5');
+    html += _financialField('金利上昇シナリオ（%）','rate-high',  '', '3.0');
+    html += '</div>';
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_Rate()">金利影響を分析する</button>';
+    html += '</div>';
+
+    if (rate) {
+      html += '<div class="result-block">';
+      html += '<h4>金利影響分析結果</h4>';
+      if (rate.scenarios && rate.scenarios.length > 0) {
+        html += '<table class="data-table"><thead><tr><th>シナリオ</th><th>金利</th><th>月返済額</th><th>総支払額</th><th>総利息</th></tr></thead><tbody>';
+        rate.scenarios.forEach(function (s) {
+          html += '<tr>';
+          html += '<td>' + _escape(s.label || s.name) + '</td>';
+          html += '<td>' + (s.rate * 100).toFixed(2) + '%</td>';
+          html += '<td>' + formatCurrency(s.monthlyPayment) + '</td>';
+          html += '<td>' + formatMan(s.totalPayment) + '</td>';
+          html += '<td>' + formatMan(s.totalInterest) + '</td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+      }
+      if (rate.analysis) html += '<p class="diagnosis">' + _escape(rate.analysis) + '</p>';
+      if (rate.riskWarning) html += '<p class="warning-text">' + _escape(rate.riskWarning) + '</p>';
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function runFinancialAnalysis_Rate() {
+    var params = {
+      loanAmount:       (_fv('rate-loan') || 3500) * 10000,
+      termYears:        _fv('rate-term') || 35,
+      baseRate:         (_fv('rate-base') || 1.5) / 100,
+      highRate:         (_fv('rate-high') || 3.0) / 100
+    };
+    if (!state.financialResults) state.financialResults = {};
+    state.financialResults.interestRate = FinancialEngine.analyzeInterestRateImpact(params);
+    saveData();
+    switchFinancialTab(state.activeFinancialTab);
+  }
+
+  // --- 資産形成フォーム ---
+  function _financialInputForm_Asset(c, r) {
+    var asset = r && r.assetProjection;
+    var html = '<h3>資産形成シミュレーション</h3>';
+    html += '<div class="form-grid">';
+    html += _financialField('現在の資産額（万円）',       'asset-init',    '', c && c.savings ? Math.round(c.savings / 10000) : '200');
+    html += _financialField('毎月の積立額（万円）',       'asset-monthly', '', '5');
+    html += _financialField('想定年利回り（%）',          'asset-yield',   '', '3');
+    html += _financialField('シミュレーション期間（年）', 'asset-years',   '', '30');
+    html += _financialField('インフレ率（%）',            'asset-inf',     '', '1');
+    html += '</div>';
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_Asset()">資産推移を試算する</button>';
+    html += '</div>';
+
+    if (asset) {
+      html += '<div class="result-block">';
+      html += '<h4>資産形成シミュレーション結果</h4>';
+      html += '<div class="result-grid">';
+      if (asset.finalAmount)      html += _resultItem('最終資産額',     formatMan(asset.finalAmount));
+      if (asset.totalContributed) html += _resultItem('積立元本合計',   formatMan(asset.totalContributed));
+      if (asset.totalReturn)      html += _resultItem('運用益合計',     formatMan(asset.totalReturn));
+      html += '</div>';
+      if (asset.analysis) html += '<p class="diagnosis">' + _escape(asset.analysis) + '</p>';
+      html += '<div class="chart-container"><canvas id="asset-chart" width="500" height="300"></canvas></div>';
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function runFinancialAnalysis_Asset() {
+    var c = state.currentClient;
+    var params = {
+      initialAssets:    (_fv('asset-init')    || 200) * 10000,
+      monthlyInvestment:(_fv('asset-monthly') || 5)   * 10000,
+      annualReturnRate: (_fv('asset-yield')   || 3)   / 100,
+      years:            _fv('asset-years')            || 30,
+      inflationRate:    (_fv('asset-inf')     || 1)   / 100
+    };
+    if (!state.financialResults) state.financialResults = {};
+    state.financialResults.assetProjection = FinancialEngine.projectAssetFormation(params);
+    saveData();
+    switchFinancialTab(state.activeFinancialTab);
+  }
+
+  // ファイナンシャル全体分析
+  function runFinancialAnalysis() {
+    var c = state.currentClient;
+    if (!c) return;
+
+    var params = collectFinancialParams();
+
+    state.financialResults = {
+      incomeExpense:   FinancialEngine.analyzeIncomeExpense(params.ie),
+      affordability:   FinancialEngine.calculateAffordability(params.afford),
+      rentVsBuy:       FinancialEngine.compareRentVsBuy(params.rvb),
+      insurance:       FinancialEngine.compareInsurance(params.ins),
+      taxBenefits:     FinancialEngine.calculateTaxBenefits(params.tax),
+      interestRate:    FinancialEngine.analyzeInterestRateImpact(params.rate),
+      assetProjection: FinancialEngine.projectAssetFormation(params.asset),
+      guideline:       FinancialEngine.getHousingCostGuideline(c.annualIncome)
+    };
+
+    saveData();
+    renderFinancialResults();
+  }
+
+  function collectFinancialParams() {
+    var c = state.currentClient || {};
+    return {
+      ie: {
+        annualIncome: c.annualIncome || 0,
+        spouseIncome: c.spouseIncome || 0,
+        currentRent:  c.currentRent  || 0,
+        savings:      0,
+        expenses: {}
+      },
+      afford: {
+        annualIncome:     c.annualIncome || 0,
+        spouseIncome:     c.spouseIncome || 0,
+        savings:          c.savings || 0,
+        desiredTermYears: 35,
+        interestRate:     0.015
+      },
+      rvb: {
+        monthlyRent:      c.currentRent || 80000,
+        propertyPrice:    40000000,
+        downPayment:      c.savings ? Math.min(c.savings * 0.5, 8000000) : 4000000,
+        loanInterestRate: 0.015,
+        loanTermYears:    35,
+        managementFee:    15000,
+        maintenanceFee:   10000,
+        propertyTax:      120000,
+        comparisonYears:  35
+      },
+      ins: {
+        age:                     c.age || 35,
+        loanAmount:              35000000,
+        loanTermYears:           35,
+        currentInsurancePremium: 15000,
+        familyMembers:           (c.children || 0) + (c.maritalStatus === 'married' ? 2 : 1)
+      },
+      tax: {
+        loanAmount:        35000000,
+        annualIncome:      c.annualIncome || 0,
+        propertyType:      'new',
+        isNewConstruction: true,
+        moveInYear:        2025
+      },
+      rate: {
+        loanAmount: 35000000,
+        termYears:  35,
+        baseRate:   0.015,
+        highRate:   0.03
+      },
+      asset: {
+        initialAssets:     c.savings || 0,
+        monthlyInvestment: 50000,
+        annualReturnRate:  0.03,
+        years:             30,
+        inflationRate:     0.01
+      }
+    };
+  }
+
+  function renderFinancialResults() {
+    var container = document.getElementById('financial-content');
+    if (container) renderFinancialTabs(container);
+  }
+
+  // ---------------------------------------------------------------------------
+  // ライフプランセクション
+  // ---------------------------------------------------------------------------
+
+  function renderLifePlan() {
+    var container = document.getElementById('lifeplan-content');
+    if (!container) return;
+
+    if (!state.currentClient) {
+      container.innerHTML = '<div class="card"><div class="card-body"><p class="text-secondary">先にクライアント情報を登録してください。</p></div></div>';
+      return;
+    }
+
+    var c = state.currentClient;
+    var hasFinancial  = !!state.financialResults;
+    var hasPsychology = !!state.psychologyResults;
+    var html = '';
+
+    // ライフプランサマリーカード
+    html += '<div class="card">';
+    html += '<div class="card-header"><h2>' + _escape(c.name) + ' 様のライフプラン総合診断</h2></div>';
+    html += '<div class="card-body">';
+
+    // ライフステージ
+    var lifeStage = hasPsychology
+      ? (state.psychologyResults.lifeStage || PsychologyEngine.analyzeLifeStage(c))
+      : PsychologyEngine.analyzeLifeStage(c);
+
+    if (lifeStage) {
+      html += '<div class="lifeplan-section">';
+      html += '<h3>現在のライフステージ: <span class="stage-badge">' + _escape(lifeStage.stageJa || lifeStage.stage || '') + '</span></h3>';
+      if (lifeStage.description) html += '<p>' + _escape(lifeStage.description) + '</p>';
+      html += '</div>';
+    }
+
+    // 基本情報サマリー
+    html += '<div class="lifeplan-section info-grid">';
+    html += _infoItem('年齢',    (c.age || '-') + '歳');
+    html += _infoItem('職業',    c.occupation || '-');
+    html += _infoItem('世帯年収', c.annualIncome ? formatMan(c.annualIncome + (c.spouseIncome || 0)) : '-');
+    html += _infoItem('貯蓄額',  c.savings ? formatMan(c.savings) : '-');
+    html += _infoItem('検討目的', {
+      'buy_first': '初めての住宅購入',
+      'buy_upgrade': '住み替え',
+      'buy_investment': '投資用不動産',
+      'rent': '賃貸継続検討'
+    }[c.purpose] || c.purpose || '-');
+    html += _infoItem('希望エリア', c.desiredArea || '-');
+    html += '</div>';
+
+    html += '</div></div>';
+
+    // ファイナンシャルサマリー
+    if (hasFinancial) {
+      var fr = state.financialResults;
+      html += '<div class="card" style="margin-top:1.5rem">';
+      html += '<div class="card-header"><h3>ファイナンシャル分析サマリー</h3></div>';
+      html += '<div class="card-body">';
+
+      if (fr.affordability) {
+        var aff = fr.affordability;
+        html += '<div class="lifeplan-section">';
+        html += '<h4>住宅取得力</h4>';
+        html += '<div class="result-grid">';
+        html += _resultItem('推奨借入額',   formatMan(aff.recommendedLoanAmount));
+        html += _resultItem('上限借入額',   formatMan(aff.maxLoanAmount));
+        html += _resultItem('リスク判定',   '<span class="risk-badge risk-' + aff.riskLevel + '">' + _escape(aff.riskLevelJa) + '</span>');
+        html += '</div>';
+        html += '<p>' + _escape(aff.explanation) + '</p>';
+        html += '</div>';
+      }
+
+      if (fr.rentVsBuy) {
+        var rvb = fr.rentVsBuy;
+        html += '<div class="lifeplan-section">';
+        html += '<h4>賃貸 vs 購入</h4>';
+        html += '<div class="recommendation-badge rec-' + rvb.recommendation + '">';
+        html += rvb.recommendation === 'buy' ? '購入が有利' : '賃貸が有利';
+        html += '</div>';
+        html += '<p>' + _escape(rvb.analysis) + '</p>';
+        html += '</div>';
+      }
+
+      html += '</div></div>';
+    }
+
+    // 心理分析サマリー
+    if (hasPsychology) {
+      var pr = state.psychologyResults;
+      html += '<div class="card" style="margin-top:1.5rem">';
+      html += '<div class="card-header"><h3>行動特性サマリー <span class="internal-badge">営業担当者用</span></h3></div>';
+      html += '<div class="card-body">';
+      if (pr.personalityType) {
+        html += '<p><strong>タイプ：</strong>' + _escape(pr.personalityType.primaryTypeJa || pr.personalityType.primaryType || '') + '</p>';
+        if (pr.personalityType.description) html += '<p>' + _escape(pr.personalityType.description) + '</p>';
+      }
+      if (pr.salesStrategy && pr.salesStrategy.communicationStyle) {
+        html += '<p><strong>推奨アプローチ：</strong>' + _escape(pr.salesStrategy.communicationStyle) + '</p>';
+      }
+      html += '</div></div>';
+    }
+
+    // ライフプランタイムライン
+    html += '<div class="card" style="margin-top:1.5rem">';
+    html += '<div class="card-header"><h3>ライフイベントタイムライン</h3></div>';
+    html += '<div class="card-body">';
+    html += _renderTimeline(c);
+    html += '</div></div>';
+
+    // アクションボタン
+    html += '<div class="form-actions" style="margin-top:1.5rem">';
+    if (!hasFinancial) {
+      html += '<button class="btn-secondary" onclick="App.showSection(\'financial\')">ファイナンシャル分析を実行する</button>';
+    }
+    html += '<button class="btn-primary" onclick="App.showSection(\'report\')" style="margin-left:1rem">レポートを出力する</button>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  function _renderTimeline(c) {
+    var now    = new Date().getFullYear();
+    var age    = c.age || 35;
+    var events = [];
+
+    // 住宅購入
+    events.push({ year: now,      label: '現在', desc: age + '歳・相談中', type: 'current' });
+    events.push({ year: now + 1,  label: '購入検討', desc: (age + 1) + '歳・住宅取得目標', type: 'milestone' });
+
+    // 子供の教育
+    if (c.children && c.children > 0 && c.childrenAges) {
+      var agesStr = c.childrenAges.split(/[,、，\s]+/);
+      agesStr.forEach(function (ageStr, i) {
+        var childAge = parseInt(ageStr);
+        if (!isNaN(childAge)) {
+          var highSchoolYear = now + (15 - childAge);
+          var univYear       = now + (18 - childAge);
+          if (highSchoolYear > now)
+            events.push({ year: highSchoolYear, label: 'お子様' + (i + 1) + '高校入学', desc: '', type: 'family' });
+          if (univYear > now)
+            events.push({ year: univYear,       label: 'お子様' + (i + 1) + '大学入学', desc: '', type: 'family' });
+        }
+      });
+    }
+
+    // 定年・老後
+    var retireYear = now + (65 - age);
+    if (retireYear > now) {
+      events.push({ year: retireYear,      label: '定年退職目安',    desc: '65歳・老後資金の確保', type: 'retirement' });
+      events.push({ year: retireYear + 5,  label: 'ローン完済目安', desc: '', type: 'milestone' });
+    }
+
+    events.sort(function (a, b) { return a.year - b.year; });
+
+    var html = '<div class="timeline">';
+    events.forEach(function (ev) {
+      html += '<div class="timeline-item timeline-' + ev.type + '">';
+      html += '<div class="timeline-year">' + ev.year + '年</div>';
+      html += '<div class="timeline-content">';
+      html += '<strong>' + _escape(ev.label) + '</strong>';
+      if (ev.desc) html += '<p>' + _escape(ev.desc) + '</p>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function _infoItem(label, value) {
+    return '<div class="info-item"><span class="info-label">' + label + '</span><span class="info-value">' + value + '</span></div>';
+  }
+
+  // ---------------------------------------------------------------------------
+  // レポートセクション
+  // ---------------------------------------------------------------------------
+
+  function renderReport() {
+    var container = document.getElementById('report-content');
+    if (!container) return;
+
+    if (!state.currentClient || !state.financialResults) {
+      container.innerHTML = '<div class="card"><div class="card-body">'
+        + '<p class="text-secondary">レポート出力にはクライアント情報とファイナンシャル分析が必要です。</p>'
+        + '<button class="btn-secondary" onclick="App.showSection(\'financial\')">ファイナンシャル分析へ</button>'
+        + '</div></div>';
+      return;
+    }
+
+    var c   = state.currentClient;
+    var html = '<div class="card">';
+    html += '<div class="card-header"><h2>レポート出力</h2></div>';
+    html += '<div class="card-body">';
+    html += '<p>クライアント: <strong>' + _escape(c.name) + '</strong> 様</p>';
+    html += '<p class="text-secondary">以下の内容でライフプランニングレポートを生成します。</p>';
+
+    // レポート内容確認リスト
+    html += '<ul class="report-checklist">';
+    html += '<li class="checked">クライアント基本情報</li>';
+    html += '<li class="' + (state.financialResults.incomeExpense ? 'checked' : 'unchecked') + '">収支分析</li>';
+    html += '<li class="' + (state.financialResults.affordability ? 'checked' : 'unchecked') + '">住宅取得力診断</li>';
+    html += '<li class="' + (state.financialResults.rentVsBuy ? 'checked' : 'unchecked') + '">賃貸 vs 購入 比較</li>';
+    html += '<li class="' + (state.financialResults.taxBenefits ? 'checked' : 'unchecked') + '">住宅ローン控除試算</li>';
+    html += '<li class="' + (state.financialResults.assetProjection ? 'checked' : 'unchecked') + '">資産形成シミュレーション</li>';
+    html += '</ul>';
+
+    html += '<div class="form-actions">';
+    html += '<button class="btn-primary btn-large" onclick="App.generateReport()">PDFレポートを生成</button>';
+    if (typeof ReportGenerator !== 'undefined' && typeof ReportGenerator.preview === 'function') {
+      html += '<button class="btn-secondary" onclick="App.previewReport()" style="margin-left:1rem">プレビュー</button>';
+    }
+    html += '</div>';
+    html += '</div></div>';
+    container.innerHTML = html;
+  }
+
+  function generateReport() {
+    if (!state.currentClient || !state.financialResults) {
+      showAlert('レポート生成に必要なデータが不足しています。', 'warning');
+      return;
+    }
+
+    if (typeof ReportGenerator === 'undefined') {
+      showAlert('ReportGeneratorが読み込まれていません。', 'error');
+      return;
+    }
+
+    var reportData = FinancialEngine.generateReportData(state.currentClient, state.financialResults);
+    reportData.clientName = state.currentClient.name;
+    reportData.lifeStage  = state.psychologyResults
+      ? state.psychologyResults.lifeStage
+      : PsychologyEngine.analyzeLifeStage(state.currentClient);
+
+    showAlert('PDFレポートを生成しています...', 'info');
+    try {
+      ReportGenerator.download(reportData);
+    } catch (e) {
+      showAlert('レポート生成中にエラーが発生しました: ' + e.message, 'error');
+    }
+  }
+
+  function previewReport() {
+    if (!state.currentClient || !state.financialResults) {
+      showAlert('レポートプレビューにはクライアント情報とファイナンシャル分析が必要です。', 'warning');
+      return;
+    }
+    if (typeof ReportGenerator === 'undefined') return;
+
+    var reportData = FinancialEngine.generateReportData(state.currentClient, state.financialResults);
+    reportData.clientName = state.currentClient.name;
+    reportData.lifeStage  = state.psychologyResults
+      ? state.psychologyResults.lifeStage
+      : PsychologyEngine.analyzeLifeStage(state.currentClient);
+
+    if (typeof ReportGenerator.preview === 'function') {
+      ReportGenerator.preview(reportData);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Chart.js グラフ描画
+  // ---------------------------------------------------------------------------
+
+  function drawPsychologyRadar(scores) {
+    var ctx = document.getElementById('psychology-radar');
+    if (!ctx || typeof Chart === 'undefined') return;
+
+    // 既存チャートを破棄
+    if (state.financialCharts['psychology-radar']) {
+      state.financialCharts['psychology-radar'].destroy();
+    }
+
+    state.financialCharts['psychology-radar'] = new Chart(ctx, {
+      type: 'radar',
+      data: {
+        labels: ['分析力', '感情性', '社交性', '実践力', 'リスク許容度', '将来志向'],
+        datasets: [{
+          label: 'スコア',
+          data: [
+            scores.analytical,
+            scores.emotional,
+            scores.social,
+            scores.practical,
+            scores.riskTolerance,
+            scores.futureOrientation
+          ],
+          backgroundColor:     'rgba(201, 168, 76, 0.2)',
+          borderColor:         '#c9a84c',
+          pointBackgroundColor: '#1a237e',
+          pointBorderColor:     '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#c9a84c'
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          r: {
+            min: 0,
+            max: 100,
+            ticks: { stepSize: 20 }
+          }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  function drawExpensePieChart(incomeExpense) {
+    var ctx = document.getElementById('expense-pie');
+    if (!ctx || typeof Chart === 'undefined') return;
+    if (state.financialCharts['expense-pie']) {
+      state.financialCharts['expense-pie'].destroy();
+    }
+
+    var breakdown = incomeExpense.expenseBreakdown || [];
+    var labels = breakdown.map(function (b) { return b.label; });
+    var data   = breakdown.map(function (b) { return b.value; });
+    var colors = [
+      '#c9a84c', '#1a237e', '#4a90d9', '#e57373', '#81c784',
+      '#ffb74d', '#ba68c8', '#4db6ac', '#f06292'
+    ];
+
+    state.financialCharts['expense-pie'] = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors.slice(0, data.length),
+          borderWidth: 2,
+          borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right' },
+          tooltip: {
+            callbacks: {
+              label: function (ctx2) {
+                return ctx2.label + ': ' + formatCurrency(ctx2.raw);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function drawRentVsBuyChart(rvb) {
+    var ctx = document.getElementById('rvb-chart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    if (state.financialCharts['rvb-chart']) {
+      state.financialCharts['rvb-chart'].destroy();
+    }
+
+    var comparison = rvb.yearlyComparison || [];
+    var step = Math.ceil(comparison.length / 20) || 1;
+    var filtered = comparison.filter(function (d, i) { return i % step === 0; });
+    var labels    = filtered.map(function (d) { return d.year + '年目'; });
+    var rentData  = filtered.map(function (d) { return Math.round(d.rentCumulativeCost / 10000); });
+    var buyData   = filtered.map(function (d) { return Math.round(d.buyCumulativeCost  / 10000); });
+
+    state.financialCharts['rvb-chart'] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: '賃貸 累計コスト（万円）',
+            data: rentData,
+            borderColor: '#4a90d9',
+            backgroundColor: 'rgba(74,144,217,0.1)',
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: '購入 累計コスト（万円）',
+            data: buyData,
+            borderColor: '#c9a84c',
+            backgroundColor: 'rgba(201,168,76,0.1)',
+            fill: true,
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            title: { display: true, text: '万円' }
+          }
+        }
+      }
+    });
+  }
+
+  function drawAssetProjectionChart(asset) {
+    var ctx = document.getElementById('asset-chart');
+    if (!ctx || typeof Chart === 'undefined') return;
+    if (state.financialCharts['asset-chart']) {
+      state.financialCharts['asset-chart'].destroy();
+    }
+
+    var yearly = asset.yearlyProjection || [];
+    var step   = Math.ceil(yearly.length / 20) || 1;
+    var filtered = yearly.filter(function (d, i) { return i % step === 0; });
+    var labels   = filtered.map(function (d) { return d.year + '年目'; });
+    var totals   = filtered.map(function (d) { return Math.round((d.totalAssets || d.amount || 0) / 10000); });
+    var contrib  = filtered.map(function (d) { return Math.round((d.totalContributed || d.contributed || 0) / 10000); });
+
+    state.financialCharts['asset-chart'] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: '積立元本（万円）',
+            data: contrib,
+            backgroundColor: 'rgba(74,144,217,0.7)',
+            stack: 'stack'
+          },
+          {
+            label: '運用益（万円）',
+            data: totals.map(function (t, i) { return Math.max(0, t - (contrib[i] || 0)); }),
+            backgroundColor: 'rgba(201,168,76,0.7)',
+            stack: 'stack'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: { stacked: true },
+          y: { stacked: true, title: { display: true, text: '万円' } }
+        }
+      }
+    });
+  }
+
+  function drawFinancialCharts(results) {
+    if (results && results.incomeExpense) drawExpensePieChart(results.incomeExpense);
+    if (results && results.rentVsBuy)     drawRentVsBuyChart(results.rentVsBuy);
+    if (results && results.assetProjection) drawAssetProjectionChart(results.assetProjection);
+  }
+
+  // ---------------------------------------------------------------------------
+  // データ永続化
+  // ---------------------------------------------------------------------------
+
+  function saveData() {
+    try {
+      var data = {
+        clients:          state.clients,
+        currentClientId:  state.currentClient ? state.currentClient.id : null,
+        psychologyResults: state.psychologyResults,
+        financialResults:  state.financialResults
+      };
+      localStorage.setItem('lifedesign_data', JSON.stringify(data));
+    } catch (e) {
+      showAlert('データの保存に失敗しました: ' + e.message, 'error');
+    }
+  }
+
+  function loadData() {
+    try {
+      var raw = localStorage.getItem('lifedesign_data');
+      if (!raw) return;
+      var data = JSON.parse(raw);
+      state.clients = data.clients || [];
+      if (data.currentClientId) {
+        state.currentClient = state.clients.find(function (c) {
+          return c.id === data.currentClientId;
+        }) || null;
+      }
+      state.psychologyResults = data.psychologyResults || null;
+      state.financialResults  = data.financialResults  || null;
+    } catch (e) {
+      state.clients           = [];
+      state.currentClient     = null;
+      state.psychologyResults = null;
+      state.financialResults  = null;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // クライアント操作
+  // ---------------------------------------------------------------------------
+
+  function selectClient(clientId) {
+    state.currentClient     = state.clients.find(function (c) { return c.id === clientId; }) || null;
+    state.psychologyResults = null;
+    state.financialResults  = null;
+    saveData();
+    updateHeader();
+    showSection('client-input');
+  }
+
+  function deleteClient(clientId) {
+    if (!confirm('このクライアントデータを削除しますか？\nこの操作は取り消せません。')) return;
+    state.clients = state.clients.filter(function (c) { return c.id !== clientId; });
+    if (state.currentClient && state.currentClient.id === clientId) {
+      state.currentClient     = null;
+      state.psychologyResults = null;
+      state.financialResults  = null;
+    }
+    saveData();
+    updateHeader();
+    renderDashboard();
+  }
+
+  function updateHeader() {
+    var headerClient = document.getElementById('header-client-name');
+    if (headerClient) {
+      if (state.currentClient) {
+        headerClient.textContent    = state.currentClient.name + ' 様';
+        headerClient.style.display  = 'inline-block';
+      } else {
+        headerClient.textContent    = '';
+        headerClient.style.display  = 'none';
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // 通知・アラート
+  // ---------------------------------------------------------------------------
+
+  function showAlert(message, type) {
+    type = type || 'info';
+
+    // 既存のアラートを削除
+    var existing = document.getElementById('app-alert');
+    if (existing) existing.remove();
+
+    var alert = document.createElement('div');
+    alert.id        = 'app-alert';
+    alert.className = 'app-alert alert-' + type;
+    alert.textContent = message;
+
+    var closeBtn = document.createElement('button');
+    closeBtn.className   = 'alert-close';
+    closeBtn.textContent = '×';
+    closeBtn.onclick     = function () { alert.remove(); };
+    alert.appendChild(closeBtn);
+
+    document.body.appendChild(alert);
+
+    // 自動消去（エラー以外）
+    if (type !== 'error') {
+      setTimeout(function () {
+        if (alert.parentNode) alert.remove();
+      }, 4000);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // フォーマット
+  // ---------------------------------------------------------------------------
+
+  function formatCurrency(amount) {
+    if (typeof amount !== 'number' || isNaN(amount)) return '-';
+    return Math.round(amount).toLocaleString('ja-JP') + '円';
+  }
+
+  function formatMan(amount) {
+    if (typeof amount !== 'number' || isNaN(amount)) return '-';
+    return (Math.round(amount / 10000)).toLocaleString('ja-JP') + '万円';
+  }
+
+  // ---------------------------------------------------------------------------
+  // 内部ユーティリティ
+  // ---------------------------------------------------------------------------
+
+  function _escape(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g,  '&amp;')
+      .replace(/</g,  '&lt;')
+      .replace(/>/g,  '&gt;')
+      .replace(/"/g,  '&quot;')
+      .replace(/'/g,  '&#039;');
+  }
+
+  // value属性用エスケープ（属性値内部）
+  function _esc(val) {
+    if (!val) return '';
+    return String(val)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function _checked(condition) {
+    return condition ? ' checked' : '';
+  }
+
+  function _radioValue(name) {
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : '';
+  }
+
+  function _fv(id) {
+    var el = document.getElementById(id);
+    return el ? parseFloat(el.value) || 0 : 0;
+  }
+
+  function _formRow(label, inputHtml) {
+    return '<div class="form-row"><label class="form-label">' + label + '</label><div class="form-input">' + inputHtml + '</div></div>';
+  }
+
+  function _financialField(label, id, value, placeholder, isSelect) {
+    if (isSelect) {
+      return '<div class="form-row">'
+        + '<label class="form-label">' + label + '</label>'
+        + '<select id="' + id + '" class="form-control form-control-sm">'
+        + '<option value="new">新築</option>'
+        + '<option value="existing">中古</option>'
+        + '</select></div>';
+    }
+    return '<div class="form-row">'
+      + '<label class="form-label">' + label + '</label>'
+      + '<input type="number" id="' + id + '" class="form-control form-control-sm"'
+      + (value       ? ' value="' + value + '"'           : '')
+      + (placeholder ? ' placeholder="' + placeholder + '"' : '')
+      + ' step="0.1" min="0">'
+      + '</div>';
+  }
+
+  function _resultItem(label, value) {
+    return '<div class="result-item"><span class="result-label">' + label + '</span><span class="result-value">' + value + '</span></div>';
+  }
+
+  function _formatDate(iso) {
+    if (!iso) return '-';
+    try {
+      var d = new Date(iso);
+      return d.getFullYear() + '/' + _pad(d.getMonth() + 1) + '/' + _pad(d.getDate());
+    } catch (e) {
+      return '-';
+    }
+  }
+
+  function _pad(n) {
+    return n < 10 ? '0' + n : String(n);
+  }
+
+  // ---------------------------------------------------------------------------
+  // 公開API
+  // ---------------------------------------------------------------------------
+
+  return {
+    state:    state,
+    init:     init,
+
+    // ナビゲーション
+    showSection: showSection,
+
+    // クライアント操作
+    saveClient:   saveClient,
+    newClient:    newClient,
+    selectClient: selectClient,
+    deleteClient: deleteClient,
+    updateHeader: updateHeader,
+
+    // 心理分析
+    submitPsychology: submitPsychology,
+    resetPsychology:  resetPsychology,
+
+    // ファイナンシャル分析
+    switchFinancialTab:          switchFinancialTab,
+    runFinancialAnalysis:        runFinancialAnalysis,
+    runFinancialAnalysis_IE:     runFinancialAnalysis_IE,
+    runFinancialAnalysis_Afford: runFinancialAnalysis_Afford,
+    runFinancialAnalysis_RVB:    runFinancialAnalysis_RVB,
+    runFinancialAnalysis_Ins:    runFinancialAnalysis_Ins,
+    runFinancialAnalysis_Tax:    runFinancialAnalysis_Tax,
+    runFinancialAnalysis_Rate:   runFinancialAnalysis_Rate,
+    runFinancialAnalysis_Asset:  runFinancialAnalysis_Asset,
+
+    // レポート
+    generateReport: generateReport,
+    previewReport:  previewReport,
+
+    // データ
+    saveData: saveData,
+    loadData: loadData,
+
+    // フォーマット
+    formatCurrency: formatCurrency,
+    formatMan:      formatMan,
+
+    // アラート
+    showAlert: showAlert
+  };
+}());
+
+// DOMContentLoaded で自動初期化
+(function () {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { App.init(); });
+  } else {
+    App.init();
+  }
+}());

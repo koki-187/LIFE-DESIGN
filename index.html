@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LIFE DESIGN PARTNER | ライフデザイン・パートナー</title>
+
+  <!-- Favicon: house + heart icon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 4 L2 16 L5 16 L5 28 L13 28 L13 20 L19 20 L19 28 L27 28 L27 16 L30 16 Z' fill='%234CAF50'/%3E%3Cpath d='M16 13 C16 13 11 10 11 14.5 C11 17 13.5 18.5 16 21 C18.5 18.5 21 17 21 14.5 C21 10 16 13 16 13 Z' fill='%23E91E63'/%3E%3C/svg%3E">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-text">
+        <span class="logo-main">LIFE DESIGN</span>
+        <span class="logo-sub">PARTNER</span>
+      </div>
+      <div class="logo-tagline">ライフデザイン・パートナー</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" data-section="dashboard" onclick="App.showSection('dashboard')">
+        <span class="material-icons">dashboard</span>
+        <span class="nav-label">ダッシュボード</span>
+      </a>
+      <a class="nav-item" data-section="client-input" onclick="App.showSection('client-input')">
+        <span class="material-icons">person_add</span>
+        <span class="nav-label">クライアント情報</span>
+      </a>
+      <a class="nav-item" data-section="psychology" onclick="App.showSection('psychology')">
+        <span class="material-icons">psychology</span>
+        <span class="nav-label">心理分析</span>
+        <span class="nav-badge">内部用</span>
+      </a>
+      <a class="nav-item" data-section="financial" onclick="App.showSection('financial')">
+        <span class="material-icons">account_balance</span>
+        <span class="nav-label">ファイナンシャル分析</span>
+      </a>
+      <a class="nav-item" data-section="lifeplan" onclick="App.showSection('lifeplan')">
+        <span class="material-icons">timeline</span>
+        <span class="nav-label">ライフプラン</span>
+      </a>
+      <a class="nav-item" data-section="report" onclick="App.showSection('report')">
+        <span class="material-icons">picture_as_pdf</span>
+        <span class="nav-label">レポート出力</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span class="material-icons">info</span>
+      <span>v1.0 - AFP Support System</span>
+    </div>
+  </aside>
+
+  <!-- Main content wrapper -->
+  <div class="main-wrapper">
+
+    <!-- Header -->
+    <header class="header" id="header">
+      <div class="header-left">
+        <button class="btn-icon sidebar-toggle" onclick="App.toggleSidebar()">
+          <span class="material-icons">menu</span>
+        </button>
+        <h1 class="header-title" id="header-title">ダッシュボード</h1>
+      </div>
+      <div class="header-right">
+        <span class="client-tag" id="header-client-name" style="display:none"></span>
+        <button class="btn-icon" onclick="App.showSection('client-input')" title="新規クライアント">
+          <span class="material-icons">person_add</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main content area -->
+    <main class="main-content">
+
+      <!-- ===================== Dashboard Section ===================== -->
+      <section class="section" id="section-dashboard">
+        <div id="dashboard-content">
+
+          <!-- Stats Grid -->
+          <div class="grid-4 mb-4">
+            <div class="stat-card stat-card-primary">
+              <div class="stat-icon"><span class="material-icons">people</span></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-clients">0</span>
+                <span class="stat-label">登録クライアント</span>
+              </div>
+            </div>
+            <div class="stat-card stat-card-success">
+              <div class="stat-icon"><span class="material-icons">psychology</span></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-analyses">0</span>
+                <span class="stat-label">分析完了</span>
+              </div>
+            </div>
+            <div class="stat-card stat-card-warning">
+              <div class="stat-icon"><span class="material-icons">description</span></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-reports">0</span>
+                <span class="stat-label">レポート出力</span>
+              </div>
+            </div>
+            <div class="stat-card stat-card-danger">
+              <div class="stat-icon"><span class="material-icons">notifications</span></div>
+              <div class="stat-info">
+                <span class="stat-value" id="stat-pending">0</span>
+                <span class="stat-label">対応待ち</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h2>クイックアクション</h2>
+            </div>
+            <div class="card-body">
+              <div class="flex" style="gap: 12px;">
+                <button class="btn-primary" onclick="App.newClient()">
+                  <span class="material-icons">person_add</span> 新規クライアント登録
+                </button>
+                <button class="btn-secondary" onclick="App.showSection('financial')">
+                  <span class="material-icons">calculate</span> 簡易シミュレーション
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Client List -->
+          <div class="card">
+            <div class="card-header">
+              <h2>クライアント一覧</h2>
+            </div>
+            <div class="card-body">
+              <div id="client-list-container">
+                <p class="text-secondary text-center p-4">クライアントが登録されていません。「新規クライアント登録」から始めましょう。</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===================== Client Input Section ===================== -->
+      <section class="section hidden" id="section-client-input">
+        <div id="client-input-content">
+          <div class="card">
+            <div class="card-header">
+              <h2><span class="material-icons">person</span> クライアント情報</h2>
+            </div>
+            <div class="card-body">
+              <form id="client-form" onsubmit="event.preventDefault(); App.saveClient();">
+
+                <!-- Row 1: Name -->
+                <div class="grid-2">
+                  <div class="form-field">
+                    <label for="client-name">お名前 <span class="text-danger">*</span></label>
+                    <input type="text" id="client-name" class="form-control" required placeholder="山田 太郎">
+                  </div>
+                  <div class="form-field">
+                    <label for="client-name-kana">フリガナ</label>
+                    <input type="text" id="client-name-kana" class="form-control" placeholder="ヤマダ タロウ">
+                  </div>
+                </div>
+
+                <!-- Row 2: Age, Gender, Occupation -->
+                <div class="grid-3">
+                  <div class="form-field">
+                    <label for="client-age">年齢 <span class="text-danger">*</span></label>
+                    <input type="number" id="client-age" class="form-control" required min="18" max="100" placeholder="35">
+                  </div>
+                  <div class="form-field">
+                    <label>性別</label>
+                    <div class="radio-group">
+                      <label class="radio-option"><input type="radio" name="gender" value="male"> 男性</label>
+                      <label class="radio-option"><input type="radio" name="gender" value="female"> 女性</label>
+                      <label class="radio-option"><input type="radio" name="gender" value="other"> その他</label>
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label for="client-occupation">ご職業</label>
+                    <select id="client-occupation" class="form-control">
+                      <option value="">選択してください</option>
+                      <option value="会社員">会社員</option>
+                      <option value="公務員">公務員</option>
+                      <option value="自営業">自営業</option>
+                      <option value="経営者">経営者</option>
+                      <option value="専門職">専門職（医師・弁護士等）</option>
+                      <option value="パート・アルバイト">パート・アルバイト</option>
+                      <option value="主婦・主夫">主婦・主夫</option>
+                      <option value="年金生活">年金生活</option>
+                      <option value="その他">その他</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Row 3: Family -->
+                <div class="grid-3">
+                  <div class="form-field">
+                    <label>婚姻状況</label>
+                    <div class="radio-group">
+                      <label class="radio-option"><input type="radio" name="marital" value="single"> 未婚</label>
+                      <label class="radio-option"><input type="radio" name="marital" value="married"> 既婚</label>
+                      <label class="radio-option"><input type="radio" name="marital" value="divorced"> 離婚</label>
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label for="client-children">お子様の人数</label>
+                    <input type="number" id="client-children" class="form-control" min="0" max="10" value="0">
+                  </div>
+                  <div class="form-field">
+                    <label for="client-children-ages">お子様の年齢（カンマ区切り）</label>
+                    <input type="text" id="client-children-ages" class="form-control" placeholder="例: 5, 3">
+                  </div>
+                </div>
+
+                <!-- Row 4: Financial -->
+                <h3 class="section-title mt-4">収入・資産情報</h3>
+                <div class="grid-3">
+                  <div class="form-field">
+                    <label for="client-income">年収（万円） <span class="text-danger">*</span></label>
+                    <div class="currency-field">
+                      <input type="number" id="client-income" class="form-control" required min="0" placeholder="500">
+                      <span class="currency-suffix">万円</span>
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label for="spouse-income">配偶者年収（万円）</label>
+                    <div class="currency-field">
+                      <input type="number" id="spouse-income" class="form-control" min="0" placeholder="0">
+                      <span class="currency-suffix">万円</span>
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label for="client-savings">貯蓄額（万円）</label>
+                    <div class="currency-field">
+                      <input type="number" id="client-savings" class="form-control" min="0" placeholder="500">
+                      <span class="currency-suffix">万円</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Row 5: Current Housing -->
+                <h3 class="section-title mt-4">現在の住居</h3>
+                <div class="grid-2">
+                  <div class="form-field">
+                    <label>現在の住居形態</label>
+                    <div class="radio-group">
+                      <label class="radio-option"><input type="radio" name="current-housing" value="rent"> 賃貸</label>
+                      <label class="radio-option"><input type="radio" name="current-housing" value="own"> 持ち家</label>
+                      <label class="radio-option"><input type="radio" name="current-housing" value="family"> 実家</label>
+                      <label class="radio-option"><input type="radio" name="current-housing" value="other"> その他</label>
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label for="current-rent">現在の家賃/ローン（万円/月）</label>
+                    <div class="currency-field">
+                      <input type="number" id="current-rent" class="form-control" min="0" placeholder="8">
+                      <span class="currency-suffix">万円/月</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Row 6: Preferences -->
+                <h3 class="section-title mt-4">ご希望</h3>
+                <div class="grid-2">
+                  <div class="form-field">
+                    <label for="desired-area">希望エリア</label>
+                    <input type="text" id="desired-area" class="form-control" placeholder="例: 東京都23区内、横浜市">
+                  </div>
+                  <div class="form-field">
+                    <label>ご検討内容</label>
+                    <div class="radio-group">
+                      <label class="radio-option"><input type="radio" name="purpose" value="buy-residence"> 住宅購入</label>
+                      <label class="radio-option"><input type="radio" name="purpose" value="buy-investment"> 投資用不動産購入</label>
+                      <label class="radio-option"><input type="radio" name="purpose" value="rent"> 賃貸を探している</label>
+                      <label class="radio-option"><input type="radio" name="purpose" value="undecided"> 購入か賃貸か迷っている</label>
+                      <label class="radio-option"><input type="radio" name="purpose" value="sell"> 売却を検討</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Row 7: Monthly Expenses -->
+                <h3 class="section-title mt-4">月間支出（概算）</h3>
+                <div class="grid-4">
+                  <div class="form-field">
+                    <label for="exp-food">食費（万円/月）</label>
+                    <input type="number" id="exp-food" class="form-control" min="0" step="0.5" placeholder="5">
+                  </div>
+                  <div class="form-field">
+                    <label for="exp-utilities">光熱費（万円/月）</label>
+                    <input type="number" id="exp-utilities" class="form-control" min="0" step="0.5" placeholder="2">
+                  </div>
+                  <div class="form-field">
+                    <label for="exp-communication">通信費（万円/月）</label>
+                    <input type="number" id="exp-communication" class="form-control" min="0" step="0.5" placeholder="1.5">
+                  </div>
+                  <div class="form-field">
+                    <label for="exp-transportation">交通費（万円/月）</label>
+                    <input type="number" id="exp-transportation" class="form-control" min="0" step="0.5" placeholder="1">
+                  </div>
+                </div>
+                <div class="grid-4">
+                  <div class="form-field">
+                    <label for="exp-insurance">保険料（万円/月）</label>
+                    <input type="number" id="exp-insurance" class="form-control" min="0" step="0.5" placeholder="2">
+                  </div>
+                  <div class="form-field">
+                    <label for="exp-education">教育費（万円/月）</label>
+                    <input type="number" id="exp-education" class="form-control" min="0" step="0.5" placeholder="0">
+                  </div>
+                  <div class="form-field">
+                    <label for="exp-entertainment">娯楽費（万円/月）</label>
+                    <input type="number" id="exp-entertainment" class="form-control" min="0" step="0.5" placeholder="3">
+                  </div>
+                  <div class="form-field">
+                    <label for="exp-other">その他（万円/月）</label>
+                    <input type="number" id="exp-other" class="form-control" min="0" step="0.5" placeholder="3">
+                  </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-field mt-3">
+                  <label for="client-notes">メモ・備考</label>
+                  <textarea id="client-notes" class="form-control" rows="3" placeholder="クライアントに関する補足事項..."></textarea>
+                </div>
+
+                <!-- Submit -->
+                <div class="flex mt-4" style="gap: 12px;">
+                  <button type="submit" class="btn-primary btn-large">
+                    <span class="material-icons">save</span> 保存する
+                  </button>
+                  <button type="button" class="btn-secondary" onclick="App.newClient()">
+                    <span class="material-icons">refresh</span> リセット
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== Psychology Section ===================== -->
+      <section class="section hidden" id="section-psychology">
+        <div class="card mb-3" style="border-left: 4px solid #f57f17;">
+          <div class="card-body">
+            <p>
+              <span class="material-icons" style="vertical-align:middle; color:#f57f17;">warning</span>
+              <strong>営業支援専用</strong> - この心理分析はお客様向けレポートには含まれません。営業アプローチの参考情報としてご活用ください。
+            </p>
+          </div>
+        </div>
+        <div id="psychology-content">
+          <p class="text-secondary text-center p-4">クライアントを選択してから心理分析を開始してください。</p>
+        </div>
+      </section>
+
+      <!-- ===================== Financial Section ===================== -->
+      <section class="section hidden" id="section-financial">
+        <div id="financial-content">
+          <div class="card">
+            <div class="card-header">
+              <div class="tabs">
+                <button class="tab-btn active" data-tab="tab-income" onclick="App.switchFinancialTab('tab-income')">収支分析</button>
+                <button class="tab-btn" data-tab="tab-afford" onclick="App.switchFinancialTab('tab-afford')">住宅取得力</button>
+                <button class="tab-btn" data-tab="tab-rvb" onclick="App.switchFinancialTab('tab-rvb')">賃貸 vs 購入</button>
+                <button class="tab-btn" data-tab="tab-insurance" onclick="App.switchFinancialTab('tab-insurance')">保険最適化</button>
+                <button class="tab-btn" data-tab="tab-tax" onclick="App.switchFinancialTab('tab-tax')">税制優遇</button>
+                <button class="tab-btn" data-tab="tab-rate" onclick="App.switchFinancialTab('tab-rate')">金利シミュレーション</button>
+                <button class="tab-btn" data-tab="tab-asset" onclick="App.switchFinancialTab('tab-asset')">資産形成</button>
+              </div>
+            </div>
+            <div class="card-body">
+
+              <!-- Tab: Income/Expense -->
+              <div class="tab-panel active" id="tab-income">
+                <h3>収支分析</h3>
+                <p class="text-secondary mb-3">クライアント情報から自動計算されます。追加情報を入力して精度を高められます。</p>
+                <div id="income-analysis-result"></div>
+                <button class="btn-primary mt-3" onclick="App.runIncomeAnalysis()">
+                  <span class="material-icons">calculate</span> 収支を分析する
+                </button>
+                <div id="income-chart-area" class="mt-4">
+                  <div class="grid-2">
+                    <div><canvas id="expense-pie-chart"></canvas></div>
+                    <div><canvas id="income-bar-chart"></canvas></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab: Affordability -->
+              <div class="tab-panel hidden" id="tab-afford">
+                <h3>住宅取得力分析</h3>
+                <div class="grid-2 mb-3">
+                  <div class="form-field">
+                    <label for="afford-rate">想定金利（%）</label>
+                    <input type="number" id="afford-rate" class="form-control" value="1.5" step="0.1" min="0.1" max="10">
+                  </div>
+                  <div class="form-field">
+                    <label for="afford-term">返済期間（年）</label>
+                    <input type="number" id="afford-term" class="form-control" value="35" min="10" max="50">
+                  </div>
+                </div>
+                <button class="btn-primary" onclick="App.runAffordability()">
+                  <span class="material-icons">home</span> 取得力を計算
+                </button>
+                <div id="affordability-result" class="mt-4"></div>
+              </div>
+
+              <!-- Tab: Rent vs Buy -->
+              <div class="tab-panel hidden" id="tab-rvb">
+                <h3>賃貸 vs 購入 比較シミュレーション</h3>
+                <div class="grid-2 mb-3">
+                  <div>
+                    <h4 class="mb-2">賃貸シナリオ</h4>
+                    <div class="form-field">
+                      <label for="rvb-rent">月額家賃（万円）</label>
+                      <input type="number" id="rvb-rent" class="form-control" value="10" step="0.5">
+                    </div>
+                    <div class="form-field">
+                      <label for="rvb-rent-increase">年間家賃上昇率（%）</label>
+                      <input type="number" id="rvb-rent-increase" class="form-control" value="0.5" step="0.1">
+                    </div>
+                  </div>
+                  <div>
+                    <h4 class="mb-2">購入シナリオ</h4>
+                    <div class="form-field">
+                      <label for="rvb-price">物件価格（万円）</label>
+                      <input type="number" id="rvb-price" class="form-control" value="4000" step="100">
+                    </div>
+                    <div class="form-field">
+                      <label for="rvb-down">頭金（万円）</label>
+                      <input type="number" id="rvb-down" class="form-control" value="400" step="50">
+                    </div>
+                    <div class="form-field">
+                      <label for="rvb-rate2">ローン金利（%）</label>
+                      <input type="number" id="rvb-rate2" class="form-control" value="1.5" step="0.1">
+                    </div>
+                  </div>
+                </div>
+                <button class="btn-primary" onclick="App.runRentVsBuy()">
+                  <span class="material-icons">compare_arrows</span> 比較する
+                </button>
+                <div id="rvb-result" class="mt-4"></div>
+                <div class="mt-3"><canvas id="rvb-chart"></canvas></div>
+              </div>
+
+              <!-- Tab: Insurance -->
+              <div class="tab-panel hidden" id="tab-insurance">
+                <h3>団信 vs 民間保険 比較</h3>
+                <p class="text-secondary mb-3">住宅ローン付帯の団体信用生命保険と民間生命保険のコスト比較</p>
+                <div class="form-field">
+                  <label for="ins-premium">現在の生命保険料（万円/月）</label>
+                  <input type="number" id="ins-premium" class="form-control" value="2" step="0.5">
+                </div>
+                <button class="btn-primary mt-2" onclick="App.runInsurance()">
+                  <span class="material-icons">health_and_safety</span> 比較する
+                </button>
+                <div id="insurance-result" class="mt-4"></div>
+              </div>
+
+              <!-- Tab: Tax Benefits -->
+              <div class="tab-panel hidden" id="tab-tax">
+                <h3>住宅ローン控除シミュレーション</h3>
+                <div class="grid-2 mb-3">
+                  <div class="form-field">
+                    <label for="tax-loan">借入金額（万円）</label>
+                    <input type="number" id="tax-loan" class="form-control" value="3500" step="100">
+                  </div>
+                  <div class="form-field">
+                    <label>物件タイプ</label>
+                    <div class="radio-group">
+                      <label class="radio-option"><input type="radio" name="tax-type" value="new" checked> 新築</label>
+                      <label class="radio-option"><input type="radio" name="tax-type" value="used"> 中古</label>
+                      <label class="radio-option"><input type="radio" name="tax-type" value="eco"> 長期優良住宅</label>
+                    </div>
+                  </div>
+                </div>
+                <button class="btn-primary" onclick="App.runTaxBenefit()">
+                  <span class="material-icons">receipt_long</span> 控除額を計算
+                </button>
+                <div id="tax-result" class="mt-4"></div>
+              </div>
+
+              <!-- Tab: Interest Rate -->
+              <div class="tab-panel hidden" id="tab-rate">
+                <h3>金利シナリオ比較</h3>
+                <div class="grid-3 mb-3">
+                  <div class="form-field">
+                    <label for="rate-loan">借入金額（万円）</label>
+                    <input type="number" id="rate-loan" class="form-control" value="3500" step="100">
+                  </div>
+                  <div class="form-field">
+                    <label for="rate-term">返済期間（年）</label>
+                    <input type="number" id="rate-term" class="form-control" value="35">
+                  </div>
+                  <div class="form-field">
+                    <label for="rate-base">基準金利（%）</label>
+                    <input type="number" id="rate-base" class="form-control" value="1.5" step="0.1">
+                  </div>
+                </div>
+                <button class="btn-primary" onclick="App.runRateAnalysis()">
+                  <span class="material-icons">trending_up</span> シナリオ比較
+                </button>
+                <div id="rate-result" class="mt-4"></div>
+              </div>
+
+              <!-- Tab: Asset Formation -->
+              <div class="tab-panel hidden" id="tab-asset">
+                <h3>資産形成シミュレーション</h3>
+                <div class="grid-3 mb-3">
+                  <div class="form-field">
+                    <label for="asset-retire">定年年齢</label>
+                    <input type="number" id="asset-retire" class="form-control" value="65">
+                  </div>
+                  <div class="form-field">
+                    <label for="asset-monthly-save">月間積立額（万円）</label>
+                    <input type="number" id="asset-monthly-save" class="form-control" value="3" step="0.5">
+                  </div>
+                  <div class="form-field">
+                    <label for="asset-return">運用利回り（%）</label>
+                    <input type="number" id="asset-return" class="form-control" value="3" step="0.5">
+                  </div>
+                </div>
+                <button class="btn-primary" onclick="App.runAssetProjection()">
+                  <span class="material-icons">savings</span> シミュレーション実行
+                </button>
+                <div id="asset-result" class="mt-4"></div>
+                <div class="mt-3"><canvas id="asset-chart"></canvas></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== Life Plan Section ===================== -->
+      <section class="section hidden" id="section-lifeplan">
+        <div id="lifeplan-content">
+          <div class="card">
+            <div class="card-header">
+              <h2><span class="material-icons">timeline</span> ライフプラン総合ビュー</h2>
+            </div>
+            <div class="card-body">
+              <div id="lifeplan-timeline"></div>
+              <div id="lifeplan-summary" class="mt-4"></div>
+              <div id="lifeplan-recommendations" class="mt-4"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== Report Section ===================== -->
+      <section class="section hidden" id="section-report">
+        <div id="report-content">
+          <div class="card">
+            <div class="card-header">
+              <h2><span class="material-icons">picture_as_pdf</span> レポート出力</h2>
+            </div>
+            <div class="card-body text-center">
+              <div id="report-preview-area" class="mb-4">
+                <p class="text-secondary">クライアント情報とファイナンシャル分析を完了すると、プロフェッショナルなPDFレポートを出力できます。</p>
+              </div>
+              <div class="flex flex-center" style="gap: 16px;">
+                <button class="btn-primary btn-large" onclick="App.generateReport()" id="btn-generate-report" disabled>
+                  <span class="material-icons">picture_as_pdf</span> PDFレポートを生成
+                </button>
+                <button class="btn-secondary btn-large" onclick="App.previewReport()" id="btn-preview-report" disabled>
+                  <span class="material-icons">visibility</span> プレビュー
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Report checklist -->
+          <div class="card mt-3">
+            <div class="card-header">
+              <h3>レポート出力チェックリスト</h3>
+            </div>
+            <div class="card-body">
+              <div class="checklist" id="report-checklist">
+                <div class="checklist-item" id="check-client">
+                  <span class="material-icons text-danger">cancel</span>
+                  <span>クライアント情報が登録済み</span>
+                </div>
+                <div class="checklist-item" id="check-financial">
+                  <span class="material-icons text-danger">cancel</span>
+                  <span>ファイナンシャル分析が完了</span>
+                </div>
+                <div class="checklist-item" id="check-psychology">
+                  <span class="material-icons text-secondary">remove_circle_outline</span>
+                  <span>心理分析（オプション - ライフステージ分析に使用）</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast notification container -->
+<div id="toast-container"></div>
+
+<!-- Modal backdrop -->
+<div class="modal-backdrop hidden" id="modal-backdrop">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- CDN Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+
+<!-- Application scripts -->
+<script src="js/psychology-engine.js"></script>
+<script src="js/financial-engine.js"></script>
+<script src="js/report-generator.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    App.init();
+  });
+</script>
+
+</body>
+</html>
