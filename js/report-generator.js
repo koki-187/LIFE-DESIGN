@@ -345,11 +345,21 @@ var ReportGenerator = (function () {
     var ie = d.incomeExpenseSummary || {};
     var grossIncome  = ie.monthlyGrossIncome || 0;
     var netIncome    = ie.monthlyNetIncome   || 0;
-    var totalExpense = ie.monthlyExpense     || 0;
+    var totalExpense = ie.monthlyExpense     || ie.monthlyTotalExpense || 0;
     var surplus      = ie.monthlySurplus     || 0;
     var savingsRate  = ie.savingsRate        || 0;
     var breakdown    = ie.expenseBreakdown   || {};
     var commentary   = ie.commentary || [];
+
+    // 配列形式の expenseBreakdown をオブジェクトに変換 (フォールバック)
+    if (Array.isArray(breakdown)) {
+      var bObj = {};
+      var _lk = {'住居費':'housing','食費':'food','交通費':'transport','保険料':'insurance',
+                  '教育費':'education','娯楽費':'entertainment','貯蓄':'savings','その他':'other',
+                  '水道光熱費':'other','通信費':'other'};
+      breakdown.forEach(function(item) { var k = _lk[item.label]; if (k) bObj[k] = (bObj[k]||0) + item.value; });
+      breakdown = bObj;
+    }
 
     var maxExpense = Math.max(
       breakdown.housing||0, breakdown.food||0, breakdown.transport||0,
@@ -413,22 +423,30 @@ var ReportGenerator = (function () {
   /* ------------------------------------------------------------------ */
   function _page4(d) {
     var asset = d.assetProjection || {};
-    var monthly    = asset.monthlyContribution  || 0;
+    var monthly    = asset.monthlyContribution  || 50000;
     var years      = asset.years                || 30;
     var rate       = asset.annualReturnRate     || 3;
-    var final      = asset.finalAmount          || 0;
-    var contrib    = asset.totalContributed     || 0;
-    var gain       = asset.totalGain            || 0;
+    var finalAmt   = asset.finalAmount          || 0;
+    var contrib    = asset.totalContributed     || (monthly * 12 * years);
+    var gain       = asset.totalGain            || Math.max(0, finalAmt - contrib);
     var yearly     = asset.yearlyProjection     || [];
 
+    // finalAmount が 0 かつ yearlyProjection がある場合、最後のエントリから取得
+    if (finalAmt === 0 && yearly.length > 0) {
+      var lastRow = yearly[yearly.length - 1];
+      finalAmt = lastRow.totalAssets || lastRow.amount || lastRow.financialAssets || 0;
+      gain = Math.max(0, finalAmt - contrib);
+    }
+
     // 代表的な年の取得 (5, 10, 20, 30年目)
-    var snapshots = [5, 10, 20, Math.min(30, years)].map(function(yr) {
+    var snapYears = [5, 10, 20, Math.min(30, years)].filter(function(y) { return y <= years; });
+    var snapshots = snapYears.map(function(yr) {
       var row = null;
       for (var i = 0; i < yearly.length; i++) { if (yearly[i].year === yr) { row = yearly[i]; break; } }
       if (!row && yearly.length > 0) row = yearly[Math.min(yr-1, yearly.length-1)];
-      return row ? { year: yr, total: row.totalAssets || row.amount || 0, contrib: row.totalContributed || row.contributed || 0 } : null;
+      return row ? { year: yr, total: row.totalAssets || row.amount || row.financialAssets || 0, contrib: row.totalContributed || row.contributed || 0 } : null;
     }).filter(Boolean);
-    var maxTotal = final || (snapshots.length > 0 ? Math.max.apply(null, snapshots.map(function(s){return s.total;})) : 1);
+    var maxTotal = finalAmt || (snapshots.length > 0 ? Math.max.apply(null, snapshots.map(function(s){return s.total;})) : 1);
 
     var html = '';
     html += '<div class="page-break"></div>';
@@ -442,7 +460,7 @@ var ReportGenerator = (function () {
     html += '<div class="kpi-big-grid">';
     html += '<div class="kpi-big"><div class="kpi-big-value">' + _man(monthly) + '</div><div class="kpi-big-label">\u6708\u6b21\u7a4d\u7acb\u984d</div></div>';
     html += '<div class="kpi-big"><div class="kpi-big-value">' + _pct(rate) + '</div><div class="kpi-big-label">\u60f3\u5b9a\u5e74\u5229\u56de\u308a</div></div>';
-    html += '<div class="kpi-big"><div class="kpi-big-value">' + _man(final) + '</div><div class="kpi-big-label">' + years + '\u5e74\u5f8c\u306e\u8a66\u7b97\u984d</div></div>';
+    html += '<div class="kpi-big"><div class="kpi-big-value">' + _man(finalAmt) + '</div><div class="kpi-big-label">' + years + '\u5e74\u5f8c\u306e\u8a66\u7b97\u984d</div></div>';
     html += '</div>';
 
     // 元本 vs 運用益 ハイライト
@@ -450,7 +468,7 @@ var ReportGenerator = (function () {
       html += '<div class="highlight-box" style="margin:4mm 0;">';
       html += '  <div style="font-size:9pt;color:rgba(255,255,255,0.7);margin-bottom:1mm;">' + years + '\u5e74\u9593\u306e\u904b\u7528\u76ca\uff08\u8907\u5229\u52b9\u679c\uff09</div>';
       html += '  <div class="amount">+ ' + _man(gain) + '</div>';
-      html += '  <div style="font-size:8pt;color:rgba(255,255,255,0.5);margin-top:1mm;">\u5143\u672c ' + _man(contrib) + ' + \u904b\u7528\u76ca ' + _man(gain) + ' = \u5408\u8a08 ' + _man(final) + '</div>';
+      html += '  <div style="font-size:8pt;color:rgba(255,255,255,0.5);margin-top:1mm;">\u5143\u672c ' + _man(contrib) + ' + \u904b\u7528\u76ca ' + _man(gain) + ' = \u5408\u8a08 ' + _man(finalAmt) + '</div>';
       html += '</div>';
     }
 
@@ -488,11 +506,11 @@ var ReportGenerator = (function () {
   function _page5(d) {
     var rvb = d.rentVsBuyResult || {};
     var af  = d.affordabilityResult || {};
-    var rentM    = rvb.monthlyRent        || 0;
+    var rentM    = rvb.monthlyRent        || 80000;
     var loanM    = rvb.monthlyLoanPayment || 0;
-    var price    = rvb.propertyPrice      || 0;
-    var totalRent= rvb.totalRentCost      || 0;
-    var totalBuy = rvb.totalBuyCost       || 0;
+    var price    = rvb.propertyPrice      || 40000000;
+    var totalRent= rvb.totalRentCost  || rvb.rentTotal  || 0;
+    var totalBuy = rvb.totalBuyCost   || rvb.buyTotal   || 0;
     var breakEven= rvb.breakEvenYear      || 0;
     var saving   = Math.max(0, totalRent - totalBuy);
     var netAsset = price * 0.5;

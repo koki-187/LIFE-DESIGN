@@ -1718,11 +1718,40 @@ var App = (function () {
   }
 
   function _buildReportData() {
-    var reportData = FinancialEngine.generateReportData(state.currentClient, state.financialResults);
-    reportData.clientName = state.currentClient.name;
-    reportData.lifeStage  = state.psychologyResults
-      ? state.psychologyResults.lifeStage
-      : PsychologyEngine.analyzeLifeStage(state.currentClient);
+    var c  = state.currentClient  || {};
+    var fr = state.financialResults || {};
+
+    var reportData = FinancialEngine.generateReportData(c, fr);
+    reportData.clientName = c.name || 'お客様';
+
+    // ライフステージ情報
+    reportData.lifeStage = state.psychologyResults
+      ? (state.psychologyResults.lifeStage || {})
+      : (typeof PsychologyEngine !== 'undefined' ? PsychologyEngine.analyzeLifeStage(c) : {});
+
+    // rentVsBuy のパラメータをユーザ入力値で上書き（フォーム入力がある場合）
+    if (reportData.rentVsBuyResult && fr.rentVsBuy) {
+      // yearlyComparison の最後のエントリから累計コストを取得できる場合
+      var yc = fr.rentVsBuy.yearlyComparison;
+      if (yc && yc.length > 0) {
+        var lastYear = yc[yc.length - 1];
+        reportData.rentVsBuyResult.totalRentCost = lastYear.rentCumulativeCost || reportData.rentVsBuyResult.totalRentCost;
+        reportData.rentVsBuyResult.totalBuyCost  = lastYear.buyCumulativeCost  || reportData.rentVsBuyResult.totalBuyCost;
+      }
+    }
+
+    // assetProjection のパラメータをユーザ入力値で反映
+    if (reportData.assetProjection && fr.assetProjection) {
+      var ap = fr.assetProjection;
+      var yearly = ap.yearlyProjection || [];
+      if (yearly.length > 0) {
+        var last = yearly[yearly.length - 1];
+        reportData.assetProjection.finalAmount = last.financialAssets || last.netWorth || reportData.assetProjection.finalAmount;
+        reportData.assetProjection.years       = yearly.length;
+        reportData.assetProjection.totalGain   = Math.max(0, reportData.assetProjection.finalAmount - reportData.assetProjection.totalContributed);
+      }
+    }
+
     return reportData;
   }
 
