@@ -4275,3 +4275,47 @@ canvas { max-width: 100%; }
 .psych-analyze-btn .material-icons {
   font-size: 20px;
 }
+
+/* ============================================================
+   Client Section Divider & Form Grid
+   ============================================================ */
+.client-section-divider {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; font-weight: 700; color: var(--primary, #0a1628);
+  border-bottom: 2px solid var(--accent, #b8922e);
+  padding-bottom: 8px; margin: 28px 0 18px;
+  letter-spacing: 0.05em;
+}
+.client-section-divider .material-icons { font-size: 20px; color: var(--accent, #b8922e); }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   FA Auto-fill Notice Banner
+   ============================================================ */
+.fa-auto-fill-notice {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(184,146,46,0.08); border: 1px solid rgba(184,146,46,0.3);
+  border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;
+  font-size: 13px; color: #666;
+}
+.fa-auto-fill-notice .material-icons { font-size: 18px; color: var(--accent, #b8922e); }
+
+/* =============================================
+   銀行ローン比較テーブル
+   ============================================= */
+.bank-compare-table { margin: 12px 0; border: 1px solid var(--border, #e0dbd2); border-radius: 10px; overflow: hidden; }
+.bank-compare-header, .bank-compare-row { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.2fr 1fr 1fr; align-items: center; gap: 0; }
+.bank-compare-header { background: var(--primary, #0a1628); color: white; font-size: 11px; font-weight: 700; padding: 10px 0; }
+.bank-compare-row { padding: 12px 0; border-bottom: 1px solid var(--border, #e8e4dc); transition: background 0.15s; }
+.bank-compare-row:hover { background: rgba(184,146,46,0.04); }
+.bank-compare-row:last-child { border-bottom: none; }
+.bct-recommended { background: rgba(184,146,46,0.06); border-left: 3px solid var(--accent, #b8922e); }
+.bct-col { padding: 4px 12px; font-size: 13px; }
+.bct-bank { padding-left: 14px; }
+.bct-badge { display: inline-block; background: var(--accent,#b8922e); color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; margin-bottom: 4px; }
+.bct-name { font-weight: 700; font-size: 13px; color: var(--primary, #0a1628); }
+.bct-type { font-size: 11px; color: #888; }
+.bct-warning { font-size: 11px; color: #e53935; }
+.bct-highlight { font-size: 15px; font-weight: 700; color: var(--primary, #0a1628); }
+@media (max-width: 600px) { .bct-hide-sm { display: none; } .bank-compare-header, .bank-compare-row { grid-template-columns: 2fr 1fr 1.2fr 1.2fr 1fr; } }

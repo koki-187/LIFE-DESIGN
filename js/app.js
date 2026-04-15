@@ -25,6 +25,73 @@ var App = (function () {
   };
 
   // ---------------------------------------------------------------------------
+  // 銀行ローン比較データベース
+  // ---------------------------------------------------------------------------
+
+  var BANK_DATABASE = [
+    {
+      id: 'sbi',
+      name: 'SBI新生銀行',
+      type: '変動',
+      rate: 0.690,
+      processingFee: 99,
+      guarantyFee: 0,
+      teamShinsho: 'がん100【ガン団信】+0.10%（満20歳以上49歳未満）',
+      maxTerm: 50,
+      minAge: 20, maxAge: 65,
+      badge: 'おすすめ'
+    },
+    {
+      id: 'ufj',
+      name: '三菱UFJ銀行',
+      type: '変動',
+      rate: 1.245,
+      processingFee: 99,
+      guarantyFee: 0,
+      teamShinsho: '7大疾病100%+0.30%（満18歳以上50歳未満）',
+      maxTerm: 35,
+      minAge: 18, maxAge: 65,
+      badge: 'メガバンク'
+    },
+    {
+      id: 'paypay',
+      name: 'PayPay銀行',
+      type: '変動',
+      rate: 0.999,
+      processingFee: 99,
+      guarantyFee: 0,
+      teamShinsho: 'がん100保障団信+0.15%（満51歳未満）',
+      maxTerm: 50,
+      minAge: 20, maxAge: 65,
+      badge: 'ネット銀行'
+    },
+    {
+      id: 'rakuten',
+      name: '楽天銀行',
+      type: '変動',
+      rate: 0.847,
+      processingFee: 132,
+      guarantyFee: 0,
+      teamShinsho: 'がん50%無料（満50歳未満）',
+      maxTerm: 35,
+      minAge: 20, maxAge: 65,
+      badge: ''
+    },
+    {
+      id: 'sumishin',
+      name: '住信SBIネット銀行',
+      type: '変動',
+      rate: 0.780,
+      processingFee: 132,
+      guarantyFee: 0,
+      teamShinsho: '全疾病保障無料',
+      maxTerm: 50,
+      minAge: 20, maxAge: 65,
+      badge: ''
+    }
+  ];
+
+  // ---------------------------------------------------------------------------
   // 初期化
   // ---------------------------------------------------------------------------
 
@@ -461,10 +528,10 @@ var App = (function () {
   function _renderBuyAdvantageSection(rvb) {
     if (!rvb) return '';
     var breakEven = rvb.breakEvenYear || 10;
-    var totalRentCost = rvb.totalRentCost || 0;
-    var totalBuyCost = rvb.totalBuyCost || 0;
+    var totalRentCost = rvb.rentTotal || 0;
+    var totalBuyCost = rvb.buyTotal || 0;
     var saving30yr = totalRentCost - totalBuyCost;
-    var propertyValue = rvb.propertyPrice || 0;
+    var propertyValue = rvb.propertyValue || 0;
     var netAsset = propertyValue * 0.5;
 
     var html = '<div class="buy-advantage-card">';
@@ -494,7 +561,7 @@ var App = (function () {
     html += '<div class="buy-adv-item">';
     html += '<div class="buy-adv-icon buy-adv-icon-green"><span class="material-icons">elderly</span></div>';
     html += '<div class="buy-adv-title">老後の住居費ゼロ</div>';
-    html += '<div class="buy-adv-value">月' + formatMan(rvb.monthlyRent || 0) + '節約</div>';
+    html += '<div class="buy-adv-value">月' + formatMan(rvb.inputMonthlyRent || 0) + '節約</div>';
     html += '<div class="buy-adv-desc">ローン完済後は住居費がほぼゼロ。年金生活への移行がスムーズになります。</div>';
     html += '</div>';
 
@@ -586,7 +653,7 @@ var App = (function () {
       '<label class="radio-inline"><input type="radio" name="current-housing" value="own"' + _checked(c && c.currentHousing === 'own') + '> 持ち家</label>' +
       '<label class="radio-inline"><input type="radio" name="current-housing" value="family"' + _checked(c && c.currentHousing === 'family') + '> 実家・家族と同居</label>'
     );
-    html += _formRow('現在の家賃（万円/月）', '<input type="number" id="current-rent" class="form-control form-control-sm" min="0" placeholder="8" value="' + (c && c.currentRent ? Math.round(c.currentRent / 10000) : '') + '">');
+    html += _formRow('現在の家賃（万円/月）', '<input type="number" id="current-rent" class="form-control form-control-sm" min="0" step="0.5" placeholder="8" value="' + (c && c.currentRent ? c.currentRent / 10000 : '') + '">');
     html += _formRow('希望エリア', '<input type="text" id="desired-area" class="form-control" placeholder="東京都世田谷区など" value="' + _esc(c && c.desiredArea) + '">');
     html += _formRow('検討目的',
       '<label class="radio-inline"><input type="radio" name="purpose" value="buy_first"' + _checked(c && c.purpose === 'buy_first') + '> 初めての購入</label>' +
@@ -595,6 +662,51 @@ var App = (function () {
       '<label class="radio-inline"><input type="radio" name="purpose" value="rent"' + _checked(c && c.purpose === 'rent') + '> 賃貸検討</label>'
     );
     html += _formRow('備考・メモ', '<textarea id="client-notes" class="form-control" rows="3" placeholder="相談内容、要望、注意点など">' + _escape(c && c.notes || '') + '</textarea>');
+    html += '</div>';
+
+    // 収支・生活費情報
+    html += '<div class="client-section-divider"><span class="material-icons">account_balance_wallet</span>収支・生活費情報</div>';
+    html += '<div class="form-grid-2">';
+    html += '<div class="form-group"><label>食費（万円/月）</label><input type="number" id="client-food" value="' + (c && c.monthlyFood || 6) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>水道光熱費（万円/月）</label><input type="number" id="client-utilities" value="' + (c && c.monthlyUtilities || 2) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>通信費（万円/月）</label><input type="number" id="client-communication" value="' + (c && c.monthlyCommunication || 1.5) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>交通費（万円/月）</label><input type="number" id="client-transport" value="' + (c && c.monthlyTransport || 2) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>保険料（万円/月）</label><input type="number" id="client-insurance-fee" value="' + (c && c.monthlyInsurance || 3) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>教育費（万円/月）</label><input type="number" id="client-education" value="' + (c && c.monthlyEducation || 0) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>娯楽費（万円/月）</label><input type="number" id="client-entertainment" value="' + (c && c.monthlyEntertainment || 3) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>月次貯蓄額（万円/月）</label><input type="number" id="client-monthly-savings" value="' + (c && c.monthlySavings || 5) + '" step="1" min="0"></div>';
+    html += '<div class="form-group"><label>その他支出（万円/月）</label><input type="number" id="client-other-expense" value="' + (c && c.monthlyOther || 2) + '" step="0.5" min="0"></div>';
+    html += '</div>';
+
+    // 住宅希望・ローン条件
+    html += '<div class="client-section-divider"><span class="material-icons">home</span>住宅希望・ローン条件</div>';
+    html += '<div class="form-grid-2">';
+    html += '<div class="form-group"><label>検討物件価格（万円）</label><input type="number" id="client-target-price" value="' + (c && c.targetPropertyPrice || 4000) + '" step="100" min="500"></div>';
+    html += '<div class="form-group"><label>頭金（万円）</label><input type="number" id="client-down-payment" value="' + (c && c.downPayment || 0) + '" step="50" min="0"></div>';
+    html += '<div class="form-group"><label>希望返済年数</label><input type="number" id="client-loan-term" value="' + (c && c.loanTerm || 35) + '" step="5" min="10" max="50"></div>';
+    html += '<div class="form-group"><label>想定金利（%）</label><input type="number" id="client-loan-rate" value="' + (c && c.loanRate || 1.5) + '" step="0.1" min="0.1" max="10"></div>';
+    var _defLoan = c ? (c.plannedLoanAmount || Math.max(0, (c.targetPropertyPrice||4000) - (c.downPayment||0))) : 4000;
+    html += '<div class="form-group"><label>借入予定額（万円）</label><input type="number" id="client-planned-loan" value="' + _defLoan + '" step="50" min="0" title="物件価格−頭金が自動設定されます"></div>';
+    html += '<div class="form-group"><label>既存借入の月返済額（万円）</label><input type="number" id="client-existing-debt" value="' + (c && c.existingDebt || 0) + '" step="1" min="0"></div>';
+    html += '<div class="form-group"><label>管理費（万円/月）</label><input type="number" id="client-mgmt-fee" value="' + (c && c.managementFee || 1.5) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>修繕積立金（万円/月）</label><input type="number" id="client-repair-fund" value="' + (c && c.repairFund || 1) + '" step="0.5" min="0"></div>';
+    html += '<div class="form-group"><label>固定資産税（万円/年）</label><input type="number" id="client-property-tax" value="' + (c && c.propertyTax || 12) + '" step="1" min="0"></div>';
+    html += '</div>';
+    html += '<div class="form-group" style="margin-top:8px">';
+    html += '<label>物件種別</label>';
+    html += '<div class="radio-group">';
+    html += '<label><input type="radio" name="client-property-type" value="new" ' + ((!c || !c.propertyType || c.propertyType === 'new') ? 'checked' : '') + '> 新築</label>';
+    html += '<label><input type="radio" name="client-property-type" value="existing" ' + (c && c.propertyType === 'existing' ? 'checked' : '') + '> 中古</label>';
+    html += '</div></div>';
+    html += '<div class="form-group"><label>入居予定年度</label><input type="number" id="client-move-in-year" value="' + (c && c.moveInYear || new Date().getFullYear()) + '" min="2020" max="2040"></div>';
+
+    // 資産・投資情報
+    html += '<div class="client-section-divider"><span class="material-icons">trending_up</span>資産・投資情報</div>';
+    html += '<div class="form-grid-2">';
+    html += '<div class="form-group"><label>NISA残高（万円）</label><input type="number" id="client-nisa" value="' + (c && c.nisaBalance || 0) + '" step="10" min="0"></div>';
+    html += '<div class="form-group"><label>iDeCo残高（万円）</label><input type="number" id="client-ideco" value="' + (c && c.idecoBalance || 0) + '" step="10" min="0"></div>';
+    html += '<div class="form-group"><label>毎月の投資額（万円/月）</label><input type="number" id="client-monthly-invest" value="' + (c && c.monthlyInvestment || 3) + '" step="1" min="0"></div>';
+    html += '<div class="form-group"><label>期待利回り（%/年）</label><input type="number" id="client-yield" value="' + (c && c.expectedYield || 3) + '" step="0.5" min="0" max="20"></div>';
     html += '</div>';
 
     html += '<div class="form-actions">';
@@ -650,6 +762,39 @@ var App = (function () {
       desiredArea:    (document.getElementById('desired-area').value || '').trim(),
       purpose:        _radioValue('purpose'),
       notes:          (document.getElementById('client-notes').value || '').trim(),
+
+      // === 収支情報 ===
+      monthlyFood:          parseFloat(_fv('client-food'))          || 6,
+      monthlyUtilities:     parseFloat(_fv('client-utilities'))     || 2,
+      monthlyCommunication: parseFloat(_fv('client-communication')) || 1.5,
+      monthlyTransport:     parseFloat(_fv('client-transport'))     || 2,
+      monthlyInsurance:     parseFloat(_fv('client-insurance-fee')) || 3,
+      monthlyEducation:     parseFloat(_fv('client-education'))     || 0,
+      monthlyEntertainment: parseFloat(_fv('client-entertainment')) || 3,
+      monthlySavings:       parseFloat(_fv('client-monthly-savings'))|| 5,
+      monthlyOther:         parseFloat(_fv('client-other-expense')) || 2,
+
+      // === 住宅希望条件 ===
+      targetPropertyPrice: parseFloat(_fv('client-target-price'))  || 4000,
+      downPayment:         parseFloat(_fv('client-down-payment'))  || 0,
+      loanTerm:            parseInt(_fv('client-loan-term'))        || 35,
+      loanRate:            parseFloat(_fv('client-loan-rate'))      || 1.5,
+      existingDebt:        parseFloat(_fv('client-existing-debt'))  || 0,
+      managementFee:       parseFloat(_fv('client-mgmt-fee'))       || 1.5,
+      repairFund:          parseFloat(_fv('client-repair-fund'))    || 1,
+      propertyTax:         parseFloat(_fv('client-property-tax'))   || 12,
+
+      // === 資産・投資情報 ===
+      nisaBalance:         parseFloat(_fv('client-nisa'))           || 0,
+      idecoBalance:        parseFloat(_fv('client-ideco'))          || 0,
+      monthlyInvestment:   parseFloat(_fv('client-monthly-invest')) || 3,
+      expectedYield:       parseFloat(_fv('client-yield'))          || 3,
+
+      // === 保険・借入情報 ===
+      plannedLoanAmount:   parseFloat(_fv('client-planned-loan'))   || 0,
+      propertyType:        _radioValue('client-property-type')      || 'new',
+      moveInYear:          parseInt(_fv('client-move-in-year'))     || new Date().getFullYear(),
+
       createdAt:      (state.currentClient && state.currentClient.createdAt) || new Date().toISOString(),
       updatedAt:      new Date().toISOString()
     };
@@ -673,7 +818,7 @@ var App = (function () {
     state.currentClient    = null;
     state.psychologyResults = null;
     state.financialResults  = null;
-    renderClientInput();
+    showSection('client-input');
     updateHeader();
   }
 
@@ -985,20 +1130,23 @@ var App = (function () {
     }, 100);
   }
 
+  var FA_AUTO_FILL_NOTICE = '<div class="fa-auto-fill-notice"><span class="material-icons">sync</span>クライアント情報ページのデータを自動反映しています。変更は<a onclick="App.showSection(\'client-input\')" style="cursor:pointer;color:var(--accent)">こちら</a>から。</div>';
+
   // --- 収支分析フォーム ---
   function _financialInputForm_IE(c, r) {
     var inc = r && r.incomeExpense;
-    var html = '<h3>収支分析</h3>';
+    var html = FA_AUTO_FILL_NOTICE;
+    html += '<h3>収支分析</h3>';
     html += '<div class="form-grid">';
-    html += _financialField('食費（月額・万円）',           'ie-food',           '', '6');
-    html += _financialField('水道光熱費（月額・万円）',     'ie-utilities',      '', '2');
-    html += _financialField('通信費（月額・万円）',         'ie-communication',  '', '1.5');
-    html += _financialField('交通費（月額・万円）',         'ie-transportation', '', '2');
-    html += _financialField('保険料（月額・万円）',         'ie-insurance',      '', '3');
-    html += _financialField('教育費（月額・万円）',         'ie-education',      '', '0');
-    html += _financialField('娯楽費（月額・万円）',         'ie-entertainment',  '', '3');
-    html += _financialField('月次貯蓄額（万円）',           'ie-savings',        '', '5');
-    html += _financialField('その他支出（月額・万円）',     'ie-other',          '', '2');
+    html += _financialField('食費（月額・万円）',           'ie-food',           (c && c.monthlyFood)          || 6,   '');
+    html += _financialField('水道光熱費（月額・万円）',     'ie-utilities',      (c && c.monthlyUtilities)     || 2,   '');
+    html += _financialField('通信費（月額・万円）',         'ie-communication',  (c && c.monthlyCommunication) || 1.5, '');
+    html += _financialField('交通費（月額・万円）',         'ie-transportation', (c && c.monthlyTransport)     || 2,   '');
+    html += _financialField('保険料（月額・万円）',         'ie-insurance',      (c && c.monthlyInsurance)     || 3,   '');
+    html += _financialField('教育費（月額・万円）',         'ie-education',      (c && c.monthlyEducation !== undefined ? c.monthlyEducation : 0), '');
+    html += _financialField('娯楽費（月額・万円）',         'ie-entertainment',  (c && c.monthlyEntertainment) || 3,   '');
+    html += _financialField('月次貯蓄額（万円）',           'ie-savings',        (c && c.monthlySavings)       || 5,   '');
+    html += _financialField('その他支出（月額・万円）',     'ie-other',          (c && c.monthlyOther)         || 2,   '');
     html += '</div>';
     html += '<div class="form-actions">';
     html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_IE()">収支を分析する</button>';
@@ -1034,16 +1182,16 @@ var App = (function () {
       annualIncome:  c.annualIncome,
       spouseIncome:  c.spouseIncome,
       currentRent:   c.currentRent,
-      savings:       _fv('ie-savings') * 10000,
+      savings:       (_fv('ie-savings') || (c.monthlySavings || 5)) * 10000,
       expenses: {
-        food:           _fv('ie-food')           * 10000,
-        utilities:      _fv('ie-utilities')      * 10000,
-        communication:  _fv('ie-communication')  * 10000,
-        transportation: _fv('ie-transportation') * 10000,
-        insurance:      _fv('ie-insurance')      * 10000,
-        education:      _fv('ie-education')      * 10000,
-        entertainment:  _fv('ie-entertainment')  * 10000,
-        other:          _fv('ie-other')          * 10000
+        food:           (_fv('ie-food')           || (c.monthlyFood || 6))           * 10000,
+        utilities:      (_fv('ie-utilities')      || (c.monthlyUtilities || 2))      * 10000,
+        communication:  (_fv('ie-communication')  || (c.monthlyCommunication || 1.5))* 10000,
+        transportation: (_fv('ie-transportation') || (c.monthlyTransport || 2))      * 10000,
+        insurance:      (_fv('ie-insurance')      || (c.monthlyInsurance || 3))      * 10000,
+        education:      (_fv('ie-education')      || (c.monthlyEducation || 0))      * 10000,
+        entertainment:  (_fv('ie-entertainment')  || (c.monthlyEntertainment || 3))  * 10000,
+        other:          (_fv('ie-other')          || (c.monthlyOther || 2))          * 10000
       }
     };
 
@@ -1056,11 +1204,12 @@ var App = (function () {
   // --- 住宅取得力フォーム ---
   function _financialInputForm_Afford(c, r) {
     var aff = r && r.affordability;
-    var html = '<h3>住宅取得可能額の試算</h3>';
+    var html = FA_AUTO_FILL_NOTICE;
+    html += '<h3>住宅取得可能額の試算</h3>';
     html += '<div class="form-grid">';
-    html += _financialField('既存借入の月返済額（万円）', 'af-existing-debt', '', '0');
-    html += _financialField('希望返済年数',               'af-term',          '', '35');
-    html += _financialField('適用金利（%）',              'af-rate',          '', '1.5');
+    html += _financialField('既存借入の月返済額（万円）', 'af-existing-debt', (c && c.existingDebt)     || 0,   '');
+    html += _financialField('希望返済年数',               'af-term',          (c && c.loanTerm)         || 35,  '');
+    html += _financialField('適用金利（%）',              'af-rate',          (c && c.loanRate)         || 1.5, '');
     html += '</div>';
     html += '<div class="form-actions">';
     html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_Afford()">取得可能額を試算する</button>';
@@ -1096,7 +1245,77 @@ var App = (function () {
         if (gl.comment) html += '<p class="diagnosis">' + _escape(gl.comment) + '</p>';
         html += '</div>';
       }
+
+      // 銀行比較テーブルを追加
+      var loanAmt = (state.currentClient && state.currentClient.plannedLoanAmount)
+                  ? state.currentClient.plannedLoanAmount * 10000
+                  : (state.currentClient && state.currentClient.targetPropertyPrice)
+                    ? (state.currentClient.targetPropertyPrice - (state.currentClient.downPayment || 0)) * 10000
+                    : 35000000;
+      var loanTerm = (state.currentClient && state.currentClient.loanTerm) || 35;
+      html += '<div class="result-block">';
+      html += '<div class="section-title" style="margin-top:8px;margin-bottom:12px;">主要銀行 ローン比較</div>';
+      html += _renderBankComparison(loanAmt, loanTerm);
+      html += '</div>';
     }
+    return html;
+  }
+
+  // ---------------------------------------------------------------------------
+  // 銀行ローン比較 - PMT計算ヘルパー
+  // ---------------------------------------------------------------------------
+
+  function _pmt(rate, nper, pv) {
+    if (rate === 0) return pv / nper;
+    var r = rate / 100 / 12;
+    return pv * r * Math.pow(1 + r, nper) / (Math.pow(1 + r, nper) - 1);
+  }
+
+  // ---------------------------------------------------------------------------
+  // 銀行ローン比較 - レンダリング関数
+  // ---------------------------------------------------------------------------
+
+  function _renderBankComparison(loanAmount, term) {
+    var html = '<div class="bank-compare-table">';
+    html += '<div class="bank-compare-header">';
+    html += '  <div class="bct-col bct-bank">銀行</div>';
+    html += '  <div class="bct-col">金利</div>';
+    html += '  <div class="bct-col">月額返済</div>';
+    html += '  <div class="bct-col">利息総額</div>';
+    html += '  <div class="bct-col">事務手数料</div>';
+    html += '  <div class="bct-col bct-hide-sm">5年後残債</div>';
+    html += '</div>';
+
+    BANK_DATABASE.forEach(function(bank) {
+      var age = (state.currentClient && state.currentClient.age) || 34;
+      var completionAge = age + term;
+      var warning = completionAge > 80 ? '⚠️完済時' + completionAge + '歳' : '';
+
+      var monthly = _pmt(bank.rate, term * 12, loanAmount);
+      var totalInterest = monthly * term * 12 - loanAmount;
+      var balance5yr = loanAmount;
+      var r = bank.rate / 100 / 12;
+      if (r > 0) {
+        balance5yr = loanAmount * Math.pow(1 + r, 60) - monthly * (Math.pow(1 + r, 60) - 1) / r;
+      } else {
+        balance5yr = loanAmount - monthly * 60;
+      }
+
+      html += '<div class="bank-compare-row' + (bank.badge === 'おすすめ' ? ' bct-recommended' : '') + '">';
+      html += '  <div class="bct-col bct-bank">';
+      if (bank.badge) html += '<span class="bct-badge">' + bank.badge + '</span>';
+      html += '  <div class="bct-name">' + bank.name + '</div>';
+      html += '  <div class="bct-type">' + bank.type + ' ' + bank.rate.toFixed(3) + '%</div>';
+      if (warning) html += '<div class="bct-warning">' + warning + '</div>';
+      html += '  </div>';
+      html += '  <div class="bct-col"><strong>' + bank.rate.toFixed(3) + '%</strong></div>';
+      html += '  <div class="bct-col bct-highlight">' + Math.round(monthly).toLocaleString() + '円</div>';
+      html += '  <div class="bct-col">' + Math.round(totalInterest / 10000) + '万円</div>';
+      html += '  <div class="bct-col">' + bank.processingFee + '万円</div>';
+      html += '  <div class="bct-col bct-hide-sm">' + Math.round(balance5yr / 10000) + '万円</div>';
+      html += '</div>';
+    });
+    html += '</div>';
     return html;
   }
 
@@ -1107,9 +1326,9 @@ var App = (function () {
       annualIncome:     c.annualIncome,
       spouseIncome:     c.spouseIncome,
       savings:          c.savings,
-      existingDebt:     _fv('af-existing-debt') * 10000,
-      desiredTermYears: _fv('af-term') || 35,
-      interestRate:     (_fv('af-rate') || 1.5) / 100
+      existingDebt:     (_fv('af-existing-debt') || (c.existingDebt || 0)) * 10000,
+      desiredTermYears: _fv('af-term') || (c.loanTerm || 35),
+      interestRate:     (_fv('af-rate') || (c.loanRate || 1.5)) / 100
     };
     if (!state.financialResults) state.financialResults = {};
     state.financialResults.affordability = FinancialEngine.calculateAffordability(params);
@@ -1121,17 +1340,18 @@ var App = (function () {
   // --- 賃貸 vs 購入フォーム ---
   function _financialInputForm_RVB(c, r) {
     var rvb = r && r.rentVsBuy;
-    var html = '<h3>賃貸 vs 購入 比較分析</h3>';
+    var html = FA_AUTO_FILL_NOTICE;
+    html += '<h3>賃貸 vs 購入 比較分析</h3>';
     html += '<div class="form-grid">';
-    html += _financialField('現在の家賃（万円/月）',         'rvb-rent',          '', c && c.currentRent ? Math.round(c.currentRent / 10000) : '8');
-    html += _financialField('検討物件価格（万円）',           'rvb-price',         '', '4000');
-    html += _financialField('頭金（万円）',                   'rvb-down',          '', '400');
-    html += _financialField('借入金利（%）',                  'rvb-rate',          '', '1.5');
-    html += _financialField('返済年数',                       'rvb-term',          '', '35');
-    html += _financialField('管理費（万円/月）',              'rvb-mgmt',          '', '1.5');
-    html += _financialField('修繕積立金（万円/月）',          'rvb-repair',        '', '1');
-    html += _financialField('固定資産税（万円/年）',          'rvb-tax',           '', '12');
-    html += _financialField('比較期間（年）',                 'rvb-years',         '', '35');
+    html += _financialField('現在の家賃（万円/月）',         'rvb-rent',  (c && c.currentRent) ? c.currentRent / 10000 : 8,  '');
+    html += _financialField('検討物件価格（万円）',           'rvb-price', (c && c.targetPropertyPrice) || 4000, '');
+    html += _financialField('頭金（万円）',                   'rvb-down',  (c && c.downPayment)          || 0,   '');
+    html += _financialField('借入金利（%）',                  'rvb-rate',  (c && c.loanRate)             || 1.5, '');
+    html += _financialField('返済年数',                       'rvb-term',  (c && c.loanTerm)             || 35,  '');
+    html += _financialField('管理費（万円/月）',              'rvb-mgmt',  (c && c.managementFee)        || 1.5, '');
+    html += _financialField('修繕積立金（万円/月）',          'rvb-repair',(c && c.repairFund)           || 1,   '');
+    html += _financialField('固定資産税（万円/年）',          'rvb-tax',   (c && c.propertyTax)          || 12,  '');
+    html += _financialField('比較期間（年）',                 'rvb-years', (c && c.loanTerm)             || 35,  '');
     html += '</div>';
     html += '<div class="form-actions">';
     html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_RVB()">比較分析を実行する</button>';
@@ -1165,21 +1385,24 @@ var App = (function () {
   function runFinancialAnalysis_RVB() {
     var c = state.currentClient;
     if (!c) return;
-    var price = _fv('rvb-price') * 10000;
-    var down  = _fv('rvb-down')  * 10000;
+    var price = (_fv('rvb-price') || (c.targetPropertyPrice || 4000)) * 10000;
+    var down  = (_fv('rvb-down')  || (c.downPayment || 0)) * 10000;
     var params = {
-      monthlyRent:        (_fv('rvb-rent') || 8) * 10000,
+      monthlyRent:        (_fv('rvb-rent') || (c.currentRent ? c.currentRent / 10000 : 8)) * 10000,
       propertyPrice:      price || 40000000,
-      downPayment:        down  || 4000000,
-      loanInterestRate:   (_fv('rvb-rate') || 1.5) / 100,
-      loanTermYears:      _fv('rvb-term')  || 35,
-      managementFee:      (_fv('rvb-mgmt') || 1.5) * 10000,
-      maintenanceFee:     (_fv('rvb-repair') || 1) * 10000,
-      propertyTax:        (_fv('rvb-tax')  || 12) * 10000,
+      downPayment:        down  || 0,
+      loanInterestRate:   (_fv('rvb-rate') || (c.loanRate || 1.5)) / 100,
+      loanTermYears:      _fv('rvb-term')  || (c.loanTerm || 35),
+      managementFee:      (_fv('rvb-mgmt') || (c.managementFee || 1.5)) * 10000,
+      maintenanceFee:     (_fv('rvb-repair') || (c.repairFund || 1)) * 10000,
+      propertyTax:        (_fv('rvb-tax')  || (c.propertyTax || 12)) * 10000,
       comparisonYears:    _fv('rvb-years') || 35
     };
     if (!state.financialResults) state.financialResults = {};
-    state.financialResults.rentVsBuy = FinancialEngine.compareRentVsBuy(params);
+    var rvbResult = FinancialEngine.compareRentVsBuy(params);
+    rvbResult.propertyValue    = params.propertyPrice || 0;
+    rvbResult.inputMonthlyRent = params.monthlyRent   || 0;
+    state.financialResults.rentVsBuy = rvbResult;
     saveData();
     switchFinancialTab(state.activeFinancialTab);
   }
@@ -1187,12 +1410,13 @@ var App = (function () {
   // --- 保険最適化フォーム ---
   function _financialInputForm_Ins(c, r) {
     var ins = r && r.insurance;
-    var html = '<h3>保険最適化分析</h3>';
+    var html = FA_AUTO_FILL_NOTICE;
+    html += '<h3>保険最適化分析</h3>';
     html += '<div class="form-grid">';
-    html += _financialField('借入予定額（万円）',           'ins-loan',      '', '3500');
-    html += _financialField('返済年数',                     'ins-term',      '', '35');
-    html += _financialField('現在の生命保険料（万円/月）',  'ins-premium',   '', '1.5');
-    html += _financialField('家族の人数',                   'ins-family',    '', '3');
+    html += _financialField('借入予定額（万円）',           'ins-loan',    (c && c.plannedLoanAmount) || (c && c.targetPropertyPrice) || 3500, '');
+    html += _financialField('返済年数',                     'ins-term',    (c && c.loanTerm)          || 35,  '');
+    html += _financialField('現在の生命保険料（万円/月）',  'ins-premium', (c && c.monthlyInsurance)  || 1.5, '');
+    html += _financialField('家族の人数',                   'ins-family',  (c && (c.children || 0) + 1 + (c.maritalStatus === 'married' ? 1 : 0)) || 1, '');
     html += '</div>';
     html += '<div class="form-actions">';
     html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_Ins()">保険を分析する</button>';
@@ -1228,8 +1452,8 @@ var App = (function () {
     if (!c) return;
     var params = {
       age:                      c.age || 35,
-      loanAmount:               (_fv('ins-loan') || 3500) * 10000,
-      loanTermYears:            _fv('ins-term') || 35,
+      loanAmount:               (_fv('ins-loan') || (c.plannedLoanAmount || c.targetPropertyPrice || 3500)) * 10000,
+      loanTermYears:            _fv('ins-term') || (c.loanTerm || 35),
       currentInsurancePremium:  (_fv('ins-premium') || 1.5) * 10000,
       familyMembers:            _fv('ins-family') || 3
     };
@@ -1242,11 +1466,12 @@ var App = (function () {
   // --- 税制優遇フォーム ---
   function _financialInputForm_Tax(c, r) {
     var tax = r && r.taxBenefits;
-    var html = '<h3>税制優遇シミュレーション（住宅ローン控除）</h3>';
+    var html = FA_AUTO_FILL_NOTICE;
+    html += '<h3>税制優遇シミュレーション（住宅ローン控除）</h3>';
     html += '<div class="form-grid">';
-    html += _financialField('借入予定額（万円）',     'tax-loan',      '', '3500');
-    html += _financialField('物件種別',               'tax-type',      'new', '', true);
-    html += _financialField('入居予定年度（西暦）',   'tax-year',      '', '2025');
+    html += _financialField('借入予定額（万円）',     'tax-loan',  (c && c.plannedLoanAmount) || (c && c.targetPropertyPrice) || 3500, '');
+    html += _financialField('物件種別',               'tax-type',  (c && c.propertyType) || 'new', '', true);
+    html += _financialField('入居予定年度（西暦）',   'tax-year',  (c && c.moveInYear) || 2026, '');
     html += '</div>';
     html += '<div class="form-actions">';
     html += '<button class="btn-primary" onclick="App.runFinancialAnalysis_Tax()">控除額を試算する</button>';
@@ -1278,13 +1503,13 @@ var App = (function () {
     var c = state.currentClient;
     if (!c) return;
     var typeEl = document.getElementById('tax-type');
-    var isNew  = typeEl ? typeEl.value === 'new' : false;
+    var isNew  = typeEl ? typeEl.value === 'new' : (c.propertyType !== 'existing');
     var params = {
-      loanAmount:          (_fv('tax-loan') || 3500) * 10000,
+      loanAmount:          (_fv('tax-loan') || (c.plannedLoanAmount || c.targetPropertyPrice || 3500)) * 10000,
       annualIncome:        c.annualIncome,
       propertyType:        isNew ? 'new' : 'existing',
       isNewConstruction:   isNew,
-      moveInYear:          _fv('tax-year') || 2025
+      moveInYear:          _fv('tax-year') || (c.moveInYear || new Date().getFullYear())
     };
     if (!state.financialResults) state.financialResults = {};
     state.financialResults.taxBenefits = FinancialEngine.calculateTaxBenefits(params);
@@ -1295,11 +1520,12 @@ var App = (function () {
   // --- 金利シミュレーションフォーム ---
   function _financialInputForm_Rate(c, r) {
     var rate = r && r.interestRate;
-    var html = '<h3>金利シミュレーション</h3>';
+    var html = FA_AUTO_FILL_NOTICE;
+    html += '<h3>金利シミュレーション</h3>';
     html += '<div class="form-grid">';
-    html += _financialField('借入額（万円）',       'rate-loan',  '', '3500');
-    html += _financialField('返済年数',             'rate-term',  '', '35');
-    html += _financialField('基準金利（%）',        'rate-base',  '', '1.5');
+    html += _financialField('借入額（万円）',       'rate-loan',  (c && c.plannedLoanAmount) || (c && c.targetPropertyPrice) || 3500, '');
+    html += _financialField('返済年数',             'rate-term',  (c && c.loanTerm)          || 35,  '');
+    html += _financialField('基準金利（%）',        'rate-base',  (c && c.loanRate)          || 1.5, '');
     html += _financialField('金利上昇シナリオ（%）','rate-high',  '', '3.0');
     html += '</div>';
     html += '<div class="form-actions">';
@@ -1314,7 +1540,7 @@ var App = (function () {
         rate.scenarios.forEach(function (s) {
           html += '<tr>';
           html += '<td>' + _escape(s.label || s.name) + '</td>';
-          html += '<td>' + (s.rate * 100).toFixed(2) + '%</td>';
+          html += '<td>' + (s.rateDecimal * 100).toFixed(2) + '%</td>';
           html += '<td>' + formatCurrency(s.monthlyPayment) + '</td>';
           html += '<td>' + formatMan(s.totalPayment) + '</td>';
           html += '<td>' + formatMan(s.totalInterest) + '</td>';
@@ -1330,9 +1556,10 @@ var App = (function () {
   }
 
   function runFinancialAnalysis_Rate() {
+    var c = state.currentClient || {};
     var params = {
-      loanAmount:       (_fv('rate-loan') || 3500) * 10000,
-      termYears:        _fv('rate-term') || 35,
+      loanAmount:       (_fv('rate-loan') || (c.plannedLoanAmount || c.targetPropertyPrice || 3500)) * 10000,
+      termYears:        _fv('rate-term') || (c.loanTerm || 35),
       baseRate:         (_fv('rate-base') || 1.5) / 100,
       highRate:         (_fv('rate-high') || 3.0) / 100
     };
@@ -1345,11 +1572,12 @@ var App = (function () {
   // --- 資産形成フォーム ---
   function _financialInputForm_Asset(c, r) {
     var asset = r && r.assetProjection;
-    var html = '<h3>資産形成シミュレーション</h3>';
+    var html = FA_AUTO_FILL_NOTICE;
+    html += '<h3>資産形成シミュレーション</h3>';
     html += '<div class="form-grid">';
-    html += _financialField('現在の資産額（万円）',       'asset-init',    '', c && c.savings ? Math.round(c.savings / 10000) : '200');
-    html += _financialField('毎月の積立額（万円）',       'asset-monthly', '', '5');
-    html += _financialField('想定年利回り（%）',          'asset-yield',   '', '3');
+    html += _financialField('現在の資産額（万円）',       'asset-init',    (c && c.savings) ? c.savings / 10000 : 200, '');
+    html += _financialField('毎月の積立額（万円）',       'asset-monthly', (c && c.monthlyInvestment) || 3, '');
+    html += _financialField('想定年利回り（%）',          'asset-yield',   (c && c.expectedYield)     || 3, '');
     html += _financialField('シミュレーション期間（年）', 'asset-years',   '', '30');
     html += _financialField('インフレ率（%）',            'asset-inf',     '', '1');
     html += '</div>';
@@ -1361,11 +1589,20 @@ var App = (function () {
       html += '<div class="result-block">';
       html += '<h4>資産形成シミュレーション結果</h4>';
       html += '<div class="result-grid">';
-      if (asset.finalAmount)      html += _resultItem('最終資産額',     formatMan(asset.finalAmount));
-      if (asset.totalContributed) html += _resultItem('積立元本合計',   formatMan(asset.totalContributed));
-      if (asset.totalReturn)      html += _resultItem('運用益合計',     formatMan(asset.totalReturn));
+      if (asset.retirementNetWorth)      html += _resultItem('定年時（65歳）純資産',       formatMan(asset.retirementNetWorth));
+      if (asset.retirementMonthlyIncome) html += _resultItem('想定月収入（4%ルール）',     formatCurrency(asset.retirementMonthlyIncome));
+      if (asset.yearlyProjection && asset.yearlyProjection.length > 0) {
+        var last = asset.yearlyProjection[asset.yearlyProjection.length - 1];
+        html += _resultItem('金融資産（最終）', formatMan(last.financialAssets));
+        html += _resultItem('純資産（最終）',   formatMan(last.netWorth));
+      }
       html += '</div>';
-      if (asset.analysis) html += '<p class="diagnosis">' + _escape(asset.analysis) + '</p>';
+      if (asset.assessment) html += '<p class="diagnosis">' + _escape(asset.assessment) + '</p>';
+      if (asset.recommendations && asset.recommendations.length > 0) {
+        html += '<ul class="recommendations">';
+        asset.recommendations.forEach(function (rec) { html += '<li>' + _escape(rec) + '</li>'; });
+        html += '</ul>';
+      }
       html += '<div class="chart-container"><canvas id="asset-chart" width="500" height="300"></canvas></div>';
       html += '</div>';
     }
@@ -1373,13 +1610,16 @@ var App = (function () {
   }
 
   function runFinancialAnalysis_Asset() {
-    var c = state.currentClient;
+    var c = state.currentClient || {};
     var params = {
-      initialAssets:    (_fv('asset-init')    || 200) * 10000,
-      monthlyInvestment:(_fv('asset-monthly') || 5)   * 10000,
-      annualReturnRate: (_fv('asset-yield')   || 3)   / 100,
-      years:            _fv('asset-years')            || 30,
-      inflationRate:    (_fv('asset-inf')     || 1)   / 100
+      currentAge:           c.age || 35,
+      retirementAge:        65,
+      currentSavings:       (_fv('asset-init')    || (c.savings ? c.savings / 10000 : 200)) * 10000,
+      monthlySavings:       (_fv('asset-monthly') || (c.monthlyInvestment || 3)) * 10000,
+      investmentReturnRate: (_fv('asset-yield')   || (c.expectedYield || 3))   / 100,
+      propertyValue:        (c.targetPropertyPrice || 4000) * 10000,
+      loanBalance:          (c.plannedLoanAmount  || 0) * 10000,
+      inflationRate:        (_fv('asset-inf')     || 1)   / 100
     };
     if (!state.financialResults) state.financialResults = {};
     state.financialResults.assetProjection = FinancialEngine.projectAssetFormation(params);
@@ -1416,53 +1656,66 @@ var App = (function () {
         annualIncome: c.annualIncome || 0,
         spouseIncome: c.spouseIncome || 0,
         currentRent:  c.currentRent  || 0,
-        savings:      0,
-        expenses: {}
+        savings:      (c.monthlySavings || 5) * 10000,
+        expenses: {
+          food:           (c.monthlyFood || 6) * 10000,
+          utilities:      (c.monthlyUtilities || 2) * 10000,
+          communication:  (c.monthlyCommunication || 1.5) * 10000,
+          transportation: (c.monthlyTransport || 2) * 10000,
+          insurance:      (c.monthlyInsurance || 3) * 10000,
+          education:      (c.monthlyEducation || 0) * 10000,
+          entertainment:  (c.monthlyEntertainment || 3) * 10000,
+          other:          (c.monthlyOther || 2) * 10000
+        }
       },
       afford: {
         annualIncome:     c.annualIncome || 0,
         spouseIncome:     c.spouseIncome || 0,
         savings:          c.savings || 0,
-        desiredTermYears: 35,
-        interestRate:     0.015
+        existingDebt:     (c.existingDebt || 0) * 10000,
+        desiredTermYears: c.loanTerm || 35,
+        interestRate:     (c.loanRate || 1.5) / 100
       },
       rvb: {
         monthlyRent:      c.currentRent || 80000,
-        propertyPrice:    40000000,
-        downPayment:      c.savings ? Math.min(c.savings * 0.5, 8000000) : 4000000,
-        loanInterestRate: 0.015,
-        loanTermYears:    35,
-        managementFee:    15000,
-        maintenanceFee:   10000,
-        propertyTax:      120000,
+        propertyPrice:    (c.targetPropertyPrice || 4000) * 10000,
+        downPayment:      (c.downPayment || 0) * 10000,
+        loanInterestRate: (c.loanRate || 1.5) / 100,
+        loanTermYears:    c.loanTerm || 35,
+        managementFee:    (c.managementFee || 1.5) * 10000,
+        maintenanceFee:   (c.repairFund || 1) * 10000,
+        propertyTax:      (c.propertyTax || 12) * 10000,
         comparisonYears:  35
       },
       ins: {
         age:                     c.age || 35,
-        loanAmount:              35000000,
-        loanTermYears:           35,
+        loanAmount:              (c.plannedLoanAmount || c.targetPropertyPrice || 3500) * 10000,
+        loanTermYears:           c.loanTerm || 35,
         currentInsurancePremium: 15000,
         familyMembers:           (c.children || 0) + (c.maritalStatus === 'married' ? 2 : 1)
       },
       tax: {
-        loanAmount:        35000000,
+        loanAmount:        (c.plannedLoanAmount || c.targetPropertyPrice || 3500) * 10000,
         annualIncome:      c.annualIncome || 0,
-        propertyType:      'new',
-        isNewConstruction: true,
-        moveInYear:        2025
+        propertyType:      c.propertyType || 'new',
+        isNewConstruction: (c.propertyType || 'new') === 'new',
+        moveInYear:        c.moveInYear || new Date().getFullYear()
       },
       rate: {
-        loanAmount: 35000000,
-        termYears:  35,
-        baseRate:   0.015,
+        loanAmount: (c.plannedLoanAmount || c.targetPropertyPrice || 3500) * 10000,
+        termYears:  c.loanTerm || 35,
+        baseRate:   (c.loanRate || 1.5) / 100,
         highRate:   0.03
       },
       asset: {
-        initialAssets:     c.savings || 0,
-        monthlyInvestment: 50000,
-        annualReturnRate:  0.03,
-        years:             30,
-        inflationRate:     0.01
+        currentAge:           c.age || 35,
+        retirementAge:        65,
+        currentSavings:       c.savings || 0,
+        monthlySavings:       (c.monthlyInvestment || 3) * 10000,
+        investmentReturnRate: (c.expectedYield || 3) / 100,
+        propertyValue:        (c.targetPropertyPrice || 4000) * 10000,
+        loanBalance:          (c.plannedLoanAmount || 0) * 10000,
+        inflationRate:        0.01
       }
     };
   }
@@ -2001,6 +2254,59 @@ var App = (function () {
       }
       state.psychologyResults = data.psychologyResults || null;
       state.financialResults  = data.financialResults  || null;
+
+    // 油布智美様の完全データ（実際の資料に基づく）
+    var yufumiData = {
+      id: 'yub-tomomi-2024',
+      name: '油布 智美',
+      nameKana: 'ユブ トモミ',
+      age: 34,
+      gender: 'female',
+      occupation: '会社員',
+      maritalStatus: 'single',
+      children: 0,
+      annualIncome: 5000000,
+      spouseIncome: 0,
+      savings: 1500000,
+      currentHousing: 'rent',
+      currentRent: 95000,
+      desiredArea: '東京都',
+      purpose: 'buy_first',
+      notes: '単身・現在賃貸9.5万円/月。初めての住宅購入を検討中。借入なし・返済なし。LoanChecker参考：借入4,500万円/SBI0.69%',
+      monthlyFood: 6,
+      monthlyUtilities: 1.5,
+      monthlyCommunication: 1,
+      monthlyTransport: 1.5,
+      monthlyInsurance: 1,
+      monthlyEducation: 0,
+      monthlyEntertainment: 2,
+      monthlySavings: 5,
+      monthlyOther: 2,
+      targetPropertyPrice: 4500,
+      downPayment: 150,
+      loanTerm: 35,
+      loanRate: 0.690,
+      existingDebt: 0,
+      managementFee: 1.5,
+      repairFund: 1,
+      propertyTax: 12,
+      propertyType: 'new',
+      moveInYear: 2026,
+      nisaBalance: 0,
+      idecoBalance: 0,
+      monthlyInvestment: 3,
+      expectedYield: 3,
+      plannedLoanAmount: 4350,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    var existingYufu = state.clients.find(function(c) { return c.id === 'yub-tomomi-2024'; });
+    if (existingYufu) {
+      Object.assign(existingYufu, yufumiData);
+    } else {
+      state.clients.push(yufumiData);
+    }
+    saveData();
     } catch (e) {
       state.clients           = [];
       state.currentClient     = null;

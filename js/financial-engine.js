@@ -386,18 +386,22 @@ var FinancialEngine = (function () {
    * 賃貸 vs 購入 比較分析
    */
   function compareRentVsBuy(params) {
-    var monthlyRent        = params.monthlyRent        || 80000;
-    var annualRentIncrease = params.annualRentIncrease || 0.005; // 0.5%
-    var propertyPrice      = params.propertyPrice      || 40000000;
-    var downPayment        = params.downPayment        || 4000000;
+    var monthlyRent        = params.monthlyRent        || 100000;    // 現在の家賃（円）
+    var annualRentIncrease = params.annualRentIncrease || 0.005;     // 0.5%
+    var propertyPrice      = params.propertyPrice      || 40000000;  // 物件価格（円）
+    var downPayment        = params.downPayment        || 4000000;   // 頭金（円）
     var loanInterestRate   = params.loanInterestRate   || 0.015;
     var loanTermYears      = params.loanTermYears      || 35;
-    var propertyTax        = params.propertyTax        || 120000;    // 年額
-    var maintenanceFee     = params.maintenanceFee     || 10000;     // 月額（修繕積立金）
-    var managementFee      = params.managementFee      || 15000;     // 月額（管理費）
+    var propertyTax        = params.propertyTax        || 120000;    // 年額（円）
+    var maintenanceFee     = params.maintenanceFee     || 10000;     // 月額（修繕積立金）（円）
+    var managementFee      = params.managementFee      || 15000;     // 月額（管理費）（円）
     var investmentReturn   = params.investmentReturnRate || 0.03;    // 年率
     var inflationRate      = params.inflationRate      || 0.01;
     var years              = params.comparisonYears    || 35;
+    // 追加: より正確な計算のための新パラメータ
+    var renewalFee         = params.renewalFee         || monthlyRent;    // 更新料（2年ごと・家賃1ヶ月分）（円）
+    var fireInsurance      = params.fireInsurance      || 20000;          // 火災保険（円/年）
+    var rentIncreaseRate   = params.rentIncreaseRate   || 0.005;          // 賃料上昇率（0.5%/年）
 
     var loanAmount    = propertyPrice - downPayment;
     var mortgageResult = calculateMortgage({
@@ -411,14 +415,14 @@ var FinancialEngine = (function () {
     // 購入時諸費用（物件価格の約7%）
     var purchaseCosts = propertyPrice * 0.07;
 
-    var yearlyComparison = [];
-    var rentCumulative   = 0;
-    var buyCumulative    = downPayment + purchaseCosts;
+    var yearlyComparison  = [];
+    var rentCumulative    = 0;
+    var buyCumulative     = downPayment + purchaseCosts;
+    var totalDeduction    = 0;
 
-    // 賃貸：差額を運用に回す想定
-    var rentInvestment   = 0;
+    // 賃貸：差額を運用に回す想定（頭金＋諸費用を初期投資として運用）
+    var rentInvestment   = downPayment + purchaseCosts;
     var buyEquity        = downPayment;
-    var currentRent      = monthlyRent;
     var loanBalance      = loanAmount;
     var currentPropertyValue = propertyPrice;
 
@@ -426,28 +430,37 @@ var FinancialEngine = (function () {
     var annualDepreciation = 0.015;
 
     for (var y = 1; y <= years; y++) {
-      // 賃貸コスト
-      var yearlyRent  = currentRent * 12;
-      rentCumulative += yearlyRent;
-      currentRent    *= (1 + annualRentIncrease);
+      // 賃貸コスト（賃料上昇率を考慮）
+      var yearlyRent  = monthlyRent * 12 * Math.pow(1 + rentIncreaseRate, y);
+      // 2年ごとに更新料（家賃1ヶ月分）を加算
+      var yearRenewal = (y % 2 === 0) ? monthlyRent * Math.pow(1 + rentIncreaseRate, y) : 0;
+      rentCumulative += yearlyRent + yearRenewal;
 
       // 賃貸での差額投資（購入月次コストとの差額）
       var buyMonthlyCost  = monthlyMortgage + maintenanceFee + managementFee + propertyTax / 12;
       var diffMonthly     = Math.max(0, buyMonthlyCost - monthlyRent);
       rentInvestment      = rentInvestment * (1 + investmentReturn) + diffMonthly * 12;
 
-      // 購入コスト
-      var yearlyBuy    = (y <= loanTermYears ? monthlyMortgage * 12 : 0)
-                       + maintenanceFee * 12
-                       + managementFee * 12
-                       + propertyTax;
-      buyCumulative   += yearlyBuy;
+      // 購入コスト（火災保険を含む）
+      var yearlyBuyCost = (y <= loanTermYears ? monthlyMortgage * 12 : 0)
+                        + maintenanceFee * 12
+                        + managementFee * 12
+                        + propertyTax
+                        + fireInsurance;
+      buyCumulative += yearlyBuyCost;
 
       // 残債更新
       if (y <= loanTermYears) {
         loanBalance = mortgageResult.yearlySchedule[Math.min(y - 1, mortgageResult.yearlySchedule.length - 1)].remainingBalance;
       } else {
         loanBalance = 0;
+      }
+
+      // 住宅ローン控除（13年間・年末残債×0.7%・上限21万円）
+      if (y <= 13) {
+        var deduction = Math.min(loanBalance * 0.007, 210000);
+        buyCumulative  -= deduction;
+        totalDeduction += deduction;
       }
 
       // 不動産評価額更新（10年目以降は緩やかな下落→底値）
@@ -460,7 +473,7 @@ var FinancialEngine = (function () {
       buyEquity = currentPropertyValue - loanBalance;
 
       var rentNetWorth = rentInvestment - rentCumulative;
-      var buyNetWorth  = buyEquity - buyCumulative + propertyPrice; // 資産価値込み
+      var buyNetWorth  = buyEquity - buyCumulative; // buyEquity = currentPropertyValue - loanBalance（物件価値を二重計上しない）
 
       yearlyComparison.push({
         year:               y,
@@ -468,8 +481,8 @@ var FinancialEngine = (function () {
         buyCumulativeCost:  Math.round(buyCumulative),
         rentAssets:         Math.round(rentInvestment),
         buyAssets:          Math.round(currentPropertyValue),
-        rentNetWorth:       Math.round(rentInvestment),
-        buyNetWorth:        Math.round(buyEquity)
+        rentNetWorth:       Math.round(rentInvestment - rentCumulative),
+        buyNetWorth:        Math.round(buyEquity - buyCumulative)
       });
     }
 
@@ -485,6 +498,18 @@ var FinancialEngine = (function () {
     var finalYear    = yearlyComparison[years - 1];
     var difference   = finalYear.buyNetWorth - finalYear.rentNetWorth;
     var recommendation = difference > 0 ? 'buy' : 'rent';
+
+    // 減価係数（最終年の物件価値算出用）
+    var depreciationFactor = 1;
+    for (var dy = 1; dy <= years; dy++) {
+      if (dy <= 10) {
+        depreciationFactor *= (1 - annualDepreciation);
+      } else {
+        depreciationFactor *= (1 - annualDepreciation * 0.3);
+      }
+    }
+    var finalPropertyValue = propertyPrice * depreciationFactor;
+    var finalLoanBalance   = years >= loanTermYears ? 0 : (mortgageResult.yearlySchedule[Math.min(years - 1, mortgageResult.yearlySchedule.length - 1)] || {remainingBalance: 0}).remainingBalance;
 
     var analysis = recommendation === 'buy'
       ? years + '年後の純資産比較では、購入が賃貸より約' + toManEn(Math.abs(difference)) + '有利な結果となっています。'
@@ -503,14 +528,19 @@ var FinancialEngine = (function () {
     ];
 
     return {
-      rentTotal:        Math.round(finalYear.rentCumulativeCost),
-      buyTotal:         Math.round(finalYear.buyCumulativeCost),
-      difference:       Math.round(difference),
-      recommendation:   recommendation,
-      breakEvenYear:    breakEvenYear,
-      yearlyComparison: yearlyComparison,
-      analysis:         analysis,
-      factors:          factors
+      rentTotal:          Math.round(finalYear.rentCumulativeCost),
+      buyTotal:           Math.round(finalYear.buyCumulativeCost),
+      difference:         Math.round(difference),
+      recommendation:     recommendation,
+      breakEvenYear:      breakEvenYear,
+      yearlyComparison:   yearlyComparison,
+      propertyValue:      Math.round(finalPropertyValue),
+      inputMonthlyRent:   monthlyRent,
+      loanDeductionTotal: Math.round(totalDeduction),
+      rentNetWorth:       Math.round(rentInvestment - rentCumulative),
+      buyNetWorth:        Math.round(finalPropertyValue - finalLoanBalance - buyCumulative),
+      analysis:           analysis,
+      factors:            factors
     };
   }
 
@@ -687,15 +717,18 @@ var FinancialEngine = (function () {
     var baseRate   = params.baseRate   || 0.005; // 0.5%（変動金利基準）
 
     var offsets    = [-0.005, 0, 0.005, 0.010, 0.015];
-    var scenarios  = offsets.map(function (offset) {
+    var labels     = ['金利-0.5%', '現在金利', '金利+0.5%', '金利+1.0%', '金利+1.5%'];
+    var scenarios  = offsets.map(function (offset, i) {
       var rate   = Math.max(0.001, baseRate + offset);
       var result = calculateMortgage({ loanAmount: loanAmount, interestRate: rate, termYears: termYears });
       return {
-        rate:              Math.round(rate * 1000) / 10,  // %表示
-        rateDecimal:       rate,
-        monthlyPayment:    result.monthlyPayment,
-        totalPayment:      result.totalPayment,
-        totalInterest:     result.totalInterest,
+        name:               labels[i],
+        label:              labels[i],
+        rate:               Math.round(rate * 1000) / 10,  // %表示
+        rateDecimal:        rate,
+        monthlyPayment:     result.monthlyPayment,
+        totalPayment:       result.totalPayment,
+        totalInterest:      result.totalInterest,
         differenceFromBase: 0
       };
     });
