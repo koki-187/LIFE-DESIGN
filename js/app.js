@@ -161,91 +161,191 @@ var App = (function () {
     var container = document.getElementById('dashboard-content');
     if (!container) return;
 
-    var totalClients  = state.clients.length;
-    var recentCount   = state.clients.filter(function (c) {
-      var d = new Date(c.updatedAt);
-      var now = new Date();
-      return (now - d) < 7 * 24 * 60 * 60 * 1000;
+    var totalClients = state.clients.length;
+    var recentCount = state.clients.filter(function(c) {
+      return (new Date() - new Date(c.updatedAt)) < 7 * 24 * 60 * 60 * 1000;
     }).length;
+
+    // time-based greeting
+    var hour = new Date().getHours();
+    var greeting = hour < 12 ? 'おはようございます' : hour < 17 ? 'こんにちは' : 'お疲れ様です';
+    var dateStr = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
 
     var html = '';
 
-    // ウェルカムバナー（クライアント未登録時）
-    if (state.clients.length === 0) {
-      html += '<div class="welcome-banner">';
-      html += '<h2>LIFE DESIGN PARTNERへようこそ</h2>';
-      html += '<p>クライアントのライフプランニングを4ステップでサポートします。</p>';
-      html += '<div class="workflow-steps">';
-      html += '<div class="step-item"><div class="step-num">1</div><div class="step-label">クライアント情報登録</div></div>';
-      html += '<div class="step-arrow">→</div>';
-      html += '<div class="step-item"><div class="step-num">2</div><div class="step-label">心理分析</div></div>';
-      html += '<div class="step-arrow">→</div>';
-      html += '<div class="step-item"><div class="step-num">3</div><div class="step-label">ファイナンシャル分析</div></div>';
-      html += '<div class="step-arrow">→</div>';
-      html += '<div class="step-item"><div class="step-num">4</div><div class="step-label">レポート出力</div></div>';
-      html += '</div>';
-      html += '<button class="btn-primary btn-large" onclick="App.newClient()" style="position:relative;z-index:1">新規クライアントを登録する</button>';
-      html += '</div>';
-    }
-
-    // 統計カード
-    html += '<div class="stats-grid">';
-    html += _statCard('登録クライアント数', totalClients + '名', 'stat-primary');
-    html += _statCard('今週の更新', recentCount + '件', 'stat-secondary');
-    html += _statCard('現在選択中', state.currentClient ? state.currentClient.name + ' 様' : '未選択', 'stat-accent');
+    // ── ヒーローバナー ──────────────────────────────────────────────────────────
+    html += '<div class="db-hero">';
+    html += '  <div class="db-hero-orb db-orb-1"></div>';
+    html += '  <div class="db-hero-orb db-orb-2"></div>';
+    html += '  <div class="db-hero-orb db-orb-3"></div>';
+    html += '  <div class="db-hero-content">';
+    html += '    <div class="db-hero-eyebrow"><span class="db-hero-dot"></span>LIFE DESIGN PARTNER  ·  AFP System</div>';
+    html += '    <div class="db-hero-greeting">' + greeting + '、パートナー</div>';
+    html += '    <div class="db-hero-sub">今日も最高のライフプランを提案しましょう</div>';
+    html += '    <div class="db-hero-date">' + dateStr + '</div>';
+    html += '  </div>';
+    html += '  <div class="db-hero-badge">';
+    html += '    <div class="db-hero-badge-icon"><span class="material-icons">auto_awesome</span></div>';
+    html += '    <div class="db-hero-badge-text">AI分析エンジン<br><span>稼働中</span></div>';
+    html += '  </div>';
     html += '</div>';
 
-    // クイックアクション
-    html += '<div class="card" style="margin-top:1.5rem">';
-    html += '<div class="card-header"><h2>クイックアクション</h2></div>';
-    html += '<div class="card-body quick-actions">';
-    html += '<button class="btn-primary" onclick="App.showSection(\'client-input\')">新規クライアント入力</button>';
-    if (state.currentClient) {
-      html += '<button class="btn-secondary" onclick="App.showSection(\'psychology\')">心理分析を実行</button>';
-      html += '<button class="btn-secondary" onclick="App.showSection(\'financial\')">ファイナンシャル分析</button>';
-    }
-    html += '</div></div>';
+    // ── KPI カード ──────────────────────────────────────────────────────────────
+    html += '<div class="db-kpi-row">';
 
-    // クライアント一覧
-    html += '<div class="card" style="margin-top:1.5rem">';
-    html += '<div class="card-header"><h2>クライアント一覧</h2></div>';
-    html += '<div class="card-body">';
+    // カード1: 登録クライアント数
+    html += '<div class="db-kpi-card db-kpi-blue">';
+    html += '  <div class="db-kpi-icon-wrap"><span class="material-icons">people</span></div>';
+    html += '  <div class="db-kpi-body">';
+    html += '    <div class="db-kpi-value" data-count="' + totalClients + '">' + totalClients + '</div>';
+    html += '    <div class="db-kpi-label">登録クライアント</div>';
+    html += '  </div>';
+    html += '  <div class="db-kpi-glow"></div>';
+    html += '</div>';
+
+    // カード2: 今週の更新
+    html += '<div class="db-kpi-card db-kpi-gold">';
+    html += '  <div class="db-kpi-icon-wrap"><span class="material-icons">update</span></div>';
+    html += '  <div class="db-kpi-body">';
+    html += '    <div class="db-kpi-value" data-count="' + recentCount + '">' + recentCount + '</div>';
+    html += '    <div class="db-kpi-label">今週の更新</div>';
+    html += '  </div>';
+    html += '  <div class="db-kpi-glow"></div>';
+    html += '</div>';
+
+    // カード3: 現在選択中クライアント
+    html += '<div class="db-kpi-card db-kpi-teal">';
+    html += '  <div class="db-kpi-icon-wrap"><span class="material-icons">person_pin</span></div>';
+    html += '  <div class="db-kpi-body">';
+    html += '    <div class="db-kpi-value db-kpi-name">' + (state.currentClient ? _escape(state.currentClient.name) : '未選択') + '</div>';
+    html += '    <div class="db-kpi-label">対応中クライアント</div>';
+    html += '  </div>';
+    html += '  <div class="db-kpi-glow"></div>';
+    html += '</div>';
+
+    // カード4: 新規ボタンカード
+    html += '<div class="db-kpi-card db-kpi-action" onclick="App.newClient()" style="cursor:pointer">';
+    html += '  <div class="db-kpi-icon-wrap"><span class="material-icons">person_add</span></div>';
+    html += '  <div class="db-kpi-body">';
+    html += '    <div class="db-kpi-value" style="font-size:1.1rem">新規登録</div>';
+    html += '    <div class="db-kpi-label">クライアントを追加</div>';
+    html += '  </div>';
+    html += '  <div class="db-kpi-glow"></div>';
+    html += '</div>';
+
+    html += '</div>'; // db-kpi-row
+
+    // ── ワークフローパイプライン ────────────────────────────────────────────────
+    if (totalClients > 0) {
+      var stageData = [
+        { label: '情報入力', icon: 'edit_note', count: totalClients },
+        { label: '心理分析', icon: 'psychology', count: state.psychologyResults ? 1 : 0 },
+        { label: 'FA分析', icon: 'bar_chart', count: state.financialResults && Object.keys(state.financialResults).length > 0 ? 1 : 0 },
+        { label: 'レポート出力', icon: 'description', count: state.financialResults && state.currentClient ? 1 : 0 }
+      ];
+      var maxStage = totalClients || 1;
+
+      html += '<div class="db-pipeline-card">';
+      html += '  <div class="db-pipeline-header">';
+      html += '    <span class="material-icons">account_tree</span>';
+      html += '    <span>ワークフロー パイプライン</span>';
+      html += '  </div>';
+      html += '  <div class="db-pipeline-stages">';
+      stageData.forEach(function(stage, idx) {
+        var pct = Math.round((stage.count / maxStage) * 100);
+        html += '  <div class="db-pipeline-stage">';
+        html += '    <div class="db-pipeline-stage-top">';
+        html += '      <div class="db-pipeline-stage-icon ' + (stage.count > 0 ? 'active' : '') + '">';
+        html += '        <span class="material-icons">' + stage.icon + '</span>';
+        html += '      </div>';
+        html += '      <div class="db-pipeline-stage-count">' + stage.count + '名</div>';
+        html += '    </div>';
+        html += '    <div class="db-pipeline-bar-wrap">';
+        html += '      <div class="db-pipeline-bar-fill" style="width:' + pct + '%"></div>';
+        html += '    </div>';
+        html += '    <div class="db-pipeline-stage-label">' + stage.label + '</div>';
+        html += '  </div>';
+        if (idx < stageData.length - 1) {
+          html += '  <div class="db-pipeline-arrow"><span class="material-icons">arrow_forward_ios</span></div>';
+        }
+      });
+      html += '  </div>';
+      html += '</div>';
+    }
+
+    // ── クライアント一覧（カードグリッド） ────────────────────────────────────
+    html += '<div class="db-section-header">';
+    html += '  <div class="db-section-title"><span class="material-icons">group</span>クライアント一覧</div>';
+    html += '  <button class="btn-primary btn-sm" onclick="App.newClient()"><span class="material-icons" style="font-size:14px;vertical-align:middle">add</span> 新規追加</button>';
+    html += '</div>';
 
     if (state.clients.length === 0) {
-      html += '<p class="text-secondary">登録されているクライアントはいません。まず新規クライアントを入力してください。</p>';
+      html += '<div class="db-empty">';
+      html += '  <div class="db-empty-icon"><span class="material-icons">person_search</span></div>';
+      html += '  <div class="db-empty-title">クライアントが未登録です</div>';
+      html += '  <div class="db-empty-sub">まず最初のクライアントを登録して、ライフプランニングを開始しましょう。</div>';
+      html += '  <button class="btn-primary btn-large" onclick="App.newClient()">最初のクライアントを登録</button>';
+      html += '</div>';
     } else {
-      html += '<table class="data-table">';
-      html += '<thead><tr><th>お名前</th><th>年齢</th><th>職業</th><th>年収</th><th>目的</th><th>更新日</th><th>操作</th></tr></thead>';
-      html += '<tbody>';
-      state.clients.forEach(function (c) {
-        var purposeLabel = {
-          'buy_first': '初めての購入',
-          'buy_upgrade': '住み替え',
-          'buy_investment': '投資用',
-          'rent': '賃貸検討'
-        }[c.purpose] || c.purpose || '未設定';
-
+      html += '<div class="db-client-grid">';
+      state.clients.forEach(function(c) {
         var isActive = state.currentClient && state.currentClient.id === c.id;
-        html += '<tr class="' + (isActive ? 'row-active' : '') + '">';
-        html += '<td><strong>' + _escape(c.name) + '</strong>';
-        if (c.nameKana) html += '<br><small class="text-secondary">' + _escape(c.nameKana) + '</small>';
-        html += '</td>';
-        html += '<td>' + (c.age || '-') + '歳</td>';
-        html += '<td>' + _escape(c.occupation || '-') + '</td>';
-        html += '<td>' + (c.annualIncome ? formatMan(c.annualIncome) : '-') + '</td>';
-        html += '<td>' + purposeLabel + '</td>';
-        html += '<td>' + _formatDate(c.updatedAt) + '</td>';
-        html += '<td class="action-cell">';
-        html += '<button class="btn-sm btn-primary" onclick="App.selectClient(\'' + c.id + '\')">選択</button> ';
-        html += '<button class="btn-sm btn-danger" onclick="App.deleteClient(\'' + c.id + '\')">削除</button>';
-        html += '</td>';
-        html += '</tr>';
+        var purposeLabel = {
+          'buy_first': '初回購入', 'buy_upgrade': '住み替え',
+          'buy_investment': '投資用', 'rent': '賃貸検討'
+        }[c.purpose] || '未設定';
+        var purposeColor = {
+          'buy_first': 'db-badge-blue', 'buy_upgrade': 'db-badge-gold',
+          'buy_investment': 'db-badge-teal', 'rent': 'db-badge-gray'
+        }[c.purpose] || 'db-badge-gray';
+
+        var initials = (c.name || '?').slice(0, 2);
+        var ageStr = c.age ? c.age + '歳' : '-';
+        var incomeStr = c.annualIncome ? Math.round(c.annualIncome / 10000) + '万円' : '-';
+
+        html += '<div class="db-client-card ' + (isActive ? 'db-client-card-active' : '') + '">';
+        html += '  <div class="db-client-card-header">';
+        html += '    <div class="db-client-avatar">' + _escape(initials) + '</div>';
+        html += '    <div class="db-client-meta">';
+        html += '      <div class="db-client-name">' + _escape(c.name) + ' 様</div>';
+        html += '      <div class="db-client-sub">' + ageStr + ' · ' + _escape(c.occupation || '-') + '</div>';
+        html += '    </div>';
+        if (isActive) html += '<div class="db-client-active-badge"><span class="material-icons">radio_button_checked</span>対応中</div>';
+        html += '  </div>';
+        html += '  <div class="db-client-card-body">';
+        html += '    <div class="db-client-stat"><span>年収</span><strong>' + incomeStr + '</strong></div>';
+        html += '    <div class="db-client-stat"><span>更新</span><strong>' + _formatDate(c.updatedAt) + '</strong></div>';
+        html += '  </div>';
+        html += '  <div class="db-client-card-footer">';
+        html += '    <span class="db-badge ' + purposeColor + '">' + purposeLabel + '</span>';
+        html += '    <div class="db-client-actions">';
+        html += '      <button class="btn-sm btn-primary" onclick="App.selectClient(\'' + c.id + '\')">選択</button>';
+        html += '      <button class="btn-sm btn-danger" onclick="App.deleteClient(\'' + c.id + '\')">削除</button>';
+        html += '    </div>';
+        html += '  </div>';
+        html += '</div>';
       });
-      html += '</tbody></table>';
+      html += '</div>'; // db-client-grid
     }
 
-    html += '</div></div>';
     container.innerHTML = html;
+
+    // カウントアップアニメーション
+    container.querySelectorAll('.db-kpi-value[data-count]').forEach(function(el) {
+      var target = parseInt(el.getAttribute('data-count'), 10);
+      if (isNaN(target) || target === 0) return;
+      var start = 0;
+      var duration = 800;
+      var startTime = null;
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        var progress = Math.min((ts - startTime) / duration, 1);
+        var ease = 1 - Math.pow(1 - progress, 3); // ease-out-cubic
+        el.textContent = Math.round(start + (target - start) * ease);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
   }
 
   function _statCard(label, value, cssClass) {
@@ -253,6 +353,167 @@ var App = (function () {
       + '<div class="stat-value">' + value + '</div>'
       + '<div class="stat-label">' + label + '</div>'
       + '</div>';
+  }
+
+  function _modelCaseBtn(label, emoji, caseId, sub) {
+    return '<button type="button" class="model-case-btn" onclick="App.applyModelCase(\'' + caseId + '\')">' +
+      '<span class="model-case-emoji">' + emoji + '</span>' +
+      '<span class="model-case-label">' + label + '</span>' +
+      '<span class="model-case-sub">' + sub + '</span>' +
+      '</button>';
+  }
+
+  function applyModelCase(caseId) {
+    var cases = {
+      single_f_34: { name: '', age: 34, gender: 'female', occupation: '会社員', maritalStatus: 'single', children: 0, annualIncome: 500, spouseIncome: 0, savings: 150, currentHousing: 'rent', currentRent: 9.5, purpose: 'buy_first', notes: '単身女性・賃貸からの初購入検討' },
+      single_m_32: { name: '', age: 32, gender: 'male',   occupation: '会社員', maritalStatus: 'single', children: 0, annualIncome: 450, spouseIncome: 0, savings: 120, currentHousing: 'rent', currentRent: 8.5, purpose: 'buy_first', notes: '単身男性・初購入検討' },
+      couple_35:   { name: '', age: 35, gender: 'male',   occupation: '会社員', maritalStatus: 'married', children: 0, annualIncome: 600, spouseIncome: 500, savings: 300, currentHousing: 'rent', currentRent: 12, purpose: 'buy_first', notes: '共働き夫婦・住宅購入検討' },
+      family_38:   { name: '', age: 38, gender: 'male',   occupation: '会社員', maritalStatus: 'married', children: 1, annualIncome: 600, spouseIncome: 300, savings: 400, currentHousing: 'rent', currentRent: 12, purpose: 'buy_upgrade', notes: '子育て世帯・住み替え検討' },
+      family_42:   { name: '', age: 42, gender: 'male',   occupation: '会社員', maritalStatus: 'married', children: 2, annualIncome: 750, spouseIncome: 450, savings: 800, currentHousing: 'own', currentRent: 0, purpose: 'buy_upgrade', notes: 'ファミリー・住み替え・売却検討' },
+      senior_55:   { name: '', age: 55, gender: 'male',   occupation: '会社員', maritalStatus: 'married', children: 0, annualIncome: 700, spouseIncome: 0, savings: 2000, currentHousing: 'own', currentRent: 0, purpose: 'buy_upgrade', notes: '子供独立・住み替え・老後準備' }
+    };
+    var mc = cases[caseId];
+    if (!mc) return;
+
+    var setVal = function(id, val) { var el = document.getElementById(id); if (el) el.value = val; };
+    var setRadio = function(name, val) { var el = document.querySelector('input[name="' + name + '"][value="' + val + '"]'); if (el) el.checked = true; };
+
+    if (mc.age)            setVal('client-age', mc.age);
+    if (mc.occupation)     setVal('client-occupation', mc.occupation);
+    if (mc.annualIncome)   setVal('client-income', mc.annualIncome);
+    if (mc.spouseIncome !== undefined) setVal('spouse-income', mc.spouseIncome);
+    if (mc.savings)        setVal('client-savings', mc.savings);
+    if (mc.currentRent)    setVal('current-rent', mc.currentRent);
+    if (mc.children !== undefined) setVal('client-children', mc.children);
+    if (mc.gender)         setRadio('gender', mc.gender);
+    if (mc.maritalStatus)  setRadio('marital', mc.maritalStatus);
+    if (mc.currentHousing) setRadio('current-housing', mc.currentHousing);
+    if (mc.purpose)        setRadio('purpose', mc.purpose);
+    if (mc.notes)          setVal('client-notes', mc.notes);
+
+    showAlert('モデルケースを入力しました。お名前などを確認してください。', 'info');
+  }
+
+  function _renderHousingRatioZone(ratio) {
+    var zones = [
+      { max: 15,  label: '余裕あり（理想的）',    color: '#1b5e20', bg: '#e8f5e9', icon: 'sentiment_very_satisfied' },
+      { max: 20,  label: '安全圏',               color: '#2e7d32', bg: '#f1f8f1', icon: 'check_circle' },
+      { max: 25,  label: '標準（推奨上限）',       color: '#f57f17', bg: '#fff8e1', icon: 'info' },
+      { max: 30,  label: '注意が必要',            color: '#e65100', bg: '#fff3e0', icon: 'warning' },
+      { max: 35,  label: '高負担',               color: '#b71c1c', bg: '#ffebee', icon: 'error' },
+      { max: 999, label: '超高負担（要見直し）',   color: '#880e4f', bg: '#fce4ec', icon: 'cancel' }
+    ];
+    var currentZone = zones.filter(function(z) { return ratio <= z.max; })[0] || zones[zones.length - 1];
+    var barPct = Math.min(100, Math.round((ratio / 40) * 100));
+
+    var html = '<div class="housing-ratio-widget">';
+    html += '<div class="housing-ratio-title"><span class="material-icons">home</span>住居費比率 安全ライン診断</div>';
+
+    html += '<div class="housing-ratio-bar-area">';
+    html += '<div class="housing-ratio-bar-track">';
+    html += '<div class="housing-ratio-zone-safe"    style="width:37.5%"></div>';
+    html += '<div class="housing-ratio-zone-moderate" style="width:25%"></div>';
+    html += '<div class="housing-ratio-zone-risky"   style="width:37.5%"></div>';
+    html += '<div class="housing-ratio-pointer" style="left:' + Math.min(95, barPct) + '%">' +
+      '<div class="housing-ratio-pointer-line"></div>' +
+      '<div class="housing-ratio-pointer-label">' + ratio.toFixed(1) + '%</div>' +
+      '</div>';
+    html += '</div>';
+    html += '<div class="housing-ratio-bar-labels">';
+    html += '<span>0%</span><span>15%</span><span>25%</span><span>35%</span><span>40%+</span>';
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="housing-ratio-verdict" style="background:' + currentZone.bg + ';border-left:4px solid ' + currentZone.color + '">';
+    html += '<span class="material-icons" style="color:' + currentZone.color + '">' + currentZone.icon + '</span>';
+    html += '<div>';
+    html += '<div class="housing-ratio-verdict-title" style="color:' + currentZone.color + '">現在の住居費比率 <strong>' + ratio.toFixed(1) + '%</strong> ：' + currentZone.label + '</div>';
+    html += '<div class="housing-ratio-verdict-sub">業界標準: 月収の25%以内を推奨。20%以下が理想的です。</div>';
+    html += '</div>';
+    html += '</div>';
+
+    html += '<div class="housing-ratio-zones">';
+    var zoneDisplay = [
+      { range: '〜15%', label: '余裕あり（理想）',   color: '#1b5e20' },
+      { range: '〜20%', label: '安全圏（推奨）',      color: '#2e7d32' },
+      { range: '〜25%', label: '標準（上限目安）',    color: '#f57f17' },
+      { range: '〜30%', label: '注意が必要',          color: '#e65100' },
+      { range: '30%〜', label: '高負担（要見直し）',  color: '#b71c1c' }
+    ];
+    zoneDisplay.forEach(function(z) {
+      var isCurrent = (ratio <= 15 && z.range === '〜15%') ||
+        (ratio > 15 && ratio <= 20 && z.range === '〜20%') ||
+        (ratio > 20 && ratio <= 25 && z.range === '〜25%') ||
+        (ratio > 25 && ratio <= 30 && z.range === '〜30%') ||
+        (ratio > 30 && z.range === '30%〜');
+      html += '<div class="housing-ratio-zone-item' + (isCurrent ? ' current' : '') + '">';
+      html += '<span class="housing-ratio-zone-dot" style="background:' + z.color + '"></span>';
+      html += '<span class="housing-ratio-zone-range">' + z.range + '</span>';
+      html += '<span class="housing-ratio-zone-label">' + z.label + '</span>';
+      if (isCurrent) html += '<span class="housing-ratio-zone-you">← あなた</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function _renderBuyAdvantageSection(rvb) {
+    if (!rvb) return '';
+    var breakEven = rvb.breakEvenYear || 10;
+    var totalRentCost = rvb.totalRentCost || 0;
+    var totalBuyCost = rvb.totalBuyCost || 0;
+    var saving30yr = totalRentCost - totalBuyCost;
+    var propertyValue = rvb.propertyPrice || 0;
+    var netAsset = propertyValue * 0.5;
+
+    var html = '<div class="buy-advantage-card">';
+    html += '<div class="buy-advantage-header">';
+    html += '<span class="material-icons">emoji_events</span>';
+    html += '<span>自宅購入が圧倒的に有利な理由</span>';
+    html += '<span class="buy-advantage-sub">〜賃貸と購入の30年間シミュレーション〜</span>';
+    html += '</div>';
+
+    html += '<div class="buy-advantage-grid">';
+
+    html += '<div class="buy-adv-item">';
+    html += '<div class="buy-adv-icon buy-adv-icon-gold"><span class="material-icons">account_balance</span></div>';
+    html += '<div class="buy-adv-title">資産として残る</div>';
+    html += '<div class="buy-adv-value">' + formatMan(netAsset) + '</div>';
+    html += '<div class="buy-adv-desc">30年後も不動産という資産が残ります。賃貸は家賃を払い続けても何も残りません。</div>';
+    html += '</div>';
+
+    var taxBenefit = Math.min(propertyValue * 0.007 * 10, 4000000);
+    html += '<div class="buy-adv-item">';
+    html += '<div class="buy-adv-icon buy-adv-icon-blue"><span class="material-icons">savings</span></div>';
+    html += '<div class="buy-adv-title">住宅ローン控除</div>';
+    html += '<div class="buy-adv-value">' + formatMan(taxBenefit) + '</div>';
+    html += '<div class="buy-adv-desc">年末ローン残高×0.7%を最大13年間、所得税・住民税から控除。実質コストが大幅削減。</div>';
+    html += '</div>';
+
+    html += '<div class="buy-adv-item">';
+    html += '<div class="buy-adv-icon buy-adv-icon-green"><span class="material-icons">elderly</span></div>';
+    html += '<div class="buy-adv-title">老後の住居費ゼロ</div>';
+    html += '<div class="buy-adv-value">月' + formatMan(rvb.monthlyRent || 0) + '節約</div>';
+    html += '<div class="buy-adv-desc">ローン完済後は住居費がほぼゼロ。年金生活への移行がスムーズになります。</div>';
+    html += '</div>';
+
+    html += '</div>';
+
+    html += '<div class="buy-advantage-breakeven">';
+    html += '<div class="buy-adv-be-icon"><span class="material-icons">schedule</span></div>';
+    html += '<div>';
+    html += '<div class="buy-adv-be-title">損益分岐点: 購入後 <strong>' + breakEven + '年目</strong> で賃貸より有利に</div>';
+    if (saving30yr > 0) {
+      html += '<div class="buy-adv-be-sub">30年間での累計差額: <strong class="buy-adv-be-amount">約' + formatMan(saving30yr) + 'お得</strong></div>';
+    } else {
+      html += '<div class="buy-adv-be-sub">長期保有でコスト最適化が期待されます</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    html += '</div>';
+    return html;
   }
 
   // ---------------------------------------------------------------------------
@@ -299,8 +560,22 @@ var App = (function () {
 
     // 収入・資産
     html += '<div class="form-section"><h3>収入・資産状況</h3>';
-    html += _formRow('本人年収（万円）', '<input type="number" id="client-income" class="form-control form-control-sm" min="0" placeholder="600" value="' + (c && c.annualIncome ? Math.round(c.annualIncome / 10000) : '') + '">');
-    html += _formRow('配偶者年収（万円）', '<input type="number" id="spouse-income" class="form-control form-control-sm" min="0" placeholder="0" value="' + (c && c.spouseIncome ? Math.round(c.spouseIncome / 10000) : '') + '">');
+    html += _formRow('本人年収（万円）',
+      '<div class="income-stepper">' +
+      '<button type="button" class="income-step-btn" onclick="(function(){var el=document.getElementById(\'client-income\');el.value=Math.max(0,(parseInt(el.value)||0)-10);})()">−</button>' +
+      '<input type="number" id="client-income" class="form-control income-step-input" step="10" min="0" max="5000" placeholder="500" value="' + (c && c.annualIncome ? Math.round(c.annualIncome / 10000) : '') + '">' +
+      '<button type="button" class="income-step-btn" onclick="(function(){var el=document.getElementById(\'client-income\');el.value=(parseInt(el.value)||0)+10;})()">＋</button>' +
+      '<span class="income-step-label">万円/年</span>' +
+      '</div>'
+    );
+    html += _formRow('配偶者年収（万円）',
+      '<div class="income-stepper">' +
+      '<button type="button" class="income-step-btn" onclick="(function(){var el=document.getElementById(\'spouse-income\');el.value=Math.max(0,(parseInt(el.value)||0)-10);})()">−</button>' +
+      '<input type="number" id="spouse-income" class="form-control income-step-input" step="10" min="0" max="5000" placeholder="0" value="' + (c && c.spouseIncome ? Math.round(c.spouseIncome / 10000) : '') + '">' +
+      '<button type="button" class="income-step-btn" onclick="(function(){var el=document.getElementById(\'spouse-income\');el.value=(parseInt(el.value)||0)+10;})()">＋</button>' +
+      '<span class="income-step-label">万円/年</span>' +
+      '</div>'
+    );
     html += _formRow('現在の貯蓄額（万円）', '<input type="number" id="client-savings" class="form-control form-control-sm" min="0" placeholder="200" value="' + (c && c.savings ? Math.round(c.savings / 10000) : '') + '">');
     html += '</div>';
 
@@ -329,6 +604,18 @@ var App = (function () {
     }
     html += '</div>';
     html += '</form></div></div>';
+
+    // モデルケース選択パネル（フォームの前に挿入）
+    html = '<div class="model-case-panel">' +
+      '<div class="model-case-header"><span class="material-icons">people_alt</span>よくあるモデルケースから入力（参考値として自動入力）</div>' +
+      '<div class="model-case-grid">' +
+      _modelCaseBtn('単身女性 34歳', '🏢', 'single_f_34', '年収500万・賃貸・独身') +
+      _modelCaseBtn('単身男性 32歳', '👔', 'single_m_32', '年収450万・賃貸・独身') +
+      _modelCaseBtn('共働き夫婦 35歳', '👫', 'couple_35', '世帯1,100万・賃貸') +
+      _modelCaseBtn('子育て世帯 38歳', '👨‍👩‍👦', 'family_38', '世帯900万・子供1人') +
+      _modelCaseBtn('ファミリー 42歳', '🏡', 'family_42', '世帯1,200万・子供2人') +
+      _modelCaseBtn('シニア単身 55歳', '🎯', 'senior_55', '年収700万・住み替え') +
+      '</div></div>' + html;
 
     container.innerHTML = html;
   }
@@ -788,6 +1075,9 @@ var App = (function () {
       html += _resultItem('リスク判定',              '<span class="risk-badge risk-' + aff.riskLevel + '">' + _escape(aff.riskLevelJa) + '</span>');
       html += '</div>';
       html += '<p class="diagnosis">' + _escape(aff.explanation) + '</p>';
+      if (aff.housingCostRatio) {
+        html += _renderHousingRatioZone(aff.housingCostRatio);
+      }
       html += '</div>';
 
       // ガイドライン
@@ -864,6 +1154,7 @@ var App = (function () {
       }
       html += '<div class="chart-container"><canvas id="rvb-chart" width="500" height="300"></canvas></div>';
       html += '</div>';
+      html += _renderBuyAdvantageSection(rvb);
     }
     return html;
   }
@@ -1928,6 +2219,7 @@ var App = (function () {
     // クライアント操作
     saveClient:      saveClient,
     newClient:       newClient,
+    applyModelCase:  applyModelCase,
     selectClient:    selectClient,
     deleteClient:    deleteClient,
     _doDeleteClient: _doDeleteClient,
