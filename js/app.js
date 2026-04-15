@@ -64,16 +64,16 @@ var App = (function () {
 
   function showSection(sectionId) {
     // すべてのセクションを非表示
-    var sections = document.querySelectorAll('.section-content');
+    var sections = document.querySelectorAll('.section');
     sections.forEach(function (s) {
-      s.style.display = 'none';
+      s.classList.add('hidden');
       s.classList.remove('active');
     });
 
     // 対象セクションを表示
     var target = document.getElementById('section-' + sectionId);
     if (target) {
-      target.style.display = 'block';
+      target.classList.remove('hidden');
       target.classList.add('active');
     }
 
@@ -87,9 +87,9 @@ var App = (function () {
     });
 
     // ヘッダーのパンくずを更新
-    var breadcrumb = document.getElementById('breadcrumb-section');
-    if (breadcrumb) {
-      breadcrumb.textContent = SECTION_LABELS[sectionId] || sectionId;
+    var headerTitle = document.getElementById('header-title');
+    if (headerTitle) {
+      headerTitle.textContent = SECTION_LABELS[sectionId] || sectionId;
     }
 
     state.currentSection = sectionId;

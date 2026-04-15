@@ -1,1252 +1,571 @@
 /**
- * LIFE DESIGN PARTNER - PDF Report Generator
- * クライアント向け ライフデザイン・レポート生成モジュール
+ * ReportGenerator - html2pdf.js ベースのPDFレポート生成モジュール
+ * Japanese text is rendered via browser fonts (Noto Sans JP / Yu Gothic)
+ * CDN: https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js
  *
- * Uses: jsPDF 2.5.x (UMD via CDN)
  * Note: Psychology/behavioral analysis data is intentionally EXCLUDED.
  *       This report is client-facing; psychology data is for internal use only.
- *
- * All measurements in mm (A4: 210 x 297mm)
  */
-
 var ReportGenerator = (function () {
   'use strict';
 
   var RG = {};
 
-  // ---------------------------------------------------------------------------
-  // Color constants (RGB arrays matching app theme)
-  // ---------------------------------------------------------------------------
-  var C = {
-    navy:      [26,  35,  126],
-    navyDark:  [13,  22,   66],
-    navyMid:   [40,  55,  160],
-    gold:      [201, 168,  76],
-    goldLight: [212, 185, 106],
-    goldPale:  [245, 235, 195],
-    white:     [255, 255, 255],
-    black:     [33,   33,  33],
-    gray:      [97,   97,  97],
-    lightGray: [200, 200, 200],
-    bgGray:    [247, 247, 250],
-    bgBlue:    [235, 238, 255],
-    success:   [46,  125,  50],
-    warning:   [230, 130,  20],
-    danger:    [198,  40,  40],
-    successBg: [232, 245, 233],
-    warningBg: [255, 243, 224],
-    dangerBg:  [255, 235, 238]
-  };
-
-  // A4 page dimensions
-  var PW = 210; // page width mm
-  var PH = 297; // page height mm
-  var ML = 14;  // margin left
-  var MR = 14;  // margin right
-  var CW = PW - ML - MR; // content width
-
-  // ---------------------------------------------------------------------------
-  // Font management
-  // ---------------------------------------------------------------------------
-  RG._fontLoaded = false;
-  RG._fontData   = null;
-
-  /**
-   * Fetch and store NotoSansJP TTF for embedding.
-   * Call once before RG.generate() for proper Japanese rendering.
-   */
-  RG.initFont = async function () {
-    try {
-      var response = await fetch(
-        'https://cdn.jsdelivr.net/gh/nicolo-ribaudo/noto-sans-jp-jspdf@main/NotoSansJP-Regular.ttf'
-      );
-      if (!response.ok) throw new Error('font fetch failed');
-      RG._fontData   = await response.arrayBuffer();
-      RG._fontLoaded = true;
-    } catch (e) {
-      RG._fontLoaded = false;
-    }
-  };
-
-  /**
-   * Embed the Japanese font into a jsPDF document.
-   * Returns true when successful; false when falling back to Helvetica.
-   */
-  function applyFont(doc) {
-    if (RG._fontLoaded && RG._fontData) {
-      try {
-        var bytes  = new Uint8Array(RG._fontData);
-        var binary = '';
-        var len    = bytes.byteLength;
-        for (var i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
-        var base64 = btoa(binary);
-        doc.addFileToVFS('NotoSansJP-Regular.ttf', base64);
-        doc.addFont('NotoSansJP-Regular.ttf', 'NotoSansJP', 'normal');
-        doc.setFont('NotoSansJP', 'normal');
-        return true;
-      } catch (e) {
-        /* fall through */
-      }
-    }
-    doc.setFont('Helvetica', 'normal');
-    return false;
+  /* ------------------------------------------------------------------ */
+  /* Formatting helpers                                                   */
+  /* ------------------------------------------------------------------ */
+  function _fmt(n) { return (n || 0).toLocaleString('ja-JP'); }
+  function _man(n) { return Math.round((n || 0) / 10000).toLocaleString('ja-JP') + '万円'; }
+  function _yen(n) { return (n || 0).toLocaleString('ja-JP') + '円'; }
+  function _pct(n) { return (n || 0).toFixed(1) + '%'; }
+  function _esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  // ---------------------------------------------------------------------------
-  // Low-level drawing helpers
-  // ---------------------------------------------------------------------------
+  /* ------------------------------------------------------------------ */
+  /* No-op font init (html2pdf uses browser fonts)                        */
+  /* ------------------------------------------------------------------ */
+  RG.initFont = function () { return Promise.resolve(); };
 
-  function setFill(doc, rgb) {
-    doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+  /* ------------------------------------------------------------------ */
+  /* Inline CSS                                                           */
+  /* ------------------------------------------------------------------ */
+  var CSS = [
+    '@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap");',
+    '.report-wrap { font-family: "Noto Sans JP", "Yu Gothic", "\u6e38\u30b4\u30b7\u30c3\u30af", sans-serif; margin:0; padding:0; }',
+    '.a4-page { width:210mm; min-height:297mm; padding:15mm 18mm; background:#fff; box-sizing:border-box;',
+    '  page-break-after:always; position:relative; overflow:hidden; }',
+    '.page-break { page-break-before:always; }',
+    '.navy { color:#1a237e; } .gold { color:#c9a84c; }',
+    '.page-header { background:#1a237e; color:white; padding:8mm 18mm; margin:-15mm -18mm 8mm; }',
+    '.page-header .logo-line { font-size:9pt; letter-spacing:3px; color:#c9a84c; font-weight:700; }',
+    '.page-header .page-title { font-size:14pt; font-weight:700; margin-top:2mm; }',
+    '.page-footer { position:absolute; bottom:8mm; left:18mm; right:18mm; font-size:8pt; color:#999;',
+    '  border-top:1px solid #e0e0e0; padding-top:3mm; display:flex; justify-content:space-between; }',
+    '.info-table { width:100%; border-collapse:collapse; margin:4mm 0; font-size:10pt; }',
+    '.info-table th { background:#1a237e; color:white; padding:3mm 4mm; text-align:left; font-weight:500; width:35%; }',
+    '.info-table td { padding:3mm 4mm; border-bottom:1px solid #e8e8e8; }',
+    '.info-table tr:nth-child(even) td { background:#f8f9ff; }',
+    '.compare-table { width:100%; border-collapse:collapse; font-size:9pt; }',
+    '.compare-table th { background:#1a237e; color:white; padding:2.5mm 3mm; text-align:center; }',
+    '.compare-table td { padding:2.5mm 3mm; border:1px solid #e0e0e0; text-align:center; }',
+    '.compare-table tr:nth-child(even) td { background:#f8f9ff; }',
+    '.compare-table td:first-child { text-align:left; font-weight:500; }',
+    '.result-card { background:#f8f9ff; border-left:4px solid #1a237e; padding:4mm; margin:3mm 0; border-radius:2mm; }',
+    '.result-card.gold-card { border-left-color:#c9a84c; background:#fffdf5; }',
+    '.result-card.success { border-left-color:#2e7d32; background:#f1f8f1; }',
+    '.highlight-box { background:#1a237e; color:white; padding:5mm; border-radius:3mm; margin:3mm 0; }',
+    '.highlight-box .amount { font-size:22pt; font-weight:700; color:#c9a84c; }',
+    '.kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:3mm; margin:4mm 0; }',
+    '.kpi-card { background:#f8f9ff; border:1px solid #e0e0e0; padding:3mm; text-align:center; border-radius:2mm; }',
+    '.kpi-card .kpi-value { font-size:16pt; font-weight:700; color:#1a237e; }',
+    '.kpi-card .kpi-label { font-size:8pt; color:#666; margin-top:1mm; }',
+    '.risk-safe { color:#2e7d32; font-weight:700; }',
+    '.risk-moderate { color:#f57f17; font-weight:700; }',
+    '.risk-risky { color:#c62828; font-weight:700; }',
+    '.section-title { font-size:12pt; font-weight:700; color:#1a237e; border-bottom:2px solid #c9a84c;',
+    '  padding-bottom:2mm; margin:6mm 0 4mm; }',
+    '.recommendation-list { padding-left:5mm; }',
+    '.recommendation-list li { margin:2mm 0; font-size:10pt; line-height:1.6; }',
+    '.timeline-item { display:flex; align-items:flex-start; margin:3mm 0; }',
+    '.timeline-dot { width:8mm; height:8mm; background:#1a237e; border-radius:50%; flex-shrink:0;',
+    '  display:flex; align-items:center; justify-content:center; color:white; font-size:8pt;',
+    '  font-weight:700; margin-right:4mm; margin-top:1mm; }',
+    '.timeline-content { flex:1; }',
+    '.two-col { display:grid; grid-template-columns:1fr 1fr; gap:6mm; }',
+    '.progress-bar-wrap { background:#e0e0e0; border-radius:2mm; height:5mm; margin:2mm 0; }',
+    '.progress-bar-fill { background:#1a237e; border-radius:2mm; height:5mm; }',
+    '.gold-row td { background:#fffdf5 !important; font-weight:700; color:#c9a84c; }',
+    '.disclaimer-box { background:#f5f5f5; border:1px solid #e0e0e0; padding:5mm; border-radius:2mm;',
+    '  font-size:8pt; color:#666; line-height:1.7; margin:4mm 0; }',
+    '.sign-table { width:100%; border-collapse:collapse; font-size:9pt; margin-top:4mm; }',
+    '.sign-table td { border:1px solid #ccc; padding:3mm 4mm; height:10mm; }',
+    '.sign-table th { background:#f0f0f0; padding:3mm 4mm; border:1px solid #ccc; font-weight:500; width:25%; }',
+  ].join('\n');
+
+  /* ------------------------------------------------------------------ */
+  /* Page 1: Cover Page                                                   */
+  /* ------------------------------------------------------------------ */
+  function _page1(d) {
+    var name = _esc(d.clientName || '\u304a\u5ba2\u69d8');
+    var date = _esc(d.reportDate || new Date().toLocaleDateString('ja-JP'));
+    return [
+      '<div class="a4-page" style="background:linear-gradient(160deg,#0d1642 60%,#1a237e 100%);',
+      '  display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">',
+      '  <div style="position:absolute;top:0;left:0;right:0;height:4mm;',
+      '    background:linear-gradient(90deg,#c9a84c,#d4b96a,#c9a84c);"></div>',
+      '  <div style="margin-bottom:12mm;">',
+      '    <div style="font-size:9pt;letter-spacing:6px;color:#c9a84c;text-transform:uppercase;margin-bottom:2mm;">AFP Life Planning</div>',
+      '    <div style="font-size:28pt;font-weight:700;color:white;letter-spacing:4px;line-height:1.2;">LIFE DESIGN</div>',
+      '    <div style="font-size:28pt;font-weight:700;color:#c9a84c;letter-spacing:8px;">PARTNER</div>',
+      '    <div style="width:60mm;height:0.5mm;background:#c9a84c;margin:4mm auto;"></div>',
+      '    <div style="font-size:11pt;color:#aab0cc;letter-spacing:2px;">\u30e9\u30a4\u30d5\u30c7\u30b6\u30a4\u30f3\u30fb\u30ec\u30dd\u30fc\u30c8</div>',
+      '  </div>',
+      '  <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(201,168,76,0.4);',
+      '    padding:8mm 20mm;border-radius:3mm;margin:8mm 0;">',
+      '    <div style="font-size:9pt;color:#c9a84c;letter-spacing:2px;margin-bottom:3mm;">\u30af\u30e9\u30a4\u30a2\u30f3\u30c8\u69d8</div>',
+      '    <div style="font-size:22pt;font-weight:700;color:white;">' + name + ' \u69d8</div>',
+      '  </div>',
+      '  <div style="margin-top:8mm;color:#aab0cc;font-size:9pt;">' + date + '</div>',
+      '  <div style="margin-top:2mm;color:rgba(170,176,204,0.6);font-size:8pt;">\u672c\u8cc7\u6599\u306f\u304a\u5ba2\u69d8\u5c02\u7528\u306e\u30e9\u30a4\u30d5\u30d7\u30e9\u30f3\u30cb\u30f3\u30b0\u8cc7\u6599\u3067\u3059</div>',
+      '  <div style="position:absolute;bottom:0;left:0;right:0;height:4mm;',
+      '    background:linear-gradient(90deg,#c9a84c,#d4b96a,#c9a84c);"></div>',
+      '</div>',
+    ].join('');
   }
 
-  function setDraw(doc, rgb) {
-    doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+  /* ------------------------------------------------------------------ */
+  /* Page 2: Life Plan Overview                                           */
+  /* ------------------------------------------------------------------ */
+  function _page2(d) {
+    var cs = d.clientSummary || {};
+    var ls = d.lifeStage || {};
+    var needs = ls.housingNeeds || [];
+    var age = cs.age || '\u2014';
+
+    var events = [
+      { label: '\u73fe\u5728', desc: _esc(cs.currentHousing || '\u73fe\u5c45\u4f4f\u4e2d') },
+      { label: '+5\u5e74', desc: '\u751f\u6d3b\u57fa\u76e4\u306e\u5b89\u5b9a' },
+      { label: '+10\u5e74', desc: '\u4f4f\u5b85\u53d6\u5f97\u30fb\u8cc7\u7523\u5f62\u6210' },
+      { label: '\u4f4f\u5b85\u53d6\u5f97', desc: _esc(cs.purpose || '\u4e0d\u52d5\u7523\u8cfc\u5165\u691c\u8a0e') },
+      { label: '\u5b50\u80b2\u3066\u5b8c\u4e86', desc: '\u6559\u80b2\u8cbb\u8ca0\u62c5\u306e\u7d42\u4e86' },
+      { label: '\u8001\u5f8c\u6e96\u5099', desc: '\u8cc7\u7523\u6700\u5927\u5316\u30d5\u30a7\u30fc\u30ba' },
+      { label: '\u5b9a\u5e74', desc: '\u5e74\u91d1\u30fb\u8001\u5f8c\u751f\u6d3b\u30b9\u30bf\u30fc\u30c8' },
+    ];
+
+    var timelineHtml = events.map(function (ev, i) {
+      return [
+        '<div class="timeline-item">',
+        '  <div class="timeline-dot">' + (i + 1) + '</div>',
+        '  <div class="timeline-content">',
+        '    <strong>' + ev.label + '</strong> \u2014 ' + ev.desc,
+        '  </div>',
+        '</div>',
+      ].join('');
+    }).join('');
+
+    var needsHtml = needs.length
+      ? needs.map(function (n) { return '<li>' + _esc(n) + '</li>'; }).join('')
+      : '<li>\u3054\u5e0c\u671b\u30a8\u30ea\u30a2\u3067\u306e\u7269\u4ef6\u63a2\u3057</li><li>\u8cc7\u7523\u5f62\u6210\u3068\u4f4f\u5c45\u8cbb\u306e\u30d0\u30e9\u30f3\u30b9</li><li>\u5c06\u6765\u306e\u5bb6\u65cf\u69cb\u6210\u306b\u5bfe\u5fdc\u3057\u305f\u4f4f\u307e\u3044</li>';
+
+    var marital = cs.maritalStatus || '\u2014';
+    var children = cs.children != null ? cs.children + '\u4eba' : '\u2014';
+
+    return [
+      '<div class="page-break"></div>',
+      '<div class="a4-page">',
+      '  <div class="page-header">',
+      '    <div class="logo-line">AFP LIFE PLANNING</div>',
+      '    <div class="page-title">\u30e9\u30a4\u30d5\u30d7\u30e9\u30f3\u6982\u8981</div>',
+      '  </div>',
+      '  <div class="section-title">\u30af\u30e9\u30a4\u30a2\u30f3\u30c8\u30d7\u30ed\u30d5\u30a3\u30fc\u30eb</div>',
+      '  <table class="info-table">',
+      '    <tr><th>\u6c0f\u540d</th><td>' + _esc(d.clientName || '\u2014') + ' \u69d8</td></tr>',
+      '    <tr><th>\u5e74\u9f62</th><td>' + _esc(age) + ' \u6b73</td></tr>',
+      '    <tr><th>\u3054\u8077\u696d</th><td>' + _esc(cs.occupation || '\u2014') + '</td></tr>',
+      '    <tr><th>\u3054\u5bb6\u65cf\u69cb\u6210</th><td>' + _esc(marital) + '\u30fb\u304a\u5b50\u69d8 ' + children + '</td></tr>',
+      '    <tr><th>\u73fe\u5728\u306e\u304a\u4f4f\u307e\u3044</th><td>' + _esc(cs.currentHousing || '\u2014') + '</td></tr>',
+      '    <tr><th>\u3054\u691c\u8a0e\u5185\u5bb9</th><td>' + _esc(cs.purpose || '\u2014') + '</td></tr>',
+      '    <tr><th>\u5e0c\u671b\u30a8\u30ea\u30a2</th><td>' + _esc(cs.desiredArea || '\u2014') + '</td></tr>',
+      '  </table>',
+      '  <div class="section-title">\u30e9\u30a4\u30d5\u30b9\u30c6\u30fc\u30b8\u8a3a\u65ad</div>',
+      '  <div class="result-card gold-card">',
+      '    <strong>' + _esc(ls.stage || '\u2014') + '</strong>',
+      '    <div style="margin-top:2mm;font-size:10pt;">' + _esc(ls.stageDescription || '') + '</div>',
+      '  </div>',
+      '  <div class="section-title">\u91cd\u8981\u30e9\u30a4\u30d5\u30a4\u30d9\u30f3\u30c8\u4e00\u89a7</div>',
+      timelineHtml,
+      '  <div class="section-title">\u4f4f\u307e\u3044\u306e\u30cb\u30fc\u30ba</div>',
+      '  <ul class="recommendation-list">' + needsHtml + '</ul>',
+      '  <div class="page-footer">',
+      '    <span>LIFE DESIGN PARTNER \u2014 \u30e9\u30a4\u30d5\u30c7\u30b6\u30a4\u30f3\u30ec\u30dd\u30fc\u30c8</span>',
+      '    <span>2 / 6</span>',
+      '  </div>',
+      '</div>',
+    ].join('');
   }
 
-  function setTextColor(doc, rgb) {
-    doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+  /* ------------------------------------------------------------------ */
+  /* Page 3: Income / Affordability Analysis                              */
+  /* ------------------------------------------------------------------ */
+  function _page3(d) {
+    var ie = d.incomeExpenseSummary || {};
+    var af = d.affordabilityResult || {};
+    var guideline = d.guideline || {};
+
+    var netIncome = ie.monthlyNetIncome || 0;
+    var totalExp = ie.monthlyTotalExpense || 0;
+    var surplus = ie.monthlySurplus || 0;
+    var savingsRate = ie.savingsRate || 0;
+    var barWidth = Math.min(Math.max(savingsRate, 0), 100).toFixed(1);
+
+    var riskClass = 'risk-safe';
+    if (af.riskLevel === 'moderate') { riskClass = 'risk-moderate'; }
+    if (af.riskLevel === 'risky') { riskClass = 'risk-risky'; }
+
+    return [
+      '<div class="page-break"></div>',
+      '<div class="a4-page">',
+      '  <div class="page-header">',
+      '    <div class="logo-line">AFP LIFE PLANNING</div>',
+      '    <div class="page-title">\u53ce\u652f\u30fb\u4f4f\u5b85\u53d6\u5f97\u529b\u5206\u6790</div>',
+      '  </div>',
+      '  <div class="two-col">',
+      '    <div>',
+      '      <div class="section-title">\u53ce\u652f\u8a3a\u65ad</div>',
+      '      <div class="kpi-grid">',
+      '        <div class="kpi-card"><div class="kpi-value">' + _man(netIncome) + '</div><div class="kpi-label">\u6708\u53ce\u624b\u53d6\u308a</div></div>',
+      '        <div class="kpi-card"><div class="kpi-value">' + _man(totalExp) + '</div><div class="kpi-label">\u6708\u9593\u652f\u51fa</div></div>',
+      '        <div class="kpi-card"><div class="kpi-value">' + _man(surplus) + '</div><div class="kpi-label">\u6708\u9593\u4f59\u5270</div></div>',
+      '      </div>',
+      '      <div style="margin:3mm 0;">',
+      '        <div style="font-size:9pt;color:#555;margin-bottom:1mm;">\u8caf\u84c4\u7387: ' + _pct(savingsRate) + '</div>',
+      '        <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + barWidth + '%;"></div></div>',
+      '      </div>',
+      '      <div class="result-card" style="font-size:9pt;">' + _esc(ie.diagnosis || '\u53ce\u652f\u306f\u6982\u306d\u826f\u597d\u3067\u3059\u3002') + '</div>',
+      '    </div>',
+      '    <div>',
+      '      <div class="section-title">\u4f4f\u5b85\u53d6\u5f97\u529b</div>',
+      '      <div class="highlight-box">',
+      '        <div style="font-size:9pt;margin-bottom:2mm;">\u63a8\u5968\u501f\u5165\u984d</div>',
+      '        <div class="amount">' + _man(af.recommendedLoanAmount) + '</div>',
+      '      </div>',
+      '      <div class="kpi-grid">',
+      '        <div class="kpi-card"><div class="kpi-value" style="font-size:12pt;">' + _man(af.maxLoanAmount) + '</div><div class="kpi-label">\u501f\u5165\u4e0a\u9650\u984d</div></div>',
+      '        <div class="kpi-card"><div class="kpi-value" style="font-size:12pt;">' + _man(af.maxMonthlyPayment) + '</div><div class="kpi-label">\u6708\u3005\u8fd4\u6e08\u76ee\u5b89</div></div>',
+      '        <div class="kpi-card"><div class="kpi-value" style="font-size:12pt;">' + _pct(af.housingCostRatio) + '</div><div class="kpi-label">\u4f4f\u5c45\u8cbb\u6bd4\u7387</div></div>',
+      '      </div>',
+      '      <div style="margin:2mm 0;font-size:10pt;">\u30ea\u30b9\u30af\u5224\u5b9a: <span class="' + riskClass + '">' + _esc(af.riskLevelJa || af.riskLevel || '\u2014') + '</span></div>',
+      '      <div style="font-size:9pt;color:#555;margin:2mm 0;">' + _esc(af.explanation || '') + '</div>',
+      '      <div class="section-title" style="margin-top:4mm;">\u5e74\u53ce\u5225\u30ac\u30a4\u30c9\u30e9\u30a4\u30f3</div>',
+      '      <table class="info-table">',
+      '        <tr><th>\u63a8\u5968\u8cc3\u6599/\u6708</th><td>' + _man(guideline.recommendedRent) + '</td></tr>',
+      '        <tr><th>\u63a8\u5968\u30ed\u30fc\u30f3/\u6708</th><td>' + _man(guideline.recommendedMortgage) + '</td></tr>',
+      '        <tr><th>\u7406\u60f3\u6bd4\u7387</th><td>' + _pct(guideline.idealRatio) + '</td></tr>',
+      '      </table>',
+      '    </div>',
+      '  </div>',
+      '  <div class="page-footer">',
+      '    <span>LIFE DESIGN PARTNER \u2014 \u30e9\u30a4\u30d5\u30c7\u30b6\u30a4\u30f3\u30ec\u30dd\u30fc\u30c8</span>',
+      '    <span>3 / 6</span>',
+      '  </div>',
+      '</div>',
+    ].join('');
   }
 
-  /** Filled rectangle */
-  function fillRect(doc, x, y, w, h, color) {
-    setFill(doc, color);
-    doc.rect(x, y, w, h, 'F');
-  }
+  /* ------------------------------------------------------------------ */
+  /* Page 4: Asset Formation Simulation                                   */
+  /* ------------------------------------------------------------------ */
+  function _page4(d) {
+    var proj = d.lifeplanProjection || [];
+    var cs = d.clientSummary || {};
+    var currentAge = cs.age || 30;
+    var retirementAge = 65;
 
-  /** Stroked rectangle */
-  function strokeRect(doc, x, y, w, h, color, lw) {
-    setDraw(doc, color);
-    doc.setLineWidth(lw || 0.3);
-    doc.rect(x, y, w, h, 'S');
-  }
+    var retRow = null;
+    proj.forEach(function (r) { if (r.age === retirementAge) { retRow = r; } });
+    if (!retRow && proj.length) { retRow = proj[proj.length - 1]; }
 
-  /** Horizontal rule */
-  function hRule(doc, x, y, w, color, lw) {
-    setDraw(doc, color);
-    doc.setLineWidth(lw || 0.3);
-    doc.line(x, y, x + w, y);
-  }
+    var firstRow = proj[0] || {};
+    var currentNetWorth = firstRow.netWorth || 0;
+    var retNetWorth = retRow ? (retRow.netWorth || 0) : 0;
+    var monthlyRetIncome = retNetWorth > 0 ? Math.round(retNetWorth / (20 * 12)) : 0;
 
-  /** Right-aligned text */
-  function textRight(doc, txt, x, y) {
-    doc.text(String(txt), x, y, { align: 'right' });
-  }
-
-  /** Center-aligned text */
-  function textCenter(doc, txt, x, y) {
-    doc.text(String(txt), x, y, { align: 'center' });
-  }
-
-  /** Truncate text to fit in maxWidth mm */
-  function truncate(doc, txt, maxWidth) {
-    var s = String(txt);
-    while (s.length > 1 && doc.getTextWidth(s) > maxWidth) {
-      s = s.slice(0, -1);
-    }
-    return s;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Page-level helpers
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Draw the top navy header bar with gold accent and page title.
-   */
-  function drawPageHeader(doc, pageTitle) {
-    // Navy background bar
-    fillRect(doc, 0, 0, PW, 18, C.navyDark);
-    // Gold accent stripe
-    fillRect(doc, 0, 18, PW, 1.8, C.gold);
-
-    // Logo text (left)
-    applyFont(doc);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.goldLight);
-    doc.text('LIFE DESIGN PARTNER', ML, 11.5);
-
-    // Page title (right)
-    doc.setFontSize(9);
-    setTextColor(doc, C.white);
-    textRight(doc, pageTitle, PW - MR, 11.5);
-  }
-
-  /**
-   * Draw page footer with page number and thin rule.
-   */
-  function drawPageFooter(doc, pageNum, totalPages) {
-    var fy = PH - 9;
-    hRule(doc, ML, fy - 1, CW, C.lightGray, 0.2);
-    applyFont(doc);
-    doc.setFontSize(7);
-    setTextColor(doc, C.gray);
-    doc.text('Confidential  /  お客様専用資料', ML, fy + 3);
-    textRight(doc, pageNum + ' / ' + totalPages, PW - MR, fy + 3);
-    textCenter(doc, 'LIFE DESIGN PARTNER', PW / 2, fy + 3);
-  }
-
-  /**
-   * Section heading with left navy bar accent.
-   */
-  function sectionHeading(doc, title, y) {
-    fillRect(doc, ML, y, 3, 6, C.gold);
-    fillRect(doc, ML + 3, y, CW - 3, 6, C.bgBlue);
-    applyFont(doc);
-    doc.setFontSize(9.5);
-    setTextColor(doc, C.navy);
-    doc.text(title, ML + 6, y + 4.3);
-    return y + 9;
-  }
-
-  /**
-   * Small label badge.
-   */
-  function badge(doc, label, x, y, bgColor, textColor) {
-    var tw = doc.getTextWidth(label) + 4;
-    fillRect(doc, x, y - 3.5, tw, 4.5, bgColor || C.navy);
-    doc.setFontSize(6.5);
-    setTextColor(doc, textColor || C.white);
-    doc.text(label, x + 2, y);
-    return x + tw + 2;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Table renderer
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Draw a simple table.
-   * @param {object} doc
-   * @param {number} startY       top of table
-   * @param {string[]} headers    column headers
-   * @param {Array[]} rows        array of row arrays (strings or numbers)
-   * @param {object} [opts]
-   *   colWidths {number[]}       column widths in mm
-   *   rowHeight {number}         row height in mm (default 7)
-   *   headerBg {number[]}        header background RGB
-   *   altBg    {number[]}        alternate row background RGB
-   *   fontSize {number}
-   *   highlightRows {number[]}   row indices to highlight with gold bg
-   * @returns {number} Y after table
-   */
-  function drawTable(doc, startY, headers, rows, opts) {
-    opts = opts || {};
-    var colWidths  = opts.colWidths  || [];
-    var rowH       = opts.rowHeight  || 7;
-    var headerBg   = opts.headerBg   || C.navy;
-    var altBg      = opts.altBg      || C.bgGray;
-    var fs         = opts.fontSize   || 8;
-    var hilite     = opts.highlightRows || [];
-
-    // Compute equal widths if not supplied
-    if (!colWidths.length) {
-      var eq = CW / headers.length;
-      headers.forEach(function () { colWidths.push(eq); });
-    }
-
-    var x = ML;
-    var y = startY;
-
-    applyFont(doc);
-    doc.setFontSize(fs);
-
-    // Header row
-    fillRect(doc, x, y, CW, rowH, headerBg);
-    setTextColor(doc, C.white);
-    var cx = x;
-    headers.forEach(function (h, i) {
-      var tx = cx + colWidths[i] / 2;
-      textCenter(doc, h, tx, y + rowH - 2);
-      cx += colWidths[i];
-    });
-    y += rowH;
-
-    // Data rows
-    rows.forEach(function (row, ri) {
-      var isHilite = hilite.indexOf(ri) !== -1;
-      var bg = isHilite ? C.goldPale : (ri % 2 === 0 ? C.white : altBg);
-      fillRect(doc, x, y, CW, rowH, bg);
-
-      // Cell borders
-      setDraw(doc, C.lightGray);
-      doc.setLineWidth(0.15);
-      doc.rect(x, y, CW, rowH, 'S');
-
-      var cx2 = x;
-      row.forEach(function (cell, ci) {
-        var align = (ci > 0) ? 'right' : 'left';
-        var cellX = align === 'right' ? cx2 + colWidths[ci] - 2 : cx2 + 2;
-        var cellTxt = truncate(doc, String(cell), colWidths[ci] - 3);
-        setTextColor(doc, isHilite ? C.navyDark : C.black);
-        doc.text(cellTxt, cellX, y + rowH - 2, { align: align });
-        cx2 += colWidths[ci];
-      });
-      y += rowH;
-    });
-
-    return y + 2;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Specialized visual components
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Horizontal progress bar.
-   * value/maxValue = fill ratio; color = fill color.
-   */
-  function drawBar(doc, x, y, width, height, value, maxValue, color) {
-    // Background
-    fillRect(doc, x, y, width, height, C.lightGray);
-    // Fill
-    var ratio = Math.min(1, Math.max(0, value / (maxValue || 1)));
-    if (ratio > 0) {
-      fillRect(doc, x, y, width * ratio, height, color || C.navy);
-    }
-    // Border
-    strokeRect(doc, x, y, width, height, C.lightGray, 0.2);
-  }
-
-  /**
-   * Traffic-light indicator: level = 'safe' | 'caution' | 'danger'
-   */
-  function drawTrafficLight(doc, x, y, level) {
-    var levels = ['safe', 'caution', 'danger'];
-    var colors = [C.success, C.warning, C.danger];
-    var labels = ['安全', '注意', '危険'];
-    var r = 4;
-
-    levels.forEach(function (lv, i) {
-      var cx = x + i * (r * 2 + 3) + r;
-      var active = (lv === level);
-      setFill(doc, active ? colors[i] : C.lightGray);
-      setDraw(doc, active ? colors[i] : C.lightGray);
-      doc.circle(cx, y + r, r, 'F');
-      if (active) {
-        applyFont(doc);
-        doc.setFontSize(5.5);
-        setTextColor(doc, C.white);
-        textCenter(doc, labels[i], cx, y + r + 1.8);
+    var tableRows = [];
+    var shown = {};
+    proj.forEach(function (r) {
+      var offset = (r.age || 0) - currentAge;
+      if (offset >= 0 && offset % 5 === 0 && !shown[r.age]) {
+        shown[r.age] = true;
+        tableRows.push(r);
       }
     });
-  }
+    if (tableRows.length > 9) { tableRows = tableRows.slice(0, 9); }
 
-  /**
-   * Key-value info row inside a light card.
-   */
-  function infoRow(doc, label, value, x, y, w, highlight) {
-    var rowH = 6.5;
-    fillRect(doc, x, y, w * 0.38, rowH, C.bgBlue);
-    fillRect(doc, x + w * 0.38, y, w * 0.62, rowH, highlight ? C.goldPale : C.white);
-    strokeRect(doc, x, y, w, rowH, C.lightGray, 0.15);
-    applyFont(doc);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.navy);
-    doc.text(label, x + 2, y + rowH - 2);
-    setTextColor(doc, highlight ? C.navyDark : C.black);
-    doc.setFontSize(8);
-    textRight(doc, value, x + w - 2, y + rowH - 2);
-    return y + rowH;
-  }
-
-  /**
-   * Render a summary recommendation bullet.
-   */
-  function recBullet(doc, idx, category, text, y) {
-    var bx = ML;
-    // Bullet circle
-    setFill(doc, C.gold);
-    setDraw(doc, C.gold);
-    doc.circle(bx + 2.5, y + 2, 2.5, 'F');
-    applyFont(doc);
-    doc.setFontSize(7);
-    setTextColor(doc, C.white);
-    textCenter(doc, String(idx), bx + 2.5, y + 3.5);
-
-    // Category badge
-    doc.setFontSize(7);
-    setTextColor(doc, C.navy);
-    fillRect(doc, bx + 8, y, 18, 5.5, C.bgBlue);
-    doc.text(category, bx + 9, y + 4);
-
-    // Text
-    doc.setFontSize(8);
-    setTextColor(doc, C.black);
-    var maxW = CW - 30;
-    var wrapped = doc.splitTextToSize(text, maxW);
-    doc.text(wrapped[0] || '', bx + 29, y + 4);
-    var extraLines = wrapped.slice(1);
-    var extraY = y + 5.5 + extraLines.length * 4.5;
-    extraLines.forEach(function (line, li) {
-      doc.text(line, bx + 29, y + 4 + (li + 1) * 4.5);
-    });
-    return extraY + 1;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Formatters
-  // ---------------------------------------------------------------------------
-
-  function fmt(n) {
-    if (n == null || isNaN(n)) return '—';
-    return Math.round(n).toLocaleString('ja-JP');
-  }
-
-  function fmtMan(n) {
-    if (n == null || isNaN(n)) return '—';
-    return Math.round(n / 10000).toLocaleString('ja-JP') + '万円';
-  }
-
-  function fmtPct(n) {
-    if (n == null || isNaN(n)) return '—';
-    return (Math.round(n * 10) / 10) + '%';
-  }
-
-  function fmtDate(d) {
-    var dt = d ? new Date(d) : new Date();
-    return dt.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
-  }
-
-  // ---------------------------------------------------------------------------
-  // Page 1: Cover
-  // ---------------------------------------------------------------------------
-
-  RG.generateCoverPage = function (doc, data) {
-    var cs = data.clientSummary || {};
-
-    // Full-page navy background
-    fillRect(doc, 0, 0, PW, PH, C.navyDark);
-
-    // Gold top stripe
-    fillRect(doc, 0, 0, PW, 3, C.gold);
-
-    // Decorative left edge bar
-    fillRect(doc, 0, 3, 4, PH - 6, C.navyMid);
-    fillRect(doc, 4, 3, 1, PH - 6, C.gold);
-
-    // Center content area (white card)
-    var cx  = 30;
-    var cy  = 55;
-    var cw  = PW - 60;
-    var ch  = 165;
-    fillRect(doc, cx, cy, cw, ch, C.white);
-    // Gold top accent on card
-    fillRect(doc, cx, cy, cw, 3, C.gold);
-    // Subtle bottom accent
-    fillRect(doc, cx, cy + ch - 3, cw, 3, C.navy);
-
-    applyFont(doc);
-
-    // Logo / main brand
-    doc.setFontSize(20);
-    setTextColor(doc, C.navy);
-    textCenter(doc, 'LIFE DESIGN PARTNER', PW / 2, cy + 26);
-
-    // Gold rule under logo
-    hRule(doc, cx + 15, cy + 31, cw - 30, C.gold, 0.8);
-
-    // Subtitle Japanese
-    doc.setFontSize(13);
-    setTextColor(doc, C.navyMid);
-    textCenter(doc, 'ライフデザイン・レポート', PW / 2, cy + 44);
-
-    // Thin separator
-    hRule(doc, cx + 25, cy + 49, cw - 50, C.lightGray, 0.3);
-
-    // Client name
-    var clientName = (cs.name || 'お客様') + ' 様';
-    doc.setFontSize(18);
-    setTextColor(doc, C.navyDark);
-    textCenter(doc, clientName, PW / 2, cy + 70);
-
-    // Gold underline beneath name
-    var nw = doc.getTextWidth(clientName);
-    hRule(doc, PW / 2 - nw / 2, cy + 73, nw, C.gold, 0.6);
-
-    // Report date
-    var rDate = cs.reportDate || fmtDate(new Date());
-    doc.setFontSize(9);
-    setTextColor(doc, C.gray);
-    textCenter(doc, '作成日：' + rDate, PW / 2, cy + 86);
-
-    // Divider
-    hRule(doc, cx + 20, cy + 93, cw - 40, C.lightGray, 0.2);
-
-    // Client meta info
-    var metaItems = [];
-    if (cs.age)         metaItems.push('年齢：' + cs.age + '歳');
-    if (cs.familyCompo) metaItems.push('家族：' + cs.familyCompo);
-    if (cs.annualIncome && cs.annualIncome > 0) metaItems.push('年収：' + fmtMan(cs.annualIncome));
-
-    doc.setFontSize(8.5);
-    setTextColor(doc, C.navy);
-    metaItems.forEach(function (item, i) {
-      textCenter(doc, item, PW / 2, cy + 104 + i * 11);
-    });
-
-    // Advisor
-    if (cs.advisorName) {
-      doc.setFontSize(8);
-      setTextColor(doc, C.gray);
-      textCenter(doc, '担当：' + cs.advisorName, PW / 2, cy + 140);
-    }
-
-    // Confidential stamp at bottom of card
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.gray);
-    textCenter(doc, 'Confidential  /  お客様専用資料', PW / 2, cy + ch - 8);
-
-    // Bottom page area
-    doc.setFontSize(8);
-    setTextColor(doc, C.goldLight);
-    textCenter(doc, 'クライアントにとって最良の生活基盤を創出する', PW / 2, PH - 16);
-
-    // Gold bottom stripe
-    fillRect(doc, 0, PH - 3, PW, 3, C.gold);
-  };
-
-  // ---------------------------------------------------------------------------
-  // Page 2: ライフプラン概要
-  // ---------------------------------------------------------------------------
-
-  RG.generateLifePlanPage = function (doc, data) {
-    var cs = data.clientSummary || {};
-
-    drawPageHeader(doc, 'ライフプラン概要');
-
-    var y = 26;
-
-    // ---- Client Profile ----
-    y = sectionHeading(doc, '01  お客様プロフィール', y);
-
-    var age     = parseInt(cs.age) || 30;
-    var income  = cs.annualIncome  || 0;
-
-    // Life stage determination
-    var lifeStage;
-    if (age < 30)       lifeStage = 'キャリア形成期（20代）';
-    else if (age < 40)  lifeStage = 'ファミリー形成期（30代）';
-    else if (age < 50)  lifeStage = '資産充実期（40代）';
-    else if (age < 60)  lifeStage = '教育・老後準備期（50代）';
-    else                lifeStage = 'セカンドライフ期（60代以降）';
-
-    var profileRows = [
-      ['お名前', (cs.name || '—') + ' 様'],
-      ['年齢',   age + '歳'],
-      ['家族構成', cs.familyCompo || '—'],
-      ['職業・年収', income > 0 ? '年収 ' + fmtMan(income) : '—'],
-      ['ライフステージ', lifeStage]
-    ];
-
-    profileRows.forEach(function (row) {
-      y = infoRow(doc, row[0], row[1], ML, y, CW, false);
-    });
-
-    y += 4;
-
-    // ---- Life Events Timeline ----
-    y = sectionHeading(doc, '02  主要ライフイベント（目安）', y);
-
-    var events = buildLifeEvents(age, cs.familyCompo || '');
-
-    // Timeline visual
-    var timelineY = y + 2;
-    var timelineH  = 22;
-    fillRect(doc, ML, timelineY, CW, timelineH, C.bgGray);
-    strokeRect(doc, ML, timelineY, CW, timelineH, C.lightGray, 0.2);
-
-    // Axis line
-    var axisY = timelineY + timelineH * 0.55;
-    hRule(doc, ML + 4, axisY, CW - 8, C.lightGray, 0.5);
-
-    // Plot events
-    var maxAge = Math.max(70, age + 35);
-    var minAge = Math.max(20, age - 2);
-    var span   = maxAge - minAge;
-
-    events.forEach(function (ev) {
-      var ratio = (ev.age - minAge) / span;
-      var ex    = ML + 4 + ratio * (CW - 8);
-      ex = Math.min(Math.max(ex, ML + 4), ML + CW - 8);
-
-      // Dot
-      setFill(doc, C.gold);
-      setDraw(doc, C.gold);
-      doc.circle(ex, axisY, 1.8, 'F');
-
-      // Age label below
-      applyFont(doc);
-      doc.setFontSize(6);
-      setTextColor(doc, C.navy);
-      textCenter(doc, ev.age + '歳', ex, axisY + 5.5);
-
-      // Event label above
-      setTextColor(doc, C.navyDark);
-      textCenter(doc, ev.label, ex, axisY - 5);
-    });
-
-    y = timelineY + timelineH + 5;
-
-    // ---- Housing Needs ----
-    y = sectionHeading(doc, '03  住まいニーズ分析', y);
-
-    var housingNeeds = buildHousingNeeds(age, cs.familyCompo || '', income);
-    applyFont(doc);
-    doc.setFontSize(8);
-    setTextColor(doc, C.black);
-    var lines = doc.splitTextToSize(housingNeeds, CW - 4);
-    fillRect(doc, ML, y, CW, lines.length * 5 + 6, C.bgGray);
-    strokeRect(doc, ML, y, CW, lines.length * 5 + 6, C.lightGray, 0.2);
-    setTextColor(doc, C.navy);
-    doc.text(lines, ML + 3, y + 5);
-    y += lines.length * 5 + 10;
-
-    // ---- Life Stage Description ----
-    y = sectionHeading(doc, '04  ライフステージ別チェックポイント', y);
-
-    var checkpoints = buildCheckpoints(age);
-    checkpoints.forEach(function (cp) {
-      applyFont(doc);
-      doc.setFontSize(7.5);
-      // Bullet
-      setFill(doc, C.navyMid);
-      setDraw(doc, C.navyMid);
-      doc.circle(ML + 2, y + 2, 1.5, 'F');
-      setTextColor(doc, C.black);
-      doc.text(cp, ML + 6, y + 3.5);
-      y += 6.5;
-    });
-
-    drawPageFooter(doc, 2, 6);
-  };
-
-  // Life event builder
-  function buildLifeEvents(age, familyCompo) {
-    var events = [];
-    events.push({ age: age,      label: '現在' });
-    if (age < 35) {
-      events.push({ age: age + 2,  label: '結婚' });
-      events.push({ age: age + 4,  label: '第1子' });
-    }
-    if (age < 45) {
-      events.push({ age: age + 12, label: '子 小学校' });
-      events.push({ age: age + 18, label: '子 大学' });
-    }
-    events.push({ age: 60,       label: '退職準備' });
-    events.push({ age: 65,       label: '定年退職' });
-    // Remove events before current age or duplicates
-    var seen = {};
-    return events.filter(function (ev) {
-      if (ev.age < age || seen[ev.age]) return false;
-      seen[ev.age] = true;
-      return true;
-    }).slice(0, 6);
-  }
-
-  // Housing needs text builder
-  function buildHousingNeeds(age, family, income) {
-    var base = '';
-    if (age < 35) {
-      base = 'キャリア形成期は利便性と将来の家族計画を見据えた住まい選びが重要です。';
-    } else if (age < 45) {
-      base = 'ファミリー形成期は子育て環境・学区・広さが住宅選びの主要要件となります。';
-    } else if (age < 55) {
-      base = '資産充実期は不動産を資産形成の柱として位置付け、老後の住まいも視野に入れましょう。';
-    } else {
-      base = '老後準備期はバリアフリー・管理の容易さ・医療アクセスを重視した住まい選びをお勧めします。';
-    }
-    if (income > 8000000) {
-      base += '年収水準から都市部・好立地物件も選択肢に入ります。';
-    } else if (income > 5000000) {
-      base += '年収水準に見合った無理のない住宅ローン設計が重要です。';
-    }
-    return base;
-  }
-
-  // Checkpoint builder
-  function buildCheckpoints(age) {
-    if (age < 35) {
+    var rowsHtml = tableRows.map(function (r) {
+      var isRetirement = (r.age === retirementAge);
+      var cls = isRetirement ? ' class="gold-row"' : '';
       return [
-        '緊急予備資金（生活費6ヶ月分）の確保を優先する',
-        '住宅購入の頭金として少なくとも物件価格の10%〜20%を貯蓄する',
-        '変動・固定金利の特性を理解し、ライフプランに合う返済計画を立てる',
-        '共働き継続の想定でダブルインカムの活用を検討する'
-      ];
-    } else if (age < 45) {
-      return [
-        '教育費ピーク（高校〜大学）に備えた計画的積立を開始する',
-        '住宅ローン繰上返済と教育費・老後資金のバランスを最適化する',
-        '団体信用生命保険の保障内容を確認し、生命保険の見直しを行う',
-        '住宅ローン控除の残余期間を確認し、節税メリットを最大化する'
-      ];
-    } else if (age < 55) {
-      return [
-        '老後資金（退職後20〜30年分）の不足額を試算し積立を強化する',
-        '住宅ローン完済時期と退職時期の整合性を確認する',
-        'iDeCo・NISAを活用した税制優遇投資を継続する',
-        '不動産の維持費・修繕費の積立計画を立てる'
-      ];
-    } else {
-      return [
-        '退職後の収入（年金・資産運用）と支出のバランスを再確認する',
-        'リバースモーゲージ等の活用も含め住宅資産の活用方法を検討する',
-        '相続・贈与の観点から不動産の名義・持分を整理する',
-        'バリアフリーリフォームの計画と費用を準備する'
-      ];
-    }
+        '<tr' + cls + '>',
+        '  <td>' + (r.age || '\u2014') + '\u6b73</td>',
+        '  <td>' + _man(r.financialAssets) + '</td>',
+        '  <td>' + _man(r.propertyValue) + '</td>',
+        '  <td>' + _man(r.loanBalance) + '</td>',
+        '  <td>' + _man(r.netWorth) + '</td>',
+        '  <td>' + _esc(r.event || '') + '</td>',
+        '</tr>',
+      ].join('');
+    }).join('');
+
+    var recs = d.keyRecommendations || [];
+    var recHtml = recs.slice(0, 3).map(function (r) { return '<li>' + _esc(r) + '</li>'; }).join('');
+    if (!recHtml) { recHtml = '<li>\u5b9a\u671f\u7684\u306a\u8cc7\u7523\u898b\u76f4\u3057\u3092\u304a\u3059\u3059\u3081\u3057\u307e\u3059\u3002</li>'; }
+
+    return [
+      '<div class="page-break"></div>',
+      '<div class="a4-page">',
+      '  <div class="page-header">',
+      '    <div class="logo-line">AFP LIFE PLANNING</div>',
+      '    <div class="page-title">\u8cc7\u7523\u5f62\u6210\u30b7\u30df\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3</div>',
+      '  </div>',
+      '  <div class="section-title">\u30b5\u30de\u30ea\u30fcKPI</div>',
+      '  <div class="kpi-grid">',
+      '    <div class="kpi-card"><div class="kpi-value" style="font-size:13pt;">' + _man(currentNetWorth) + '</div><div class="kpi-label">\u73fe\u5728\u7d14\u8cc7\u7523</div></div>',
+      '    <div class="kpi-card"><div class="kpi-value" style="font-size:13pt;">' + _man(retNetWorth) + '</div><div class="kpi-label">\u5b9a\u5e74\u6642\u7d14\u8cc7\u7523</div></div>',
+      '    <div class="kpi-card"><div class="kpi-value" style="font-size:13pt;">' + _man(monthlyRetIncome) + '</div><div class="kpi-label">\u8001\u5f8c\u6708\u53ce\u63db\u7b97</div></div>',
+      '  </div>',
+      '  <div class="section-title">\u8cc7\u7523\u63a8\u79fb\u8868</div>',
+      '  <table class="compare-table">',
+      '    <thead><tr>',
+      '      <th>\u5e74\u9f62</th><th>\u91d1\u878d\u8cc7\u7523</th><th>\u4e0d\u52d5\u7523\u8cc7\u7523</th><th>\u30ed\u30fc\u30f3\u6b8b\u9ad8</th><th>\u7d14\u8cc7\u7523</th><th>\u30e9\u30a4\u30d5\u30a4\u30d9\u30f3\u30c8</th>',
+      '    </tr></thead>',
+      '    <tbody>' + (rowsHtml || '<tr><td colspan="6" style="text-align:center;">\u30c7\u30fc\u30bf\u306a\u3057</td></tr>') + '</tbody>',
+      '  </table>',
+      '  <div class="section-title">\u8001\u5f8c\u6e96\u5099\u30a2\u30c9\u30d0\u30a4\u30b9</div>',
+      '  <div class="result-card success">',
+      '    <ul class="recommendation-list">' + recHtml + '</ul>',
+      '  </div>',
+      '  <div class="page-footer">',
+      '    <span>LIFE DESIGN PARTNER \u2014 \u30e9\u30a4\u30d5\u30c7\u30b6\u30a4\u30f3\u30ec\u30dd\u30fc\u30c8</span>',
+      '    <span>4 / 6</span>',
+      '  </div>',
+      '</div>',
+    ].join('');
   }
 
-  // ---------------------------------------------------------------------------
-  // Page 3: 収支分析・住宅取得力
-  // ---------------------------------------------------------------------------
+  /* ------------------------------------------------------------------ */
+  /* Page 5: Real Estate Options Comparison                               */
+  /* ------------------------------------------------------------------ */
+  function _page5(d) {
+    var fr = d.financialResults || {};
+    var rvb = fr.rentVsBuy || {};
+    var ins = fr.insurance || {};
+    var tax = fr.taxBenefits || {};
+    var ir = fr.interestRate || {};
+    var scenarios = ir.scenarios || [];
 
-  RG.generateFinancialPage = function (doc, data) {
-    var ie  = data.incomeExpenseSummary || {};
-    var af  = data.affordabilityResult  || {};
-    var cs  = data.clientSummary        || {};
+    var recText = rvb.recommendation || '\u8a73\u7d30\u306a\u6bd4\u8f03\u5206\u6790\u3092\u3054\u78ba\u8a8d\u304f\u3060\u3055\u3044';
+    var breakEven = rvb.breakEvenYear ? rvb.breakEvenYear + '\u5e74\u3067\u8cfc\u5165\u304c\u6709\u5229\u306b' : '\u2014';
+    var rentTotal = _man(rvb.rentTotal);
+    var buyTotal = _man(rvb.buyTotal);
 
-    drawPageHeader(doc, '収支分析・住宅取得力');
-    var y = 26;
-
-    // ---- Income/Expense ----
-    y = sectionHeading(doc, '01  月次収支サマリー', y);
-
-    var monthlyNet     = ie.monthlyNetIncome    || 0;
-    var monthlyExp     = ie.monthlyTotalExpense || 0;
-    var monthlySurplus = ie.monthlySurplus      || (monthlyNet - monthlyExp);
-    var savingsRate    = ie.savingsRate || (monthlyNet > 0 ? (monthlySurplus / monthlyNet * 100) : 0);
-
-    // Two-column info cards
-    var halfW = CW / 2 - 2;
-    var incomeRows = [
-      ['手取り月収',    fmtMan(monthlyNet)],
-      ['月次支出合計',  fmtMan(monthlyExp)],
-      ['月次余剰',      fmtMan(monthlySurplus)]
-    ];
-    incomeRows.forEach(function (row) {
-      y = infoRow(doc, row[0], row[1], ML, y, CW, row[0] === '月次余剰');
-    });
-
-    y += 3;
-
-    // Savings rate bar
-    applyFont(doc);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.navy);
-    doc.text('貯蓄率', ML, y + 4);
-    var barColor = savingsRate >= 20 ? C.success : (savingsRate >= 10 ? C.warning : C.danger);
-    drawBar(doc, ML + 16, y, CW - 40, 5, savingsRate, 40, barColor);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.black);
-    textRight(doc, fmtPct(savingsRate), ML + CW, y + 4);
-    y += 10;
-
-    // Diagnosis text
-    if (ie.diagnosis) {
-      fillRect(doc, ML, y, CW, 8, C.bgBlue);
-      strokeRect(doc, ML, y, CW, 8, C.lightGray, 0.15);
-      doc.setFontSize(7.5);
-      setTextColor(doc, C.navyDark);
-      doc.text(truncate(doc, ie.diagnosis, CW - 6), ML + 3, y + 5.5);
-      y += 11;
+    var yearlyDeduction = 0;
+    if (tax.yearlyDeduction && tax.yearlyDeduction.length) {
+      yearlyDeduction = tax.yearlyDeduction[0].deduction || 0;
     }
+    var totalBenefit = tax.totalBenefit || 0;
+    var insMonthly = ins.monthlySavings || 0;
 
-    // ---- Affordability ----
-    y = sectionHeading(doc, '02  住宅取得能力分析', y);
-
-    if (af.maxLoanAmount) {
-      y = infoRow(doc, '最大借入可能額',    fmtMan(af.maxLoanAmount),         ML, y, CW, false);
-      y = infoRow(doc, '推奨借入額',        fmtMan(af.recommendedLoanAmount), ML, y, CW, true);
-
-      // Monthly payment estimate
-      var recLoan    = af.recommendedLoanAmount || 0;
-      var monthlyPmt = recLoan > 0 ? Math.round(recLoan * 0.015 / 12 /
-        (1 - Math.pow(1 + 0.015 / 12, -420))) : 0;
-      y = infoRow(doc, '月次返済目安（35年/1.5%）', fmtMan(monthlyPmt) + '/月', ML, y, CW, false);
-
-      // Risk level with traffic light
-      var riskY = y;
-      fillRect(doc, ML, riskY, CW * 0.38, 9, C.bgBlue);
-      fillRect(doc, ML + CW * 0.38, riskY, CW * 0.62, 9, C.white);
-      strokeRect(doc, ML, riskY, CW, 9, C.lightGray, 0.15);
-      applyFont(doc);
-      doc.setFontSize(7.5);
-      setTextColor(doc, C.navy);
-      doc.text('リスク判定', ML + 2, riskY + 6);
-      var tlevel = af.riskLevel === 'safe' ? 'safe' : (af.riskLevel === 'caution' ? 'caution' : 'danger');
-      drawTrafficLight(doc, ML + CW * 0.38 + 4, riskY + 0.5, tlevel);
-      setTextColor(doc, C.black);
-      doc.setFontSize(7.5);
-      doc.text('（' + (af.riskLevelJa || af.riskLevel || '—') + '）', ML + CW * 0.38 + 36, riskY + 6);
-      y = riskY + 10;
-
-      // Explanation
-      if (af.explanation) {
-        fillRect(doc, ML, y, CW, 9, C.bgGray);
-        strokeRect(doc, ML, y, CW, 9, C.lightGray, 0.15);
-        applyFont(doc);
-        doc.setFontSize(7.5);
-        setTextColor(doc, C.gray);
-        doc.text(truncate(doc, af.explanation, CW - 6), ML + 3, y + 6);
-        y += 12;
-      }
+    var irRows = '';
+    if (scenarios.length) {
+      irRows = scenarios.map(function (s) {
+        return [
+          '<tr>',
+          '  <td>' + _esc(s.label || '') + '</td>',
+          '  <td>' + _man(s.monthlyPayment) + '</td>',
+          '  <td>' + _man(s.totalPayment) + '</td>',
+          '  <td>' + _man(s.totalInterest) + '</td>',
+          '</tr>',
+        ].join('');
+      }).join('');
     } else {
-      applyFont(doc);
-      doc.setFontSize(8);
-      setTextColor(doc, C.gray);
-      doc.text('借入能力分析データがありません。', ML + 3, y + 6);
-      y += 12;
+      irRows = [
+        '<tr><td>\u5909\u52d51%</td><td>\u2014</td><td>\u2014</td><td>\u2014</td></tr>',
+        '<tr><td>\u56fa\u5b9a1.5%</td><td>\u2014</td><td>\u2014</td><td>\u2014</td></tr>',
+        '<tr><td>\u56fa\u5b9a2%</td><td>\u2014</td><td>\u2014</td><td>\u2014</td></tr>',
+      ].join('');
     }
 
-    // ---- Annual Income Guideline ----
-    y = sectionHeading(doc, '03  年収別 住宅購入目安', y);
-
-    var income = cs.annualIncome || 0;
-    var guideRows = [
-      ['年収 300万円', '1,800〜2,100万円', '5〜6倍'],
-      ['年収 400万円', '2,400〜2,800万円', '6〜7倍'],
-      ['年収 500万円', '3,000〜3,500万円', '6〜7倍'],
-      ['年収 600万円', '3,600〜4,200万円', '6〜7倍'],
-      ['年収 800万円', '4,800〜5,600万円', '6〜7倍'],
-      ['年収1,000万円', '6,000〜7,000万円', '6〜7倍']
-    ];
-
-    var hiliteRows = [];
-    guideRows.forEach(function (r, i) {
-      var rowIncome = parseInt(r[0].replace(/[^0-9]/g, '')) * 10000;
-      var diff = Math.abs(rowIncome - income);
-      if (diff < 150 * 10000) hiliteRows.push(i);
-    });
-
-    y = drawTable(doc, y, ['年収目安', '物件価格目安', '年収倍率'], guideRows, {
-      colWidths:    [60, 80, 42],
-      rowHeight:    6.5,
-      fontSize:     7.5,
-      headerBg:     C.navyMid,
-      highlightRows: hiliteRows
-    });
-
-    drawPageFooter(doc, 3, 6);
-  };
-
-  // ---------------------------------------------------------------------------
-  // Page 4: 資産形成シミュレーション
-  // ---------------------------------------------------------------------------
-
-  RG.generateAssetPage = function (doc, data) {
-    var cs    = data.clientSummary      || {};
-    var proj  = data.lifeplanProjection || [];
-
-    drawPageHeader(doc, '資産形成シミュレーション');
-    var y = 26;
-
-    y = sectionHeading(doc, '01  純資産推移シミュレーション', y);
-
-    if (proj && proj.length > 0) {
-      // Pick every 5 years
-      var currentAge = parseInt(cs.age) || 30;
-      var tableRows  = [];
-      var highlight  = [];
-
-      proj.forEach(function (row, idx) {
-        var age = row.age || (currentAge + idx);
-        if ((age - currentAge) % 5 === 0 || age === currentAge) {
-          var isRetire = (age >= 60 && age <= 67);
-          if (isRetire && tableRows.length > 0 && tableRows[tableRows.length - 1][0] === age + '歳') return;
-          tableRows.push([
-            age + '歳',
-            fmtMan(row.financialAssets),
-            fmtMan(row.propertyValue),
-            fmtMan(row.loanBalance),
-            fmtMan(row.netWorth)
-          ]);
-          if (isRetire) highlight.push(tableRows.length - 1);
-        }
-      });
-
-      // Limit to 10 rows
-      if (tableRows.length > 10) tableRows = tableRows.slice(0, 10);
-
-      y = drawTable(doc, y,
-        ['年齢', '金融資産', '不動産資産', 'ローン残高', '純資産'],
-        tableRows, {
-          colWidths:    [22, 42, 42, 42, 34],
-          rowHeight:    7,
-          fontSize:     7.5,
-          headerBg:     C.navy,
-          highlightRows: highlight
-        }
-      );
-
-      // Retirement note
-      applyFont(doc);
-      doc.setFontSize(6.5);
-      setTextColor(doc, C.gold);
-      doc.text('★ 定年退職前後の行を金色でハイライト表示', ML, y);
-      y += 6;
-    } else {
-      applyFont(doc);
-      doc.setFontSize(8);
-      setTextColor(doc, C.gray);
-      doc.text('資産形成シミュレーションデータがありません。', ML, y + 5);
-      y += 12;
-    }
-
-    // ---- Milestones ----
-    y = sectionHeading(doc, '02  主要マイルストーン', y);
-
-    var age = parseInt(cs.age) || 30;
-    var milestones = [
-      { label: '住宅ローン完済予定',   value: (age + 35) + '歳頃（35年ローン想定）' },
-      { label: '子どもの教育費ピーク', value: (age + 18) + '〜' + (age + 22) + '歳頃（大学費用）' },
-      { label: 'リタイアメント',        value: '65歳（年金受給開始）' },
-      { label: '老後必要資金目安',      value: '2,000〜3,000万円（公的年金補完分）' }
-    ];
-
-    milestones.forEach(function (ms) {
-      y = infoRow(doc, ms.label, ms.value, ML, y, CW, false);
-    });
-
-    y += 4;
-
-    // ---- Retirement Readiness ----
-    y = sectionHeading(doc, '03  老後準備度チェック', y);
-
-    var lastRow = proj && proj.length > 0 ? proj[proj.length - 1] : null;
-    var retireNetWorth = lastRow ? (lastRow.netWorth || 0) : 0;
-    var targetRetire   = 30000000; // 3,000万円
-    var readinessPct   = Math.min(100, Math.round((retireNetWorth / targetRetire) * 100));
-
-    applyFont(doc);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.navy);
-    doc.text('老後資金目標達成率（目標：' + fmtMan(targetRetire) + '）', ML, y + 4);
-    y += 7;
-
-    var readColor = readinessPct >= 80 ? C.success : (readinessPct >= 50 ? C.warning : C.danger);
-    drawBar(doc, ML, y, CW - 25, 7, readinessPct, 100, readColor);
-    doc.setFontSize(9);
-    setTextColor(doc, readColor);
-    textRight(doc, readinessPct + '%', ML + CW, y + 5.5);
-    y += 12;
-
-    var readMsg;
-    if (readinessPct >= 80)     readMsg = '老後資金の準備は順調です。引き続き計画的な積立を継続しましょう。';
-    else if (readinessPct >= 50) readMsg = '老後資金の準備はある程度進んでいますが、積立額の増加が望まれます。';
-    else                         readMsg = '老後資金の準備が不足しています。iDeCo・NISAの活用と支出見直しを検討しましょう。';
-
-    fillRect(doc, ML, y, CW, 9, C.bgGray);
-    strokeRect(doc, ML, y, CW, 9, C.lightGray, 0.15);
-    applyFont(doc);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.black);
-    var msgLines = doc.splitTextToSize(readMsg, CW - 6);
-    doc.text(msgLines[0] || '', ML + 3, y + 6);
-    y += 12;
-
-    drawPageFooter(doc, 4, 6);
-  };
-
-  // ---------------------------------------------------------------------------
-  // Page 5: 不動産オプション比較
-  // ---------------------------------------------------------------------------
-
-  RG.generateOptionsPage = function (doc, data) {
-    var ro  = (data.recommendedOptions && data.recommendedOptions[0]) || {};
-    var cs  = data.clientSummary || {};
-
-    drawPageHeader(doc, '不動産オプション比較');
-    var y = 26;
-
-    // ---- Rent vs Buy ----
-    y = sectionHeading(doc, '01  賃貸 vs 購入 比較', y);
-
-    var income = cs.annualIncome || 0;
-    var rvbRows = [];
-    var rvbHeaders = ['比較項目', '賃貸', '購入'];
-
-    rvbRows.push(['初期費用',         '敷金礼金 2〜3ヶ月',    '頭金＋諸費用 10〜20%']);
-    rvbRows.push(['月次コスト',       '家賃（変動なし）',     'ローン＋管理・修繕費']);
-    rvbRows.push(['資産形成',         '資産にならない',        '不動産資産を形成']);
-    rvbRows.push(['住替えの柔軟性',   '高い（解約3ヶ月前）',  '低い（売却に時間要）']);
-    rvbRows.push(['老後の住居費',     '家賃負担が続く',        'ローン完済後は低減']);
-    rvbRows.push(['税制優遇',         'なし',                  '住宅ローン控除あり']);
-
-    y = drawTable(doc, y, rvbHeaders, rvbRows, {
-      colWidths: [48, 60, 74],
-      rowHeight: 7,
-      fontSize:  7.5,
-      headerBg:  C.navyMid
-    });
-
-    // Break-even note
-    applyFont(doc);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.navy);
-    doc.text('目安：購入コストが賃貸コストを下回るまでの損益分岐点は概ね8〜12年前後となります。', ML, y + 4);
-    y += 10;
-
-    // ---- New vs Used ----
-    y = sectionHeading(doc, '02  新築 vs 中古 比較', y);
-
-    var nvuRows = [
-      ['価格水準',   '高め（プレミアム付）', '低め（築年数により）'],
-      ['広さ（同予算）', '狭くなりがち',    '広くなりやすい'],
-      ['設備・仕様', '最新設備',            '古い場合あり（リノベ可）'],
-      ['住宅ローン控除', '最大13年間',       '築年数条件あり（10年等）'],
-      ['修繕リスク', '当面低い',            '事前インスペクション推奨'],
-      ['資産価値低下', '入居後急落傾向',    '下落率が緩やか']
-    ];
-
-    y = drawTable(doc, y, ['比較項目', '新築', '中古'], nvuRows, {
-      colWidths: [44, 68, 70],
-      rowHeight: 6.5,
-      fontSize:  7.5,
-      headerBg:  C.navy
-    });
-
-    // ---- Insurance & Tax ----
-    y = sectionHeading(doc, '03  団体信用生命保険・住宅ローン控除 概要', y);
-
-    var insRows = [
-      ['団体信用生命保険', '住宅ローン付帯（一般団信）', '死亡・高度障害時にローン残高を保障'],
-      ['三大疾病保障団信',  '特約付き（金利上乗せ）',    'がん・脳卒中・心筋梗塞で保障拡充'],
-      ['住宅ローン控除',    '年末残高×0.7%を税額控除',  '最大13年間（新築・認定住宅）']
-    ];
-
-    y = drawTable(doc, y, ['保障・優遇', '概要', '備考'], insRows, {
-      colWidths: [44, 72, 66],
-      rowHeight: 7,
-      fontSize:  7,
-      headerBg:  C.navyMid
-    });
-
-    // ---- Interest Rate Scenarios ----
-    y = sectionHeading(doc, '04  金利シナリオ別 月次返済試算（3,000万円・35年）', y);
-
-    var scenarios = [
-      ['変動金利（現在水準）', '0.5%',   fmtMan(calcMonthlyPmt(30000000, 0.005, 35)) + '/月'],
-      ['変動金利（上昇後）',   '1.5%',   fmtMan(calcMonthlyPmt(30000000, 0.015, 35)) + '/月'],
-      ['固定10年',             '1.8%',   fmtMan(calcMonthlyPmt(30000000, 0.018, 35)) + '/月'],
-      ['フラット35',           '2.0%',   fmtMan(calcMonthlyPmt(30000000, 0.020, 35)) + '/月'],
-      ['金利2.5%想定',         '2.5%',   fmtMan(calcMonthlyPmt(30000000, 0.025, 35)) + '/月']
-    ];
-
-    y = drawTable(doc, y, ['金利タイプ', '金利', '月次返済額'], scenarios, {
-      colWidths: [70, 40, 72],
-      rowHeight: 6.5,
-      fontSize:  7.5,
-      headerBg:  C.navy,
-      highlightRows: [1]
-    });
-
-    drawPageFooter(doc, 5, 6);
-  };
-
-  // PMT helper for scenarios
-  function calcMonthlyPmt(principal, annualRate, years) {
-    var r = annualRate / 12;
-    var n = years * 12;
-    if (r === 0) return principal / n;
-    return Math.round((principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+    return [
+      '<div class="page-break"></div>',
+      '<div class="a4-page">',
+      '  <div class="page-header">',
+      '    <div class="logo-line">AFP LIFE PLANNING</div>',
+      '    <div class="page-title">\u4e0d\u52d5\u7523\u30aa\u30d7\u30b7\u30e7\u30f3\u6bd4\u8f03</div>',
+      '  </div>',
+      '  <div class="two-col">',
+      '    <div>',
+      '      <div class="section-title">\u8cc3\u8cb8 vs \u8cfc\u5165</div>',
+      '      <div class="result-card gold-card" style="font-size:10pt;"><strong>\u63a8\u5968: </strong>' + _esc(recText) + '</div>',
+      '      <div style="font-size:9pt;margin:2mm 0;"><strong>\u640d\u76ca\u5206\u5c90:</strong> ' + _esc(breakEven) + '</div>',
+      '      <table class="compare-table" style="margin-top:2mm;">',
+      '        <thead><tr><th>\u9805\u76ee</th><th>\u8cc3\u8cb8</th><th>\u8cfc\u5165</th></tr></thead>',
+      '        <tbody>',
+      '          <tr><td>\u7dcf\u30b3\u30b9\u30c8</td><td>' + rentTotal + '</td><td>' + buyTotal + '</td></tr>',
+      '        </tbody>',
+      '      </table>',
+      '      <div class="section-title" style="margin-top:5mm;">\u4f4f\u5b85\u30ed\u30fc\u30f3\u63a7\u9664</div>',
+      '      <div class="result-card">',
+      '        <div style="font-size:9pt;">\u5e74\u9593\u6700\u5927\u63a7\u9664\u984d: <strong>' + _yen(yearlyDeduction) + '</strong></div>',
+      '        <div style="font-size:9pt;margin-top:1mm;">13\u5e74\u9593\u7dcf\u63a7\u9664\u984d: <strong>' + _man(totalBenefit) + '</strong></div>',
+      '      </div>',
+      '      <div class="section-title" style="margin-top:4mm;">\u56e3\u4fe1 vs \u4fdd\u967a</div>',
+      '      <div class="result-card' + (insMonthly > 0 ? ' success' : '') + '" style="font-size:9pt;">',
+      '        \u6708\u9593\u7bc0\u7d04\u984d: <strong>' + _yen(insMonthly) + '</strong>',
+      '      </div>',
+      '    </div>',
+      '    <div>',
+      '      <div class="section-title">\u65b0\u7bc9 vs \u4e2d\u53e4</div>',
+      '      <table class="compare-table">',
+      '        <thead><tr><th>\u6bd4\u8f03\u9805\u76ee</th><th>\u65b0\u7bc9</th><th>\u4e2d\u53e4</th></tr></thead>',
+      '        <tbody>',
+      '          <tr><td>\u4fa1\u683c</td><td>\u9ad8\u3081</td><td>\u4f4e\u3081</td></tr>',
+      '          <tr><td>\u5e83\u3055</td><td>\u6a19\u6e96</td><td>\u5e83\u3044\u50be\u5411</td></tr>',
+      '          <tr><td>\u8a2d\u5099</td><td>\u6700\u65b0</td><td>\u8981\u78ba\u8a8d</td></tr>',
+      '          <tr><td>\u30ed\u30fc\u30f3\u63a7\u9664</td><td>\u6700\u5927\u9069\u7528</td><td>\u6761\u4ef6\u3042\u308a</td></tr>',
+      '          <tr><td>\u8cc7\u7523\u4fa1\u5024</td><td>\u4e0b\u843d\u5e45\u5927</td><td>\u5b89\u5b9a\u50be\u5411</td></tr>',
+      '        </tbody>',
+      '      </table>',
+      '    </div>',
+      '  </div>',
+      '  <div class="section-title" style="margin-top:5mm;">\u91d1\u5229\u30b7\u30ca\u30ea\u30aa\u6bd4\u8f03</div>',
+      '  <table class="compare-table">',
+      '    <thead><tr><th>\u91d1\u5229</th><th>\u6708\u3005\u8fd4\u6e08</th><th>\u7dcf\u652f\u6255</th><th>\u7dcf\u5229\u606f</th></tr></thead>',
+      '    <tbody>' + irRows + '</tbody>',
+      '  </table>',
+      '  <div class="page-footer">',
+      '    <span>LIFE DESIGN PARTNER \u2014 \u30e9\u30a4\u30d5\u30c7\u30b6\u30a4\u30f3\u30ec\u30dd\u30fc\u30c8</span>',
+      '    <span>5 / 6</span>',
+      '  </div>',
+      '</div>',
+    ].join('');
   }
 
-  // ---------------------------------------------------------------------------
-  // Page 6: Back Cover
-  // ---------------------------------------------------------------------------
+  /* ------------------------------------------------------------------ */
+  /* Page 6: Summary & Disclaimer                                         */
+  /* ------------------------------------------------------------------ */
+  function _page6(d) {
+    var recs = d.keyRecommendations || [];
+    var opts = d.recommendedOptions || [];
+    var date = _esc(d.reportDate || new Date().toLocaleDateString('ja-JP'));
 
-  RG.generateBackCover = function (doc, data) {
-    var cs   = data.clientSummary     || {};
-    var recs = data.keyRecommendations || [];
+    var recsHtml = recs.length
+      ? recs.map(function (r) { return '<li style="font-size:11pt;margin:3mm 0;line-height:1.7;">' + _esc(r) + '</li>'; }).join('')
+      : '<li style="font-size:11pt;">\u62c5\u5f53\u8005\u306b\u3054\u76f8\u8ac7\u304f\u3060\u3055\u3044\u3002</li>';
 
-    // Navy full-page background
-    fillRect(doc, 0, 0, PW, PH, C.navyDark);
-    fillRect(doc, 0, 0, PW, 2.5, C.gold);
-    fillRect(doc, 0, PH - 2.5, PW, 2.5, C.gold);
-    fillRect(doc, 0, 2.5, 4, PH - 5, C.navyMid);
-    fillRect(doc, 4, 2.5, 1, PH - 5, C.gold);
+    var optsHtml = opts.length
+      ? opts.slice(0, 3).map(function (o) { return '<li>' + _esc(o) + '</li>'; }).join('')
+      : [
+        '<li>\u3054\u5e0c\u671b\u30a8\u30ea\u30a2\u30fb\u4e88\u7b97\u306b\u5408\u308f\u305b\u305f\u7269\u4ef6\u63a2\u3057</li>',
+        '<li>\u30e9\u30a4\u30d5\u30a4\u30d9\u30f3\u30c8\u306b\u5408\u308f\u305b\u305f\u67d4\u8edf\u306a\u30d7\u30e9\u30f3\u30cb\u30f3\u30b0</li>',
+        '<li>\u5b9a\u671f\u7684\u306a\u898b\u76f4\u3057\u3068\u8cc7\u7523\u7ba1\u7406</li>',
+      ].join('');
 
-    applyFont(doc);
+    return [
+      '<div class="page-break"></div>',
+      '<div class="a4-page">',
+      '  <div class="page-header">',
+      '    <div class="logo-line">AFP LIFE PLANNING</div>',
+      '    <div class="page-title">\u3054\u63d0\u6848\u306e\u307e\u3068\u3081</div>',
+      '  </div>',
+      '  <div class="section-title">\u4e3b\u8981\u63a8\u5968\u4e8b\u9805</div>',
+      '  <ol class="recommendation-list">' + recsHtml + '</ol>',
+      '  <div class="section-title">\u4e0d\u52d5\u7523\u9078\u629e\u306e\u30dd\u30a4\u30f3\u30c8</div>',
+      '  <ul class="recommendation-list">' + optsHtml + '</ul>',
+      '  <div class="section-title" style="margin-top:6mm;">\u514d\u8ca3\u4e8b\u9805</div>',
+      '  <div class="disclaimer-box">',
+      '    <p>\u672c\u8cc7\u6599\u306f\u30e9\u30a4\u30d5\u30d7\u30e9\u30f3\u30cb\u30f3\u30b0\u306e\u53c2\u8003\u60c5\u5831\u3068\u3057\u3066\u4f5c\u6210\u3055\u308c\u305f\u3082\u306e\u3067\u3059\u3002</p>',
+      '    <p>\u8a18\u8f09\u3055\u308c\u305f\u91d1\u984d\u30fb\u8a66\u7b97\u306f\u3042\u304f\u307e\u3067\u30b7\u30df\u30e5\u30ec\u30fc\u30b7\u30e7\u30f3\u3067\u3042\u308a\u3001\u5b9f\u969b\u306e\u7d50\u679c\u3092\u4fdd\u8a3c\u3059\u308b\u3082\u306e\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002</p>',
+      '    <p>\u91d1\u5229\u30fb\u7a0e\u5236\u30fb\u4e0d\u52d5\u7523\u4fa1\u683c\u7b49\u306f\u5c06\u6765\u5909\u66f4\u3055\u308c\u308b\u53ef\u80fd\u6027\u304c\u3042\u308a\u307e\u3059\u3002</p>',
+      '    <p>\u6700\u7d42\u7684\u306a\u5224\u65ad\u306f\u3054\u672c\u4eba\u306e\u8cac\u4efb\u306b\u304a\u3044\u3066\u884c\u3063\u3066\u304f\u3060\u3055\u3044\u3002\u8a73\u7d30\u306f\u5c02\u9580\u5bb6\u306b\u3054\u76f8\u8ac7\u304f\u3060\u3055\u3044\u3002</p>',
+      '    <p>\u672c\u8cc7\u6599\u306b\u542b\u307e\u308c\u308b\u60c5\u5831\u306f\u4f5c\u6210\u6642\u70b9\u306e\u3082\u306e\u3067\u3042\u308a\u3001\u5c06\u6765\u306e\u5e02\u5834\u52d5\u5411\u3092\u4fdd\u8a3c\u3059\u308b\u3082\u306e\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002</p>',
+      '  </div>',
+      '  <div style="text-align:center;margin:5mm 0;">',
+      '    <div style="font-size:9pt;letter-spacing:3px;color:#c9a84c;font-weight:700;">LIFE DESIGN PARTNER</div>',
+      '    <div style="font-size:8pt;color:#999;margin-top:1mm;">AFP\u8a8d\u5b9a\u30d5\u30a1\u30a4\u30ca\u30f3\u30b7\u30e3\u30eb\u30d7\u30e9\u30f3\u30ca\u30fc</div>',
+      '  </div>',
+      '  <div class="section-title">\u4f5c\u6210\u8005\u8a18\u5165\u6b04</div>',
+      '  <table class="sign-table">',
+      '    <tr><th>\u62c5\u5f53\u8005\u540d</th><td></td><th>\u4f1a\u793e\u540d</th><td></td></tr>',
+      '    <tr><th>\u65e5\u4ed8</th><td>' + date + '</td><th>\u9023\u7d61\u5148</th><td></td></tr>',
+      '  </table>',
+      '  <div class="page-footer">',
+      '    <span>LIFE DESIGN PARTNER \u2014 \u30e9\u30a4\u30d5\u30c7\u30b6\u30a4\u30f3\u30ec\u30dd\u30fc\u30c8</span>',
+      '    <span>6 / 6</span>',
+      '  </div>',
+      '</div>',
+    ].join('');
+  }
 
-    // Section: Key Recommendations (white card)
-    var cx = 22;
-    var cy = 18;
-    var cw = PW - 44;
-
-    fillRect(doc, cx, cy, cw, 9, C.gold);
-    doc.setFontSize(10);
-    setTextColor(doc, C.navyDark);
-    textCenter(doc, '主要アドバイス・ポイント', PW / 2, cy + 6.5);
-
-    var recY = cy + 12;
-    if (recs.length === 0) {
-      recs = [
-        { category: '住宅計画', text: 'ライフステージに合った住宅取得時期と物件選びを検討しましょう。' },
-        { category: '家計管理', text: '月次収支を把握し、住宅費比率25%以内を目標にしてください。' },
-        { category: '資産形成', text: 'iDeCo・NISAを活用し、長期・分散・積立の投資習慣を構築しましょう。' },
-        { category: 'リスク管理', text: '団体信用生命保険と民間保険の保障内容を整合させてください。' },
-        { category: '税制活用', text: '住宅ローン控除（最大13年間）を最大限に活用してください。' }
-      ];
+  /* ------------------------------------------------------------------ */
+  /* _buildHtml: assemble all 6 pages                                     */
+  /* ------------------------------------------------------------------ */
+  RG._buildHtml = function (data) {
+    var d = data || {};
+    if (!d.reportDate) {
+      d.reportDate = new Date().toLocaleDateString('ja-JP');
     }
-
-    recs.slice(0, 5).forEach(function (rec, i) {
-      // Light card per rec
-      var rh = 13;
-      fillRect(doc, cx, recY, cw, rh, i % 2 === 0 ? [30, 45, 140] : [22, 35, 110]);
-      // Number circle
-      setFill(doc, C.gold);
-      setDraw(doc, C.gold);
-      doc.circle(cx + 6, recY + rh / 2, 4.5, 'F');
-      applyFont(doc);
-      doc.setFontSize(8);
-      setTextColor(doc, C.navyDark);
-      textCenter(doc, String(i + 1), cx + 6, recY + rh / 2 + 2.8);
-      // Category
-      doc.setFontSize(7);
-      setTextColor(doc, C.goldLight);
-      doc.text(rec.category || '', cx + 14, recY + 5.5);
-      // Text
-      doc.setFontSize(8);
-      setTextColor(doc, C.white);
-      var maxW = cw - 18;
-      var recText = truncate(doc, rec.text || '', maxW);
-      doc.text(recText, cx + 14, recY + 10.5);
-      recY += rh + 1;
-    });
-
-    // Divider
-    hRule(doc, cx, recY + 4, cw, C.gold, 0.5);
-
-    // Disclaimers
-    var disclY = recY + 10;
-    fillRect(doc, cx, disclY, cw, 38, [18, 28, 90]);
-    strokeRect(doc, cx, disclY, cw, 38, C.gold, 0.3);
-
-    applyFont(doc);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.goldLight);
-    textCenter(doc, '【重要事項・免責事項】', PW / 2, disclY + 6);
-
-    var disclaimers = [
-      '本資料はライフプランニングの参考情報です',
-      '投資判断は自己責任でお願いいたします',
-      '金利・税制等は変更される場合があります',
-      '詳細は専門家（税理士・司法書士等）にご相談ください',
-      '将来の運用成果・収益を保証するものではありません'
-    ];
-
-    doc.setFontSize(7.5);
-    setTextColor(doc, [200, 210, 240]);
-    disclaimers.forEach(function (d, i) {
-      // Bullet dot
-      setFill(doc, C.gold);
-      setDraw(doc, C.gold);
-      doc.circle(cx + 4, disclY + 13 + i * 5.5, 1, 'F');
-      doc.text(d, cx + 8, disclY + 14.5 + i * 5.5);
-    });
-
-    // Mission statement
-    var missionY = disclY + 43;
-    hRule(doc, cx, missionY, cw, C.gold, 0.4);
-    applyFont(doc);
-    doc.setFontSize(9);
-    setTextColor(doc, C.goldLight);
-    textCenter(doc, 'クライアントにとって最良の生活基盤を創出する', PW / 2, missionY + 8);
-
-    // Brand
-    doc.setFontSize(16);
-    setTextColor(doc, C.white);
-    textCenter(doc, 'LIFE DESIGN PARTNER', PW / 2, missionY + 20);
-
-    hRule(doc, cx + 30, missionY + 24, cw - 60, C.gold, 0.6);
-
-    // Prepared by area
-    var prepY = missionY + 32;
-    fillRect(doc, cx, prepY, cw, 22, [18, 28, 90]);
-    strokeRect(doc, cx, prepY, cw, 22, C.gold, 0.3);
-    applyFont(doc);
-    doc.setFontSize(7.5);
-    setTextColor(doc, C.goldLight);
-    doc.text('担当者：', cx + 5, prepY + 7);
-    doc.text('日付：' + (cs.reportDate || fmtDate(new Date())), cx + 5, prepY + 14);
-    if (cs.advisorName) {
-      setTextColor(doc, C.white);
-      doc.text(cs.advisorName, cx + 24, prepY + 7);
-    }
-
-    // Page footer
-    applyFont(doc);
-    doc.setFontSize(6.5);
-    setTextColor(doc, [120, 130, 170]);
-    textCenter(doc, '6 / 6', PW / 2, PH - 6);
+    return [
+      '<!DOCTYPE html>',
+      '<html lang="ja"><head>',
+      '<meta charset="UTF-8">',
+      '<style>' + CSS + '</style>',
+      '</head>',
+      '<body>',
+      '<div class="report-wrap">',
+      _page1(d),
+      _page2(d),
+      _page3(d),
+      _page4(d),
+      _page5(d),
+      _page6(d),
+      '</div>',
+      '</body></html>',
+    ].join('');
   };
 
-  // ---------------------------------------------------------------------------
-  // Main orchestration
-  // ---------------------------------------------------------------------------
+  /* ------------------------------------------------------------------ */
+  /* generate: append hidden container to DOM                             */
+  /* ------------------------------------------------------------------ */
+  RG.generate = function (data) {
+    var container = document.createElement('div');
+    container.innerHTML = RG._buildHtml(data);
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    document.body.appendChild(container);
+    return container;
+  };
 
-  /**
-   * Generate all 6 pages and return the jsPDF document.
-   * @param {object} reportData  Result of FinancialEngine.generateReportData() + clientSummary
-   */
-  RG.generate = function (reportData) {
-    var doc = new jspdf.jsPDF({
-      orientation: 'portrait',
-      unit:        'mm',
-      format:      'a4'
+  /* ------------------------------------------------------------------ */
+  /* download: generate PDF and save                                      */
+  /* ------------------------------------------------------------------ */
+  RG.download = function (data) {
+    var d = data || {};
+    var el = RG.generate(d);
+    var filename = _esc(d.clientName || '\u304a\u5ba2\u69d8') +
+      '_\u30e9\u30a4\u30d5\u30c7\u30b6\u30a4\u30f3\u30ec\u30dd\u30fc\u30c8_' +
+      new Date().toISOString().slice(0, 10) + '.pdf';
+    var opt = {
+      margin: 0,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: 'css', before: '.page-break' },
+    };
+    return html2pdf().set(opt).from(el).save().then(function () {
+      document.body.removeChild(el);
     });
-
-    applyFont(doc);
-
-    this.generateCoverPage(doc, reportData);
-
-    doc.addPage();
-    this.generateLifePlanPage(doc, reportData);
-
-    doc.addPage();
-    this.generateFinancialPage(doc, reportData);
-
-    doc.addPage();
-    this.generateAssetPage(doc, reportData);
-
-    doc.addPage();
-    this.generateOptionsPage(doc, reportData);
-
-    doc.addPage();
-    this.generateBackCover(doc, reportData);
-
-    return doc;
   };
 
-  /**
-   * Download the PDF to the user's device.
-   * @param {object} reportData
-   */
-  RG.download = function (reportData) {
-    var doc      = this.generate(reportData);
-    var name     = (reportData.clientSummary && reportData.clientSummary.name) || 'クライアント';
-    var dateStr  = new Date().toISOString().slice(0, 10);
-    var filename = name + '_ライフデザインレポート_' + dateStr + '.pdf';
-    doc.save(filename);
-  };
-
-  /**
-   * Open a preview of the PDF in a new browser tab.
-   * @param {object} reportData
-   */
-  RG.preview = function (reportData) {
-    var doc  = this.generate(reportData);
-    var blob = doc.output('blob');
-    var url  = URL.createObjectURL(blob);
-    window.open(url, '_blank');
+  /* ------------------------------------------------------------------ */
+  /* preview: open PDF in new tab                                         */
+  /* ------------------------------------------------------------------ */
+  RG.preview = function (data) {
+    var d = data || {};
+    var el = RG.generate(d);
+    var opt = {
+      margin: 0,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: 'css', before: '.page-break' },
+    };
+    return html2pdf().set(opt).from(el).outputPdf('bloburl').then(function (url) {
+      window.open(url, '_blank');
+      document.body.removeChild(el);
+    });
   };
 
   return RG;
-
-}());
-
-// CommonJS / Node.js support
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = ReportGenerator;
-}
+})();
