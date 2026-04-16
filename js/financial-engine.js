@@ -773,7 +773,10 @@ var FinancialEngine = (function () {
       70: '退職後の安定生活期'
     };
 
-    for (var y = 1; y <= Math.max(yearsToRetirement + 10, 30); y++) {
+    // simYears 指定時は指定年数のみ、退職プランニング時は退職後10年まで
+    var maxLoopYears = simYears > 0 ? simYears : Math.max(yearsToRetirement + 10, 30);
+
+    for (var y = 1; y <= maxLoopYears; y++) {
       var age = currentAge + y;
 
       // 金融資産：複利運用＋月次積立
@@ -800,7 +803,7 @@ var FinancialEngine = (function () {
         event:           event
       });
 
-      if (age >= retirementAge + 10) break;
+      if (simYears <= 0 && age >= retirementAge + 10) break;
     }
 
     var retirementIdx    = yearlyProjection.findIndex(function (p) { return p.age >= retirementAge; });
@@ -1151,8 +1154,9 @@ var FinancialEngine = (function () {
     var priorityIdx = 1;
 
     if (analysis.incomeExpense && analysis.incomeExpense.recommendations) {
-      analysis.incomeExpense.recommendations.slice(0, 2).forEach(function (r) {
-        actions.push({ priority: priorityIdx++, title: '家計の収支改善', detail: r });
+      var ieTitles = ['家計の収支改善', '固定費の見直し', '変動費の最適化'];
+      analysis.incomeExpense.recommendations.slice(0, 2).forEach(function (r, i) {
+        actions.push({ priority: priorityIdx++, title: ieTitles[i] || ('家計改善 #' + (i + 1)), detail: r });
       });
     }
     if (!actions.length) {

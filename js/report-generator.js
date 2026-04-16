@@ -622,7 +622,7 @@ var ReportGenerator = (function () {
     // アクションプラン
     html += '<div class="section-title">\u512a\u5148\u30a2\u30af\u30b7\u30e7\u30f3\u30d7\u30e9\u30f3</div>';
     html += '<div class="action-list">';
-    actions.slice(0, 5).forEach(function(a, i) {
+    actions.slice(0, 6).forEach(function(a, i) {
       var priClass = colors[a.priority || (i+1)] || 'pri-3';
       html += '<div class="action-item">';
       html += '  <div class="action-num ' + priClass + '">' + (a.priority || i+1) + '</div>';
