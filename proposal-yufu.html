@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>住宅購入ライフプランニング 提案書 - 油布 智美 様</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #0a1628;
+    --accent: #b8922e;
+    --accent-pale: rgba(184,146,46,0.1);
+    --success: #2e7d32;
+    --warning: #f57f17;
+    --danger: #c62828;
+    --text-primary: #1a1a2e;
+    --surface: #ffffff;
+    --surface-2: #f8f6f2;
+    --border: #e8e0d0;
+  }
+
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-primary);
+    background: #f0ede8;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  h1, h2, h3, h4, .serif {
+    font-family: 'Noto Serif JP', serif;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 20px auto;
+    padding: 40px 45px;
+    background: var(--surface);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    position: relative;
+  }
+
+  /* ===== COVER PAGE ===== */
+  .cover {
+    background: var(--primary);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 50px;
+  }
+
+  .cover-top-line {
+    width: 60px;
+    height: 3px;
+    background: var(--accent);
+    margin-bottom: 50px;
+  }
+
+  .cover-label {
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    font-weight: 500;
+  }
+
+  .cover h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .cover-subtitle {
+    font-size: 16px;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 60px;
+    letter-spacing: 1px;
+  }
+
+  .cover-gold-line {
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin-bottom: 60px;
+  }
+
+  .cover-client {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+  }
+
+  .cover-client-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 3px;
+    margin-bottom: 80px;
+  }
+
+  .cover-footer {
+    text-align: center;
+  }
+
+  .cover-date {
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 12px;
+  }
+
+  .cover-planner {
+    font-size: 15px;
+    color: var(--accent);
+    letter-spacing: 1px;
+  }
+
+  .cover-company {
+    font-size: 12px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 4px;
+  }
+
+  /* ===== PAGE HEADERS ===== */
+  .page-header {
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 12px;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .page-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 80px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  .page-header h2 {
+    font-size: 22px;
+    color: var(--primary);
+    letter-spacing: 2px;
+  }
+
+  .page-header .page-num {
+    float: right;
+    font-size: 11px;
+    color: #999;
+    margin-top: 8px;
+  }
+
+  /* ===== SECTION TITLES ===== */
+  .section-title {
+    font-size: 16px;
+    color: var(--primary);
+    font-weight: 700;
+    margin: 28px 0 14px;
+    padding-left: 14px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .subsection-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 20px 0 10px;
+  }
+
+  /* ===== PROFILE CARD ===== */
+  .profile-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 40px;
+  }
+
+  .profile-item {
+    display: flex;
+    align-items: baseline;
+  }
+
+  .profile-label {
+    font-size: 12px;
+    color: #888;
+    min-width: 130px;
+    flex-shrink: 0;
+  }
+
+  .profile-value {
+    font-weight: 700;
+    font-size: 14px;
+  }
+
+  /* ===== GOLD BOX ===== */
+  .gold-box {
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 24px 28px;
+    background: var(--accent-pale);
+    margin: 20px 0;
+  }
+
+  .gold-box h3 {
+    font-size: 15px;
+    color: var(--accent);
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+  }
+
+  .gold-box ol {
+    padding-left: 20px;
+  }
+
+  .gold-box li {
+    margin-bottom: 6px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* ===== TABLES ===== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 13px;
+  }
+
+  table thead th {
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 12px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  table thead th:first-child {
+    text-align: left;
+  }
+
+  table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+
+  table tbody td:first-child {
+    text-align: left;
+    font-weight: 500;
+  }
+
+  table tbody tr:nth-child(even) {
+    background: var(--surface-2);
+  }
+
+  table tbody tr.highlight-row {
+    background: var(--accent-pale);
+    font-weight: 700;
+  }
+
+  /* ===== RECOMMENDED BOX ===== */
+  .recommend-box {
+    background: var(--primary);
+    color: #fff;
+    border-radius: 10px;
+    padding: 28px 32px;
+    margin: 20px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .recommend-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--accent);
+  }
+
+  .recommend-box h3 {
+    color: var(--accent);
+    font-size: 16px;
+    margin-bottom: 18px;
+    letter-spacing: 1px;
+  }
+
+  .recommend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+
+  .recommend-item {
+    text-align: center;
+  }
+
+  .recommend-item .label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 4px;
+  }
+
+  .recommend-item .value {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'Noto Serif JP', serif;
+  }
+
+  .recommend-item .value.gold {
+    color: var(--accent);
+  }
+
+  /* ===== STATUS BADGES ===== */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-safe { background: #e8f5e9; color: var(--success); }
+  .badge-ok { background: #e3f2fd; color: #1565c0; }
+  .badge-warn { background: #fff3e0; color: var(--warning); }
+  .badge-danger { background: #ffebee; color: var(--danger); }
+
+  /* ===== TWO COLUMNS ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  .col-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 22px;
+    background: var(--surface-2);
+  }
+
+  .col-card h4 {
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent);
+    color: var(--primary);
+  }
+
+  .col-card .cost-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+
+  .col-card .cost-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0 0;
+    margin-top: 8px;
+    border-top: 2px solid var(--primary);
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--primary);
+  }
+
+  /* ===== BREAKEVEN BOX ===== */
+  .breakeven-box {
+    background: linear-gradient(135deg, var(--primary), #162240);
+    color: #fff;
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin: 20px 0;
+    text-align: center;
+  }
+
+  .breakeven-box .be-title {
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+
+  .breakeven-box .be-value {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .breakeven-box .be-detail {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.6;
+  }
+
+  /* ===== BAR CHART ===== */
+  .bar-chart {
+    margin: 20px 0;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+
+  .bar-label {
+    width: 50px;
+    text-align: right;
+    margin-right: 10px;
+    font-weight: 700;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  .bar-group {
+    flex: 1;
+  }
+
+  .bar-track {
+    height: 22px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #fff;
+    min-width: 40px;
+    transition: width 0.3s;
+  }
+
+  .bar-purchase { background: linear-gradient(90deg, var(--primary), #1e3a5f); }
+  .bar-rent { background: linear-gradient(90deg, var(--accent), #d4a93a); }
+
+  /* ===== DONUT CHART (CSS) ===== */
+  .donut-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    margin: 24px 0;
+  }
+
+  .donut {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: conic-gradient(
+      var(--primary) 0deg 141deg,
+      #2e7d32 141deg 304deg,
+      var(--accent) 304deg 337deg,
+      #78909c 337deg 360deg
+    );
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .donut::after {
+    content: '';
+    position: absolute;
+    top: 35px;
+    left: 35px;
+    width: 110px;
+    height: 110px;
+    background: var(--surface);
+    border-radius: 50%;
+  }
+
+  .donut-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    text-align: center;
+  }
+
+  .donut-center .dc-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .donut-center .dc-label {
+    font-size: 10px;
+    color: #999;
+  }
+
+  .donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .legend-pct {
+    font-weight: 700;
+    min-width: 35px;
+  }
+
+  /* ===== ICON LIST ===== */
+  .icon-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0;
+  }
+
+  .icon-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border-radius: 6px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .icon-list-item .icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  /* ===== TIMELINE ===== */
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+    margin: 20px 0;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .timeline-phase {
+    position: relative;
+    margin-bottom: 28px;
+  }
+
+  .timeline-phase::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .phase-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+
+  .phase-title span {
+    font-size: 11px;
+    color: var(--accent);
+    margin-left: 8px;
+    font-weight: 500;
+  }
+
+  .phase-list {
+    padding-left: 18px;
+    font-size: 13px;
+  }
+
+  .phase-list li {
+    margin-bottom: 5px;
+    line-height: 1.6;
+  }
+
+  /* ===== HIGHLIGHT BOX ===== */
+  .highlight-box {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* ===== DISCLAIMER ===== */
+  .disclaimer {
+    font-size: 12px;
+    line-height: 2;
+    color: #666;
+  }
+
+  .disclaimer-title {
+    font-size: 16px;
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ===== SURPLUS BOX ===== */
+  .surplus-box {
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 16px 0;
+    text-align: center;
+  }
+
+  .surplus-box .surplus-label {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 4px;
+  }
+
+  .surplus-box .surplus-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--success);
+  }
+
+  .surplus-box .surplus-note {
+    font-size: 12px;
+    color: #666;
+    margin-top: 6px;
+  }
+
+  /* ===== ANNUAL SUMMARY ===== */
+  .annual-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+
+  .annual-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .annual-card .ac-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .annual-card .ac-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+
+  .annual-card .ac-note {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  /* ===== NISA TABLE ===== */
+  .nisa-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .nisa-card {
+    text-align: center;
+    background: var(--accent-pale);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .nisa-card .nc-period {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .nisa-card .nc-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 4px;
+  }
+
+  /* ===== FOOTER ===== */
+  .page-footer {
+    position: absolute;
+    bottom: 20px;
+    left: 45px;
+    right: 45px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #bbb;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+  }
+
+  /* ===== PRINT ===== */
+  @media print {
+    body {
+      background: white;
+      font-size: 10pt;
+    }
+    .page {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+      page-break-before: always;
+    }
+    .cover {
+      page-break-before: avoid;
+    }
+    .page-footer {
+      position: fixed;
+      bottom: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- PAGE 1: COVER                                                 -->
+<!-- ============================================================ -->
+<div class="page cover">
+  <div class="cover-top-line"></div>
+  <div class="cover-label">LIFE DESIGN PROPOSAL</div>
+  <h1>住宅購入ライフプランニング<br>提案書</h1>
+  <div class="cover-subtitle">年収500万円安全設計・フルローン3,500万円プラン</div>
+  <div class="cover-gold-line"></div>
+  <div class="cover-client">油布 智美 様</div>
+  <div class="cover-client-label">CLIENT</div>
+  <div class="cover-footer">
+    <div class="cover-date">2026年4月16日</div>
+    <div class="cover-planner">AFP Koki Takahashi</div>
+    <div class="cover-company">TERASS</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 2: CLIENT PROFILE & FP BASIC POLICY                     -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">02 / 08</span>
+    <h2>クライアントプロフィール &amp; FP基本方針</h2>
+  </div>
+
+  <div class="section-title">クライアントプロフィール</div>
+  <div class="profile-card">
+    <div class="profile-item">
+      <span class="profile-label">氏名</span>
+      <span class="profile-value">油布 智美 様</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">年齢</span>
+      <span class="profile-value">34歳</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">職業</span>
+      <span class="profile-value">会社員（単身）</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">現在の居住</span>
+      <span class="profile-value">賃貸 9.5万円/月</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">年収（設計ベース）</span>
+      <span class="profile-value">500万円</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">実績年収</span>
+      <span class="profile-value">800万円（一時的）</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">現在の貯蓄</span>
+      <span class="profile-value">150万円</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">希望</span>
+      <span class="profile-value">初めての住宅購入（東京都）</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">生命保険</span>
+      <span class="profile-value" style="color:var(--warning); font-weight:700">現在未加入 → 住宅ローン加入で団信が主軸となる</span>
+    </div>
+    <div class="profile-item">
+      <span class="profile-label">趣味・習慣</span>
+      <span class="profile-value">マシンピラティス（週1回）</span>
+    </div>
+  </div>
+
+  <div class="section-title">FP基本方針</div>
+  <div class="gold-box">
+    <h3>ファイナンシャルプランニング 5つの基本方針</h3>
+    <ol>
+      <li><strong>年収500万円を絶対安全基準として設計</strong><br>一時的な年収800万円ではなく、安定収入ベースで無理のない返済計画を策定します。</li>
+      <li><strong>フルローンにより150万円の自己資金を緊急予備資金として確保</strong><br>頭金を入れず、手元資金を生活防衛資金として温存します。</li>
+      <li><strong>金利1.5%上昇まで返済比率25%以内を維持</strong><br>変動金利リスクに対し、十分なバッファを持たせた設計です。</li>
+      <li><strong>住宅ローン控除273万円（13年）を最大活用</strong><br>税制優遇をフル活用し、実質的な住居コストを削減します。</li>
+      <li><strong>NISA月3万円の積立投資を購入後も継続</strong><br>住宅取得と資産形成の両立を実現します。</li>
+      <li><strong>団信を死亡保障の主軸として活用し、医療・就業不能保険を新規取得</strong><br>現在生命保険未加入のため、住宅ローンで付帯する団信が第一の死亡保障となります。これに加え、医療保険・就業不能保険への加入を優先課題とします。</li>
+    </ol>
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 3: RECOMMENDED PLAN & SIMULATION                         -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">03 / 08</span>
+    <h2>推奨プランと借入シミュレーション</h2>
+  </div>
+
+  <div class="section-title">推奨プラン</div>
+  <div class="recommend-box">
+    <h3>&#9670; RECOMMENDED PLAN</h3>
+    <div class="recommend-grid">
+      <div class="recommend-item">
+        <div class="label">物件価格</div>
+        <div class="value gold">3,500万円</div>
+      </div>
+      <div class="recommend-item">
+        <div class="label">借入額（フルローン）</div>
+        <div class="value gold">3,500万円</div>
+      </div>
+      <div class="recommend-item">
+        <div class="label">頭金</div>
+        <div class="value">0円</div>
+      </div>
+      <div class="recommend-item">
+        <div class="label">返済期間</div>
+        <div class="value">35年</div>
+      </div>
+      <div class="recommend-item">
+        <div class="label">適用金利</div>
+        <div class="value">0.69%<span style="font-size:11px;opacity:0.6">（変動・SBI）</span></div>
+      </div>
+      <div class="recommend-item">
+        <div class="label">月々返済額</div>
+        <div class="value gold">93,824円</div>
+      </div>
+      <div class="recommend-item">
+        <div class="label">総返済額</div>
+        <div class="value">3,941万円</div>
+      </div>
+      <div class="recommend-item">
+        <div class="label">利息総額</div>
+        <div class="value">441万円</div>
+      </div>
+      <div class="recommend-item">
+        <div class="label">住宅ローン控除</div>
+        <div class="value" style="color:#4caf50">▲273万円</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">金利変動リスクシミュレーション</div>
+  <table>
+    <thead>
+      <tr>
+        <th>適用金利</th>
+        <th>月々返済額</th>
+        <th>返済比率</th>
+        <th>評価</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="highlight-row">
+        <td>0.69%</td>
+        <td>93,824円</td>
+        <td>22.5%</td>
+        <td><span class="badge badge-safe">&#128142; 絶対安全</span></td>
+      </tr>
+      <tr>
+        <td>1.00%</td>
+        <td>98,800円</td>
+        <td>23.7%</td>
+        <td><span class="badge badge-ok">&#9989; 安全</span></td>
+      </tr>
+      <tr>
+        <td>1.50%</td>
+        <td>107,165円</td>
+        <td>25.7%</td>
+        <td><span class="badge badge-warn">&#9651; 注意</span></td>
+      </tr>
+      <tr>
+        <td>2.00%</td>
+        <td>115,942円</td>
+        <td>27.8%</td>
+        <td><span class="badge badge-danger">&#9888; 要対策</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">4プラン比較</div>
+  <table>
+    <thead>
+      <tr>
+        <th>プラン</th>
+        <th>借入額</th>
+        <th>月返済額</th>
+        <th>返済比率</th>
+        <th>1.5%時</th>
+        <th>判定</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>A 超安全</td>
+        <td>3,000万</td>
+        <td>80,421円</td>
+        <td>19.3%</td>
+        <td>22.0%</td>
+        <td><span class="badge badge-safe">&#9989;</span></td>
+      </tr>
+      <tr class="highlight-row">
+        <td><strong>B 推奨 &#9733;</strong></td>
+        <td>3,500万</td>
+        <td>93,824円</td>
+        <td>22.5%</td>
+        <td>25.7%</td>
+        <td><span class="badge badge-safe">&#9989;</span></td>
+      </tr>
+      <tr>
+        <td>C 上限</td>
+        <td>3,700万</td>
+        <td>99,186円</td>
+        <td>23.8%</td>
+        <td>27.2%</td>
+        <td><span class="badge badge-warn">&#9888;</span></td>
+      </tr>
+      <tr>
+        <td>D 旧案</td>
+        <td>4,350万</td>
+        <td>116,610円</td>
+        <td>28.0%</td>
+        <td>32.0%</td>
+        <td><span class="badge badge-danger">&#10060;</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box">
+    <strong>住宅ローン控除:</strong> 0.7% &times; 残債 &times; 13年 = <strong>273万円</strong>（13年累計）<br>
+    毎年約21万円の税額控除が受けられ、実質金利はほぼゼロに近づきます。
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 4: RENT vs BUY 35-YEAR COMPARISON                        -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">04 / 08</span>
+    <h2>賃貸 vs 購入 35年比較</h2>
+  </div>
+
+  <p style="text-align:center; color:#888; font-size:13px; margin-bottom:20px;">
+    同額家賃で賃貸を続けた場合との比較 &#8212; 月93,824円を家賃として払い続けた場合 vs 購入した場合
+  </p>
+
+  <div class="section-title">35年間 総コスト比較</div>
+  <div class="two-col">
+    <div class="col-card">
+      <h4>&#127968; 購入した場合</h4>
+      <div class="cost-item"><span>諸費用</span><span>105万円</span></div>
+      <div class="cost-item"><span>ローン総返済</span><span>3,941万円</span></div>
+      <div class="cost-item"><span>管理費・修繕・固定資産税</span><span>1,470万円</span></div>
+      <div class="cost-item"><span>住宅ローン控除</span><span style="color:var(--success)">&#9650; 273万円</span></div>
+      <div class="cost-total"><span>総支出</span><span>5,243万円</span></div>
+    </div>
+    <div class="col-card">
+      <h4>&#127970; 賃貸を続けた場合</h4>
+      <div class="cost-item"><span>家賃35年分</span><span>3,941万円</span></div>
+      <div class="cost-item"><span>更新料</span><span>160万円</span></div>
+      <div class="cost-total"><span>総支出</span><span>4,101万円</span></div>
+      <div style="margin-top:14px; padding-top:10px; border-top:1px dashed var(--border);">
+        <div class="cost-item"><span>節約分投資（月3.5万&times;3%）</span><span>2,596万円</span></div>
+        <div class="cost-item"><span>初期費用節約分</span><span>300万円</span></div>
+        <div class="cost-total"><span>投資資産</span><span style="color:var(--accent)">2,895万円</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="breakeven-box">
+    <div class="be-title">&#9670; 損益分岐ポイント</div>
+    <div class="be-value">35年後に物件価値が 4,038万円以上 あれば購入が有利</div>
+    <div class="be-detail">
+      3,500万円から +15.4%（年率+0.4%上昇）で達成 &#8594; 東京都内なら十分実現可能
+    </div>
+  </div>
+
+  <div class="section-title">年次 純資産推移</div>
+  <table>
+    <thead>
+      <tr>
+        <th>年数</th>
+        <th>ローン残高</th>
+        <th>推定物件価値</th>
+        <th>購入 純資産</th>
+        <th>賃貸 投資資産</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>5年</td><td>3,050万</td><td>3,254万</td><td>203万</td><td>348万</td></tr>
+      <tr><td>10年</td><td>2,585万</td><td>3,025万</td><td>440万</td><td>631万</td></tr>
+      <tr><td>13年</td><td>2,298万</td><td>2,895万</td><td>598万</td><td>822万</td></tr>
+      <tr><td>15年</td><td>2,103万</td><td>2,812万</td><td>709万</td><td>959万</td></tr>
+      <tr><td>20年</td><td>1,604万</td><td>2,614万</td><td>1,010万</td><td>1,340万</td></tr>
+      <tr><td>25年</td><td>1,088万</td><td>2,430万</td><td>1,342万</td><td>1,783万</td></tr>
+      <tr><td>30年</td><td>553万</td><td>2,259万</td><td>1,706万</td><td>2,298万</td></tr>
+      <tr><td>35年</td><td>0万</td><td>2,100万</td><td style="color:var(--success); font-weight:700">2,100万</td><td style="color:var(--accent); font-weight:700">2,895万</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">純資産推移チャート</div>
+  <div class="bar-chart">
+    <div class="bar-row">
+      <div class="bar-label">5年</div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:7%">203万</div>
+        <div class="bar-track bar-rent" style="width:12%">348万</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">10年</div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:15%">440万</div>
+        <div class="bar-track bar-rent" style="width:22%">631万</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">15年</div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:24%">709万</div>
+        <div class="bar-track bar-rent" style="width:33%">959万</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">20年</div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:35%">1,010万</div>
+        <div class="bar-track bar-rent" style="width:46%">1,340万</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">25年</div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:46%">1,342万</div>
+        <div class="bar-track bar-rent" style="width:62%">1,783万</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">30年</div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:59%">1,706万</div>
+        <div class="bar-track bar-rent" style="width:79%">2,298万</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">35年</div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:73%">2,100万</div>
+        <div class="bar-track bar-rent" style="width:100%">2,895万</div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex; gap:20px; justify-content:center; font-size:12px; color:#888; margin-top:6px;">
+    <span><span style="display:inline-block;width:12px;height:12px;background:var(--primary);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>購入 純資産</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:var(--accent);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>賃貸 投資資産</span>
+  </div>
+
+  <div class="section-title">住宅購入の非財務的メリット</div>
+  <div class="icon-list">
+    <div class="icon-list-item"><span class="icon">&#127968;</span>老後の住居費ゼロ（ローン完済後）</div>
+    <div class="icon-list-item"><span class="icon">&#128296;</span>自由なリフォーム・カスタマイズ</div>
+    <div class="icon-list-item"><span class="icon">&#128176;</span>家賃値上げリスクなし</div>
+    <div class="icon-list-item"><span class="icon">&#128737;</span>団信による生命保険効果</div>
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 5: MONTHLY CASH FLOW PLAN                                -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">05 / 08</span>
+    <h2>月次収支計画（購入後）</h2>
+  </div>
+
+  <div class="highlight-box" style="text-align:center;">
+    月手取り収入: <strong style="font-size:20px; color:var(--primary);">328,000円</strong>
+    <span style="font-size:12px; color:#888;">（年収500万円基準）</span>
+  </div>
+
+  <div class="section-title">住居費</div>
+  <table>
+    <thead>
+      <tr><th>項目</th><th>月額</th><th>備考</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>住宅ローン返済</td><td>93,824円</td><td>0.69% 変動 35年</td></tr>
+      <tr><td>管理費・修繕積立金</td><td>25,000円</td><td>マンション想定</td></tr>
+      <tr><td>固定資産税積立</td><td>10,000円</td><td>年12万÷12月</td></tr>
+      <tr class="highlight-row"><td><strong>住居費 小計</strong></td><td><strong>128,824円</strong></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">生活費</div>
+  <table>
+    <thead>
+      <tr><th>項目</th><th>月額</th><th>備考</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>食費</td><td>55,000円</td><td>自炊+外食</td></tr>
+      <tr><td>光熱費</td><td>15,000円</td><td>電気・ガス・水道</td></tr>
+      <tr><td>通信費</td><td>12,000円</td><td>スマホ+ネット</td></tr>
+      <tr><td>交通費</td><td>15,000円</td><td>定期代等</td></tr>
+      <tr><td>保険料</td><td style="color:var(--warning)">0円</td><td style="color:var(--warning)">現在未加入 ※購入後に医療・就業不能を新規加入推奨</td></tr>
+      <tr><td>マシンピラティス</td><td>16,000円</td><td>週1回（スタジオ月額）</td></tr>
+      <tr><td>娯楽・交際費</td><td>20,000円</td><td>外食・レジャー等</td></tr>
+      <tr><td>その他</td><td>15,000円</td><td>日用品・雑費</td></tr>
+      <tr class="highlight-row"><td><strong>生活費 小計</strong></td><td><strong>148,000円</strong></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">資産形成</div>
+  <table>
+    <thead>
+      <tr><th>項目</th><th>月額</th><th>備考</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>NISA積立投資</td><td>30,000円</td><td>インデックスファンド</td></tr>
+      <tr class="highlight-row"><td><strong>合計支出</strong></td><td><strong>306,824円</strong></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <div class="surplus-box">
+    <div class="surplus-label">月間余剰</div>
+    <div class="surplus-value">21,176円</div>
+    <div class="surplus-note">&#8594; 緊急資金積立へ（購入後の保険加入時は月12,000円程度を保険料へ充当）</div>
+  </div>
+
+  <div class="section-title">支出内訳</div>
+  <div class="donut-container">
+    <div class="donut" style="position:relative;">
+      <div class="donut-center">
+        <div class="dc-value">328,000</div>
+        <div class="dc-label">円/月</div>
+      </div>
+    </div>
+    <div class="donut-legend">
+      <div class="legend-item">
+        <div class="legend-color" style="background:var(--primary)"></div>
+        <span class="legend-pct">39%</span>
+        <span>住居費（128,824円）</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#2e7d32"></div>
+        <span class="legend-pct">45%</span>
+        <span>生活費（148,000円）</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:var(--accent)"></div>
+        <span class="legend-pct">9%</span>
+        <span>資産形成（30,000円）</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color" style="background:#78909c"></div>
+        <span class="legend-pct">6%</span>
+        <span>余剰（21,176円）</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">年間収支サマリー</div>
+  <div class="annual-summary">
+    <div class="annual-card">
+      <div class="ac-label">月間余剰</div>
+      <div class="ac-value">21,176円</div>
+      <div class="ac-note">購入後・保険加入前の試算</div>
+    </div>
+    <div class="annual-card">
+      <div class="ac-label">年間余剰</div>
+      <div class="ac-value">254,112円</div>
+      <div class="ac-note">21,176円 &times; 12ヶ月</div>
+    </div>
+    <div class="annual-card">
+      <div class="ac-label">緊急資金回復目標</div>
+      <div class="ac-value">約15年で500万円</div>
+      <div class="ac-note">現150万 + 年25万積立（保険加入後）</div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 6: PEER COMPARISON REPORT                                -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">06 / 08</span>
+    <h2>同世代比較レポート</h2>
+  </div>
+
+  <p style="text-align:center; font-size:15px; color:var(--primary); font-weight:700; margin-bottom:6px;">
+    単身女性・34歳・会社員・年収500万 同属性比較
+  </p>
+  <p style="text-align:center; font-size:11px; color:#999; margin-bottom:24px;">
+    出典: 総務省家計調査 / 生命保険文化センター / 金融広報中央委員会 2022-2023年データ
+  </p>
+
+  <div class="section-title">月次支出比較</div>
+  <table>
+    <thead>
+      <tr><th>費目</th><th>油布様</th><th>同属性平均</th><th>評価</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>住居費</td><td>95,000円</td><td>90,000〜110,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>食費</td><td>55,000円</td><td>45,000〜60,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>光熱費</td><td>15,000円</td><td>10,000〜15,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>通信費</td><td>12,000円</td><td>8,000〜12,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>交通費</td><td>15,000円</td><td>10,000〜20,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>被服・美容</td><td>未設定</td><td>15,000〜25,000円</td><td><span class="badge badge-warn">&#9888; 要確認</span></td></tr>
+      <tr><td>娯楽費</td><td>20,000円</td><td>20,000〜30,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>マシンピラティス</td><td>16,000円</td><td>スポーツジム: 5,000〜15,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>保険料</td><td style="color:var(--danger); font-weight:700">0円（未加入）</td><td>13,000〜18,000円</td><td><span class="badge badge-danger">&#9888; 要加入</span></td></tr>
+      <tr><td>積立投資</td><td>30,000円</td><td>20,000〜40,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-title">貯蓄残高比較</div>
+  <div class="two-col" style="gap:16px;">
+    <div class="col-card" style="text-align:center;">
+      <div style="font-size:12px; color:#888;">油布様 現在の貯蓄</div>
+      <div style="font-size:28px; font-weight:700; color:var(--primary); margin:8px 0;">150万円</div>
+    </div>
+    <div class="col-card" style="text-align:center;">
+      <div style="font-size:12px; color:#888;">同属性 平均 / 中央値</div>
+      <div style="font-size:28px; font-weight:700; color:var(--accent); margin:8px 0;">450〜600万 / 100〜200万</div>
+    </div>
+  </div>
+  <div class="highlight-box" style="text-align:center;">
+    中央値水準（50〜55パーセンタイル）&#8212; 平均は高額資産層に引き上げられており、中央値での比較が適切です。
+  </div>
+
+  <div class="section-title">生命保険 現状と住宅購入後の保障設計</div>
+
+  <div class="highlight-box" style="border-left-color:var(--accent); background:var(--accent-pale); margin-bottom:16px;">
+    <strong>&#127968; 住宅購入で団信が自動付帯 &#8594; 死亡保障の主軸に</strong><br>
+    油布様は現在生命保険に未加入です。住宅ローン加入時に<strong>団体信用生命保険（団信）</strong>が付帯し、
+    万一の死亡・高度障害時はローン残債が全額免除されます。<br>
+    これが実質的な<strong>最初の生命保険</strong>となります。
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>保障種類</th><th>油布様（現在）</th><th>住宅購入後</th><th>同属性平均月額</th><th>FP推奨</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>死亡・高度障害保障</strong></td>
+        <td style="color:var(--danger)">未加入</td>
+        <td style="color:var(--success); font-weight:700">&#9989; 団信で補完（ローン免除）</td>
+        <td>2,000〜5,000円</td>
+        <td>団信のみで十分。別途加入不要</td>
+      </tr>
+      <tr>
+        <td><strong>医療保険</strong><br><small>入院・手術保障</small></td>
+        <td style="color:var(--danger)">未加入</td>
+        <td style="color:var(--warning)">&#9888; 新規加入が必要</td>
+        <td>7,000〜10,000円</td>
+        <td><span class="badge badge-danger">&#11088; 優先①</span> 日額5,000〜10,000円</td>
+      </tr>
+      <tr>
+        <td><strong>就業不能保険</strong><br><small>長期病欠・障害備え</small></td>
+        <td style="color:var(--danger)">未加入</td>
+        <td style="color:var(--warning)">&#9888; 新規加入が必要</td>
+        <td>加入率15〜20%</td>
+        <td><span class="badge badge-danger">&#11088; 優先②</span> 月収の60〜70%補償</td>
+      </tr>
+      <tr>
+        <td><strong>がん保険</strong></td>
+        <td style="color:var(--danger)">未加入</td>
+        <td style="color:var(--warning)">&#9888; 推奨加入</td>
+        <td>3,000〜5,000円</td>
+        <td>診断一時金100万円以上</td>
+      </tr>
+      <tr class="highlight-row">
+        <td><strong>合計保険料（目安）</strong></td>
+        <td><strong style="color:var(--danger)">0円</strong></td>
+        <td colspan="2"><strong>月12,000〜18,000円（新規加入後）</strong></td>
+        <td><strong>13,000〜18,000円</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box" style="border-left-color:var(--danger); background:#fff5f5; border-color:#ef9a9a;">
+    <strong>&#128680; 単身者の保険戦略：優先順位</strong><br><br>
+    <strong>① 就業不能保険（最優先）</strong> &#8212; 単身者が長期間働けなくなると収入ゼロ＋住居費が直撃します。ローンは団信で守られますが、生活費は自分で確保する必要があります。<br><br>
+    <strong>② 医療保険</strong> &#8212; 入院・手術費用をカバー。公的医療保険の自己負担3割＋差額ベッド代を補完します。<br><br>
+    <strong>③ がん保険</strong> &#8212; 女性は30代からの乳がん・子宮頸がんリスクが上昇。診断一時金型が実用的です。<br><br>
+    <span style="color:var(--success)"><strong>&#10003; 死亡保険は団信が代替するため、別途加入不要です。</strong></span>
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 7: ACTION PLAN                                           -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">07 / 08</span>
+    <h2>FP推奨アクションプラン</h2>
+  </div>
+
+  <div class="timeline">
+    <div class="timeline-phase">
+      <div class="phase-title">Phase 1: 購入前<span>&#8212; 2026年中</span></div>
+      <ol class="phase-list">
+        <li><strong>医療保険・就業不能保険への新規加入</strong>（合計月12,000〜18,000円）&#8212; 現在未加入のため最優先。就業不能保険は単身者の生活防衛の要</li>
+        <li><strong>物件選定:</strong> 3,500万円以内・東京都内・管理費1.5万以内の条件で絞り込み</li>
+        <li><strong>住宅ローン事前審査</strong>&#8212; SBI / 楽天 / PayPay等3行比較で最有利条件を確保。団信の保障内容も必ず確認</li>
+        <li><strong>諸費用（約105万円）の資金計画確認</strong>&#8212; 貯蓄150万円からの支出範囲を精査</li>
+      </ol>
+    </div>
+
+    <div class="timeline-phase">
+      <div class="phase-title">Phase 2: 購入直後<span>&#8212; 1年以内</span></div>
+      <ol class="phase-list">
+        <li><strong>初年度確定申告で住宅ローン控除申請</strong>&#8212; 初年度は確定申告が必須（2年目以降は年末調整）。273万円の控除を確実に取得</li>
+        <li><strong>団信の保障内容を確認・記録</strong>&#8212; 死亡・高度障害時のローン免除条件を把握。就業不能特約付き団信も検討</li>
+        <li><strong>NISA継続</strong>&#8212; 月3万円を維持し、住宅取得と資産形成を両立</li>
+        <li><strong>緊急予備資金150万円は保全</strong>&#8212; 諸費用支出後の残額を絶対に手付かずで維持</li>
+      </ol>
+    </div>
+
+    <div class="timeline-phase">
+      <div class="phase-title">Phase 3: 中長期<span>&#8212; 10年</span></div>
+      <ol class="phase-list">
+        <li><strong>年収800万円期間中は繰上返済検討</strong>&#8212; ただしNISA投資を優先（期待リターン &gt; ローン金利）</li>
+        <li><strong>残債3,000万以下になったら固定金利への借換検討</strong>&#8212; 金利上昇リスクの軽減</li>
+        <li><strong>5年ごとに収支見直し</strong>&#8212; ライフステージの変化に合わせた計画修正</li>
+        <li><strong>65歳完済後の生活費計画策定</strong>&#8212; 老後資金2,000万円問題への対応</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="section-title">NISA資産形成予測</div>
+  <p style="font-size:12px; color:#888; margin-bottom:12px;">月3万円 &times; 年利3% 複利運用</p>
+  <div class="nisa-grid">
+    <div class="nisa-card">
+      <div class="nc-period">5年後</div>
+      <div class="nc-value">200万円</div>
+    </div>
+    <div class="nisa-card">
+      <div class="nc-period">10年後</div>
+      <div class="nc-value">417万円</div>
+    </div>
+    <div class="nisa-card">
+      <div class="nc-period">20年後</div>
+      <div class="nc-value">986万円</div>
+    </div>
+    <div class="nisa-card">
+      <div class="nc-period">30年後</div>
+      <div class="nc-value">1,749万円</div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="text-align:center;">
+    <strong>住宅ローン完済（35年後・69歳）時点で:</strong><br>
+    &#127968; 物件資産（推定2,100万円）+ &#128200; NISA資産（推定1,749万円以上）= <strong style="font-size:18px; color:var(--primary);">約3,849万円</strong>の資産形成
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 8: DISCLAIMER                                            -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">08 / 08</span>
+    <h2>免責事項・ご留意事項</h2>
+  </div>
+
+  <div style="height:40px;"></div>
+
+  <div class="disclaimer-title serif">Important Notice / 免責事項</div>
+
+  <div class="disclaimer">
+    <p style="margin-bottom:18px;">
+      本提案書に記載された試算・分析結果は、提供いただいた情報をもとにしたシミュレーションであり、将来の収益または成果を保証するものではありません。
+    </p>
+
+    <p style="margin-bottom:18px;">
+      金融商品の購入・ローンの借入・不動産の取得等の最終的な意思決定は、お客様ご自身の責任において行ってください。
+    </p>
+
+    <p style="margin-bottom:18px;">
+      税務に関するご相談は税理士、法律に関するご相談は弁護士・司法書士に別途ご相談ください。
+    </p>
+
+    <p style="margin-bottom:18px;">
+      本提案書の内容は作成時点（2026年4月16日）の法令・税制に基づいており、制度改正により変更になる場合があります。
+    </p>
+
+    <p style="margin-bottom:18px;">
+      金利・物件価格・投資リターン等の将来予測は、過去の実績データおよび現時点の市場環境に基づく推計であり、実際の結果は大きく異なる可能性があります。
+    </p>
+
+    <p style="margin-bottom:18px;">
+      本提案書は油布 智美 様個人に向けて作成されたものであり、第三者への提供を目的としたものではありません。
+    </p>
+
+    <p style="margin-bottom:40px;">
+      当事務所はAFP（日本FP協会認定アフィリエイテッド ファイナンシャル・プランナー）として、お客様の最善の利益を追求したアドバイスの提供に努めております。
+    </p>
+  </div>
+
+  <div style="text-align:center; margin-top:60px; padding-top:30px; border-top:1px solid var(--border);">
+    <div style="width:60px; height:2px; background:var(--accent); margin:0 auto 20px;"></div>
+    <div style="font-size:14px; color:var(--primary); font-weight:700; letter-spacing:2px; margin-bottom:6px;">
+      AFP Koki Takahashi
+    </div>
+    <div style="font-size:12px; color:#888; letter-spacing:1px; margin-bottom:4px;">
+      TERASS
+    </div>
+    <div style="font-size:11px; color:#bbb;">
+      2026年4月16日 作成
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+</body>
+</html>
