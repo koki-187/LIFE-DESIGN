@@ -1398,16 +1398,22 @@ var App = (function () {
 
     var params = collectFinancialParams();
 
-    state.financialResults = {
-      incomeExpense:   FinancialEngine.analyzeIncomeExpense(params.ie),
-      affordability:   FinancialEngine.calculateAffordability(params.afford),
-      rentVsBuy:       FinancialEngine.compareRentVsBuy(params.rvb),
-      insurance:       FinancialEngine.compareInsurance(params.ins),
-      taxBenefits:     FinancialEngine.calculateTaxBenefits(params.tax),
-      interestRate:    FinancialEngine.analyzeInterestRateImpact(params.rate),
-      assetProjection: FinancialEngine.projectAssetFormation(params.asset),
-      guideline:       FinancialEngine.getHousingCostGuideline(c.annualIncome)
-    };
+    try {
+      state.financialResults = {
+        incomeExpense:   FinancialEngine.analyzeIncomeExpense(params.ie),
+        affordability:   FinancialEngine.calculateAffordability(params.afford),
+        rentVsBuy:       FinancialEngine.compareRentVsBuy(params.rvb),
+        insurance:       FinancialEngine.compareInsurance(params.ins),
+        taxBenefits:     FinancialEngine.calculateTaxBenefits(params.tax),
+        interestRate:    FinancialEngine.analyzeInterestRateImpact(params.rate),
+        assetProjection: FinancialEngine.projectAssetFormation(params.asset),
+        guideline:       FinancialEngine.getHousingCostGuideline(c.annualIncome)
+      };
+    } catch (e) {
+      showAlert('ファイナンシャル分析中にエラーが発生しました: ' + e.message, 'error');
+      console.error('runFinancialAnalysis error:', e);
+      return;
+    }
 
     saveData();
     renderFinancialResults();
@@ -1420,8 +1426,17 @@ var App = (function () {
         annualIncome: c.annualIncome || 0,
         spouseIncome: c.spouseIncome || 0,
         currentRent:  c.currentRent  || 0,
-        savings:      0,
-        expenses: {}
+        savings:      50000,
+        expenses: {
+          food:           50000,
+          utilities:      15000,
+          communication:  10000,
+          transportation: 20000,
+          insurance:      30000,
+          education:      c.children ? 20000 * c.children : 0,
+          entertainment:  30000,
+          other:          20000
+        }
       },
       afford: {
         annualIncome:     c.annualIncome || 0,
