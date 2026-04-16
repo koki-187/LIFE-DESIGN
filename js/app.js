@@ -2343,7 +2343,10 @@ var App = (function () {
       state.remoteSettings    = data.remoteSettings    || null;
       state.remoteSessions    = data.remoteSessions    || [];
 
-    // 油布智美様の完全データ（実際の資料に基づく）
+    // 油布智美様の完全データ
+    // FP設計方針：年収500万円（最低保証ライン）基準・フルローン
+    // 物件3,500万円 / 頭金0円 / 借入3,500万円（自己資金は緊急予備資金として保全）
+    // 月返済93,824円 / 返済比率22.5%（500万ベース）→ 金利1.5%上昇時も25.7%で安全圏
     var yufumiData = {
       id: 'yub-tomomi-2024',
       name: '油布 智美',
@@ -2360,18 +2363,18 @@ var App = (function () {
       currentRent: 95000,
       desiredArea: '東京都',
       purpose: 'buy_first',
-      notes: '単身・現在賃貸9.5万円/月。初めての住宅購入を検討中。借入なし・返済なし。LoanChecker参考：借入4,500万円/SBI0.69%',
-      monthlyFood: 6,
+      notes: '単身・現在賃貸9.5万円/月。FP設計：年収500万円最低保証ライン基準。フルローン3,500万円（自己資金150万は緊急予備として保全）。月返済93,824円・返済比率22.5%。金利1.5%上昇時も25.7%で安全圏。',
+      monthlyFood: 5.5,
       monthlyUtilities: 1.5,
-      monthlyCommunication: 1,
+      monthlyCommunication: 1.2,
       monthlyTransport: 1.5,
       monthlyInsurance: 1,
       monthlyEducation: 0,
       monthlyEntertainment: 2,
-      monthlySavings: 5,
-      monthlyOther: 2,
-      targetPropertyPrice: 4500,
-      downPayment: 150,
+      monthlySavings: 3,
+      monthlyOther: 1.5,
+      targetPropertyPrice: 3500,
+      downPayment: 0,
       loanTerm: 35,
       loanRate: 0.690,
       existingDebt: 0,
@@ -2384,7 +2387,17 @@ var App = (function () {
       idecoBalance: 0,
       monthlyInvestment: 3,
       expectedYield: 3,
-      plannedLoanAmount: 4350,
+      plannedLoanAmount: 3500,
+      expenses: {
+        food:           55000,
+        utilities:      15000,
+        communication:  12000,
+        transportation: 15000,
+        insurance:      10000,
+        education:      0,
+        entertainment:  20000,
+        other:          15000
+      },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
