@@ -4319,3 +4319,111 @@ canvas { max-width: 100%; }
 .bct-warning { font-size: 11px; color: #e53935; }
 .bct-highlight { font-size: 15px; font-weight: 700; color: var(--primary, #0a1628); }
 @media (max-width: 600px) { .bct-hide-sm { display: none; } .bank-compare-header, .bank-compare-row { grid-template-columns: 2fr 1fr 1.2fr 1.2fr 1fr; } }
+
+/* ============================================================
+   REMOTE SETTINGS (リモート設定)
+   ============================================================ */
+
+.remoteset-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+}
+
+.remoteset-toggle-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.remoteset-toggle-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.remoteset-toggle-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.toggle-label-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Remote session history */
+.remote-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.remote-history-item {
+  padding: 16px;
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  transition: var(--transition-fast);
+}
+
+.remote-history-item:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.remote-history-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.remote-history-header > .material-icons {
+  font-size: 24px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.remote-history-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.remote-history-client {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.remote-history-date {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.remote-history-platform {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--accent-pale);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.remote-history-notes {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-light);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}

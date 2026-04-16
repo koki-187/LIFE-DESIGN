@@ -21,7 +21,9 @@ var App = (function () {
     financialResults: null,
     isDirty: false,
     activeFinancialTab: 0,
-    financialCharts: {}
+    financialCharts: {},
+    remoteSettings: null,
+    remoteSessions: []
   };
 
   // ---------------------------------------------------------------------------
@@ -126,7 +128,8 @@ var App = (function () {
     'psychology':   '心理分析',
     'financial':    'ファイナンシャル分析',
     'lifeplan':     'ライフプラン',
-    'report':       'レポート出力'
+    'report':       'レポート出力',
+    'remoteset':    'リモート設定'
   };
 
   function showSection(sectionId) {
@@ -169,6 +172,7 @@ var App = (function () {
       case 'financial':    renderFinancial();    break;
       case 'lifeplan':     renderLifePlan();     break;
       case 'report':       renderReport();       break;
+      case 'remoteset':    renderRemoteSet();    break;
     }
 
     updateNavBadges();
@@ -795,6 +799,17 @@ var App = (function () {
       propertyType:        _radioValue('client-property-type')      || 'new',
       moveInYear:          parseInt(_fv('client-move-in-year'))     || new Date().getFullYear(),
 
+      // === 支出オブジェクト（レポート用・後方互換） ===
+      expenses: {
+        food:           (parseFloat(_fv('client-food'))          || 6)   * 10000,
+        utilities:      (parseFloat(_fv('client-utilities'))     || 2)   * 10000,
+        communication:  (parseFloat(_fv('client-communication')) || 1.5) * 10000,
+        transportation: (parseFloat(_fv('client-transport'))     || 2)   * 10000,
+        insurance:      (parseFloat(_fv('client-insurance-fee')) || 3)   * 10000,
+        education:      (parseFloat(_fv('client-education'))     || 0)   * 10000,
+        entertainment:  (parseFloat(_fv('client-entertainment')) || 3)   * 10000,
+        other:          (parseFloat(_fv('client-other-expense')) || 2)   * 10000
+      },
       createdAt:      (state.currentClient && state.currentClient.createdAt) || new Date().toISOString(),
       updatedAt:      new Date().toISOString()
     };
@@ -1634,30 +1649,58 @@ var App = (function () {
 
     var params = collectFinancialParams();
 
-    state.financialResults = {
-      incomeExpense:   FinancialEngine.analyzeIncomeExpense(params.ie),
-      affordability:   FinancialEngine.calculateAffordability(params.afford),
-      rentVsBuy:       FinancialEngine.compareRentVsBuy(params.rvb),
-      insurance:       FinancialEngine.compareInsurance(params.ins),
-      taxBenefits:     FinancialEngine.calculateTaxBenefits(params.tax),
-      interestRate:    FinancialEngine.analyzeInterestRateImpact(params.rate),
-      assetProjection: FinancialEngine.projectAssetFormation(params.asset),
-      guideline:       FinancialEngine.getHousingCostGuideline(c.annualIncome)
-    };
+    try {
+      var existing = state.financialResults || {};
+      state.financialResults = {
+        incomeExpense:   existing.incomeExpense   || FinancialEngine.analyzeIncomeExpense(params.ie),
+        affordability:   existing.affordability   || FinancialEngine.calculateAffordability(params.afford),
+        rentVsBuy:       existing.rentVsBuy       || FinancialEngine.compareRentVsBuy(params.rvb),
+        insurance:       existing.insurance       || FinancialEngine.compareInsurance(params.ins),
+        taxBenefits:     existing.taxBenefits     || FinancialEngine.calculateTaxBenefits(params.tax),
+        interestRate:    existing.interestRate    || FinancialEngine.analyzeInterestRateImpact(params.rate),
+        assetProjection: existing.assetProjection || FinancialEngine.projectAssetFormation(params.asset),
+        guideline:       FinancialEngine.getHousingCostGuideline(c.annualIncome)
+      };
+    } catch (e) {
+      showAlert('ファイナンシャル分析中にエラーが発生しました: ' + e.message, 'error');
+      console.error('runFinancialAnalysis error:', e);
+      return;
+    }
 
     saveData();
     renderFinancialResults();
   }
 
+  function runAllAnalyses() {
+    if (!state.currentClient) {
+      showAlert('先にクライアント情報を登録してください。', 'warning');
+      return;
+    }
+    runFinancialAnalysis();
+    showAlert('全分析を実行しました。レポートを生成できます。', 'success');
+    renderReport();
+  }
+
   function collectFinancialParams() {
     var c = state.currentClient || {};
+    var ex = c.expenses || {};
+    var hasExpenses = ex.food || ex.utilities || ex.insurance || ex.entertainment;
     return {
       ie: {
         annualIncome: c.annualIncome || 0,
         spouseIncome: c.spouseIncome || 0,
         currentRent:  c.currentRent  || 0,
-        savings:      (c.monthlySavings || 5) * 10000,
-        expenses: {
+        savings:      c.savings || (c.monthlySavings || 5) * 10000,
+        expenses: hasExpenses ? {
+          food:           ex.food           || (c.monthlyFood || 6) * 10000,
+          utilities:      ex.utilities      || (c.monthlyUtilities || 2) * 10000,
+          communication:  ex.communication  || (c.monthlyCommunication || 1.5) * 10000,
+          transportation: ex.transportation || (c.monthlyTransport || 2) * 10000,
+          insurance:      ex.insurance      || (c.monthlyInsurance || 3) * 10000,
+          education:      ex.education      || (c.monthlyEducation || 0) * 10000,
+          entertainment:  ex.entertainment  || (c.monthlyEntertainment || 3) * 10000,
+          other:          ex.other          || (c.monthlyOther || 2) * 10000
+        } : {
           food:           (c.monthlyFood || 6) * 10000,
           utilities:      (c.monthlyUtilities || 2) * 10000,
           communication:  (c.monthlyCommunication || 1.5) * 10000,
@@ -1929,6 +1972,18 @@ var App = (function () {
     html += '<li class="' + (state.financialResults.assetProjection ? 'checked' : 'unchecked') + '">資産形成シミュレーション</li>';
     html += '</ul>';
 
+    // 未実行の分析がある場合、一括実行ボタンを表示
+    var fr = state.financialResults;
+    var missingAnalyses = !fr.incomeExpense || !fr.affordability || !fr.rentVsBuy || !fr.assetProjection;
+    if (missingAnalyses) {
+      html += '<div class="result-block" style="background:#fff8e1;border-left:4px solid #f57f17;padding:12px 16px;margin-bottom:16px;">';
+      html += '<p style="margin:0;color:#5d4037"><span class="material-icons" style="vertical-align:middle;font-size:18px;margin-right:4px;">info</span>';
+      html += '一部の分析が未実行です。レポートの精度を高めるには、全分析を実行してください。</p>';
+      html += '<button class="btn-secondary" onclick="App.runAllAnalyses()" style="margin-top:8px">';
+      html += '<span class="material-icons" style="font-size:16px;vertical-align:middle">play_circle</span> 全分析を一括実行</button>';
+      html += '</div>';
+    }
+
     html += '<div class="form-actions">';
     html += '<button class="btn-primary btn-large" onclick="App.generateReport()">PDFレポートを生成</button>';
     if (typeof ReportGenerator !== 'undefined' && typeof ReportGenerator.preview === 'function') {
@@ -1967,11 +2022,40 @@ var App = (function () {
   }
 
   function _buildReportData() {
-    var reportData = FinancialEngine.generateReportData(state.currentClient, state.financialResults);
-    reportData.clientName = state.currentClient.name;
-    reportData.lifeStage  = state.psychologyResults
-      ? state.psychologyResults.lifeStage
-      : PsychologyEngine.analyzeLifeStage(state.currentClient);
+    var c  = state.currentClient  || {};
+    var fr = state.financialResults || {};
+
+    var reportData = FinancialEngine.generateReportData(c, fr);
+    reportData.clientName = c.name || 'お客様';
+
+    // ライフステージ情報
+    reportData.lifeStage = state.psychologyResults
+      ? (state.psychologyResults.lifeStage || {})
+      : (typeof PsychologyEngine !== 'undefined' ? PsychologyEngine.analyzeLifeStage(c) : {});
+
+    // rentVsBuy のパラメータをユーザ入力値で上書き（フォーム入力がある場合）
+    if (reportData.rentVsBuyResult && fr.rentVsBuy) {
+      // yearlyComparison の最後のエントリから累計コストを取得できる場合
+      var yc = fr.rentVsBuy.yearlyComparison;
+      if (yc && yc.length > 0) {
+        var lastYear = yc[yc.length - 1];
+        reportData.rentVsBuyResult.totalRentCost = lastYear.rentCumulativeCost || reportData.rentVsBuyResult.totalRentCost;
+        reportData.rentVsBuyResult.totalBuyCost  = lastYear.buyCumulativeCost  || reportData.rentVsBuyResult.totalBuyCost;
+      }
+    }
+
+    // assetProjection のパラメータをユーザ入力値で反映
+    if (reportData.assetProjection && fr.assetProjection) {
+      var ap = fr.assetProjection;
+      var yearly = ap.yearlyProjection || [];
+      if (yearly.length > 0) {
+        var last = yearly[yearly.length - 1];
+        reportData.assetProjection.finalAmount = last.financialAssets || last.netWorth || reportData.assetProjection.finalAmount;
+        reportData.assetProjection.years       = yearly.length;
+        reportData.assetProjection.totalGain   = Math.max(0, reportData.assetProjection.finalAmount - reportData.assetProjection.totalContributed);
+      }
+    }
+
     return reportData;
   }
 
@@ -2232,7 +2316,9 @@ var App = (function () {
         clients:          state.clients,
         currentClientId:  state.currentClient ? state.currentClient.id : null,
         psychologyResults: state.psychologyResults,
-        financialResults:  state.financialResults
+        financialResults:  state.financialResults,
+        remoteSettings:    state.remoteSettings,
+        remoteSessions:    state.remoteSessions
       };
       localStorage.setItem('lifedesign_data', JSON.stringify(data));
     } catch (e) {
@@ -2254,6 +2340,8 @@ var App = (function () {
       }
       state.psychologyResults = data.psychologyResults || null;
       state.financialResults  = data.financialResults  || null;
+      state.remoteSettings    = data.remoteSettings    || null;
+      state.remoteSessions    = data.remoteSessions    || [];
 
     // 油布智美様の完全データ（実際の資料に基づく）
     var yufumiData = {
@@ -2312,6 +2400,8 @@ var App = (function () {
       state.currentClient     = null;
       state.psychologyResults = null;
       state.financialResults  = null;
+      state.remoteSettings    = null;
+      state.remoteSessions    = [];
     }
   }
 
@@ -2515,6 +2605,212 @@ var App = (function () {
   }
 
   // ---------------------------------------------------------------------------
+  // リモート設定
+  // ---------------------------------------------------------------------------
+
+  function renderRemoteSet() {
+    var settings = state.remoteSettings || {};
+    var setVal = function(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; };
+
+    // Restore form values
+    setVal('remote-platform', settings.platform);
+    setVal('remote-meeting-url', settings.meetingUrl);
+    setVal('remote-meeting-id', settings.meetingId);
+    setVal('remote-meeting-password', settings.meetingPassword);
+    setVal('remote-date', settings.date);
+    setVal('remote-time-start', settings.timeStart || '10:00');
+    setVal('remote-time-end', settings.timeEnd || '11:00');
+    setVal('remote-client-email', settings.clientEmail);
+    setVal('remote-shared-docs', settings.sharedDocs);
+    setVal('remote-session-notes', settings.sessionNotes);
+
+    // Toggle states
+    var modeToggle = document.getElementById('remote-mode-toggle');
+    var reminderToggle = document.getElementById('remote-reminder-toggle');
+    var details = document.getElementById('remoteset-details');
+
+    if (settings.enabled) {
+      if (modeToggle) {
+        modeToggle.classList.add('active');
+        modeToggle.querySelector('.toggle-label-text').textContent = '有効';
+      }
+      if (details) details.style.display = 'block';
+    } else {
+      if (modeToggle) {
+        modeToggle.classList.remove('active');
+        modeToggle.querySelector('.toggle-label-text').textContent = '無効';
+      }
+      if (details) details.style.display = 'none';
+    }
+
+    if (settings.reminderEnabled && reminderToggle) {
+      reminderToggle.classList.add('active');
+      reminderToggle.querySelector('.toggle-label-text').textContent = '有効';
+    }
+
+    // Render session history
+    renderRemoteSessionHistory();
+  }
+
+  function toggleRemoteMode() {
+    var toggle = document.getElementById('remote-mode-toggle');
+    var details = document.getElementById('remoteset-details');
+    if (!toggle) return;
+
+    var isActive = toggle.classList.toggle('active');
+    toggle.querySelector('.toggle-label-text').textContent = isActive ? '有効' : '無効';
+
+    if (details) {
+      details.style.display = isActive ? 'block' : 'none';
+    }
+  }
+
+  function toggleRemoteReminder() {
+    var toggle = document.getElementById('remote-reminder-toggle');
+    if (!toggle) return;
+
+    var isActive = toggle.classList.toggle('active');
+    toggle.querySelector('.toggle-label-text').textContent = isActive ? '有効' : '無効';
+  }
+
+  function saveRemoteSettings() {
+    var modeToggle = document.getElementById('remote-mode-toggle');
+    var reminderToggle = document.getElementById('remote-reminder-toggle');
+
+    var settings = {
+      enabled:         modeToggle ? modeToggle.classList.contains('active') : false,
+      platform:        (document.getElementById('remote-platform').value || ''),
+      meetingUrl:      (document.getElementById('remote-meeting-url').value || '').trim(),
+      meetingId:       (document.getElementById('remote-meeting-id').value || '').trim(),
+      meetingPassword: (document.getElementById('remote-meeting-password').value || '').trim(),
+      date:            (document.getElementById('remote-date').value || ''),
+      timeStart:       (document.getElementById('remote-time-start').value || '10:00'),
+      timeEnd:         (document.getElementById('remote-time-end').value || '11:00'),
+      reminderEnabled: reminderToggle ? reminderToggle.classList.contains('active') : false,
+      clientEmail:     (document.getElementById('remote-client-email').value || '').trim(),
+      sharedDocs:      (document.getElementById('remote-shared-docs').value || '').trim(),
+      sessionNotes:    (document.getElementById('remote-session-notes').value || '').trim(),
+      updatedAt:       new Date().toISOString()
+    };
+
+    // Archive current session to history if there are meaningful details
+    if (settings.date && settings.meetingUrl) {
+      var session = {
+        id: Date.now().toString(),
+        clientName: state.currentClient ? state.currentClient.name : '未選択',
+        platform: settings.platform,
+        date: settings.date,
+        timeStart: settings.timeStart,
+        timeEnd: settings.timeEnd,
+        meetingUrl: settings.meetingUrl,
+        notes: settings.sessionNotes,
+        savedAt: new Date().toISOString()
+      };
+      state.remoteSessions.unshift(session);
+      if (state.remoteSessions.length > 50) {
+        state.remoteSessions = state.remoteSessions.slice(0, 50);
+      }
+    }
+
+    state.remoteSettings = settings;
+    saveData();
+    renderRemoteSessionHistory();
+    showAlert('リモート設定を保存しました。', 'success');
+  }
+
+  function resetRemoteSettings() {
+    state.remoteSettings = null;
+    saveData();
+    renderRemoteSet();
+    showAlert('リモート設定をリセットしました。', 'info');
+  }
+
+  function copyMeetingLink() {
+    var urlEl = document.getElementById('remote-meeting-url');
+    var url = urlEl ? urlEl.value.trim() : '';
+    if (!url) {
+      showAlert('ミーティングURLが設定されていません。', 'warning');
+      return;
+    }
+
+    var platformEl = document.getElementById('remote-platform');
+    var platform = platformEl ? platformEl.options[platformEl.selectedIndex].text : '';
+    var dateEl = document.getElementById('remote-date');
+    var startEl = document.getElementById('remote-time-start');
+    var endEl = document.getElementById('remote-time-end');
+    var idEl = document.getElementById('remote-meeting-id');
+    var pwEl = document.getElementById('remote-meeting-password');
+
+    var text = 'リモート相談のご案内\n';
+    if (platform && platform !== '選択してください') text += 'プラットフォーム: ' + platform + '\n';
+    if (dateEl && dateEl.value) text += '日時: ' + dateEl.value + ' ' + (startEl ? startEl.value : '') + ' ~ ' + (endEl ? endEl.value : '') + '\n';
+    text += 'URL: ' + url + '\n';
+    if (idEl && idEl.value.trim()) text += 'ミーティングID: ' + idEl.value.trim() + '\n';
+    if (pwEl && pwEl.value.trim()) text += 'パスコード: ' + pwEl.value.trim() + '\n';
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        showAlert('ミーティング情報をクリップボードにコピーしました。', 'success');
+      }).catch(function() {
+        _fallbackCopy(text);
+      });
+    } else {
+      _fallbackCopy(text);
+    }
+  }
+
+  function _fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      showAlert('ミーティング情報をクリップボードにコピーしました。', 'success');
+    } catch (e) {
+      showAlert('コピーに失敗しました。手動でコピーしてください。', 'warning');
+    }
+    document.body.removeChild(ta);
+  }
+
+  function renderRemoteSessionHistory() {
+    var container = document.getElementById('remote-session-history');
+    if (!container) return;
+
+    if (!state.remoteSessions || state.remoteSessions.length === 0) {
+      container.innerHTML = '<p class="text-secondary text-center p-4">リモート相談の履歴はまだありません。</p>';
+      return;
+    }
+
+    var PLATFORM_LABELS = {
+      'zoom': 'Zoom', 'teams': 'Microsoft Teams',
+      'google-meet': 'Google Meet', 'webex': 'Cisco Webex', 'other': 'その他'
+    };
+
+    var html = '<div class="remote-history-list">';
+    state.remoteSessions.forEach(function(s) {
+      html += '<div class="remote-history-item">';
+      html += '  <div class="remote-history-header">';
+      html += '    <span class="material-icons">videocam</span>';
+      html += '    <div class="remote-history-meta">';
+      html += '      <div class="remote-history-client">' + _escape(s.clientName) + ' 様</div>';
+      html += '      <div class="remote-history-date">' + _escape(s.date) + ' ' + _escape(s.timeStart || '') + ' ~ ' + _escape(s.timeEnd || '') + '</div>';
+      html += '    </div>';
+      html += '    <span class="remote-history-platform">' + _escape(PLATFORM_LABELS[s.platform] || s.platform || '-') + '</span>';
+      html += '  </div>';
+      if (s.notes) {
+        html += '  <div class="remote-history-notes">' + _escape(s.notes).replace(/\n/g, '<br>') + '</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  // ---------------------------------------------------------------------------
   // 公開API
   // ---------------------------------------------------------------------------
 
@@ -2559,6 +2855,7 @@ var App = (function () {
     runTaxBenefit:      runFinancialAnalysis_Tax,
     runRateAnalysis:    runFinancialAnalysis_Rate,
     runAssetProjection: runFinancialAnalysis_Asset,
+    runAllAnalyses:     runAllAnalyses,
 
     // レポート
     generateReport: generateReport,
@@ -2573,7 +2870,14 @@ var App = (function () {
     formatMan:      formatMan,
 
     // アラート
-    showAlert: showAlert
+    showAlert: showAlert,
+
+    // リモート設定
+    toggleRemoteMode:     toggleRemoteMode,
+    toggleRemoteReminder: toggleRemoteReminder,
+    saveRemoteSettings:   saveRemoteSettings,
+    resetRemoteSettings:  resetRemoteSettings,
+    copyMeetingLink:      copyMeetingLink
   };
 }());
 

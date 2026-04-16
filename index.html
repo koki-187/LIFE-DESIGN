@@ -59,6 +59,10 @@
         <span class="material-icons">picture_as_pdf</span>
         <span class="nav-label">レポート出力</span>
       </a>
+      <a class="nav-item" data-section="remoteset" onclick="App.showSection('remoteset')">
+        <span class="material-icons">settings_remote</span>
+        <span class="nav-label">リモート設定</span>
+      </a>
     </nav>
 
     <div class="sidebar-footer">
@@ -611,6 +615,144 @@
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- ===================== Remote Settings Section ===================== -->
+      <section class="section hidden" id="section-remoteset">
+        <div id="remoteset-content">
+
+          <!-- Remote Consultation Toggle Card -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h2><span class="material-icons">settings_remote</span> リモート相談設定</h2>
+            </div>
+            <div class="card-body">
+              <p class="text-secondary mb-3">クライアントとのリモート（オンライン）相談に関する設定を管理します。</p>
+
+              <div class="remoteset-toggle-row mb-4">
+                <div class="remoteset-toggle-info">
+                  <div class="remoteset-toggle-label">リモート相談モード</div>
+                  <div class="remoteset-toggle-desc">オンライン面談を有効にすると、クライアントにリモート相談リンクを共有できます。</div>
+                </div>
+                <div class="toggle-switch" id="remote-mode-toggle" onclick="App.toggleRemoteMode()">
+                  <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                  <span class="toggle-label-text">無効</span>
+                </div>
+              </div>
+
+              <div id="remoteset-details" style="display:none;">
+
+                <!-- Meeting Platform -->
+                <h3 class="section-title mt-4">ミーティングプラットフォーム</h3>
+                <div class="grid-2">
+                  <div class="form-field">
+                    <label for="remote-platform">使用プラットフォーム</label>
+                    <select id="remote-platform" class="form-control">
+                      <option value="">選択してください</option>
+                      <option value="zoom">Zoom</option>
+                      <option value="teams">Microsoft Teams</option>
+                      <option value="google-meet">Google Meet</option>
+                      <option value="webex">Cisco Webex</option>
+                      <option value="other">その他</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label for="remote-meeting-url">ミーティングURL</label>
+                    <input type="url" id="remote-meeting-url" class="form-control" placeholder="https://zoom.us/j/xxxxxxxxxx">
+                  </div>
+                </div>
+
+                <div class="grid-2">
+                  <div class="form-field">
+                    <label for="remote-meeting-id">ミーティングID</label>
+                    <input type="text" id="remote-meeting-id" class="form-control" placeholder="123 456 7890">
+                  </div>
+                  <div class="form-field">
+                    <label for="remote-meeting-password">パスコード</label>
+                    <input type="text" id="remote-meeting-password" class="form-control" placeholder="任意のパスコード">
+                  </div>
+                </div>
+
+                <!-- Consultation Schedule -->
+                <h3 class="section-title mt-4">相談スケジュール</h3>
+                <div class="grid-3">
+                  <div class="form-field">
+                    <label for="remote-date">相談日</label>
+                    <input type="date" id="remote-date" class="form-control">
+                  </div>
+                  <div class="form-field">
+                    <label for="remote-time-start">開始時刻</label>
+                    <input type="time" id="remote-time-start" class="form-control" value="10:00">
+                  </div>
+                  <div class="form-field">
+                    <label for="remote-time-end">終了時刻</label>
+                    <input type="time" id="remote-time-end" class="form-control" value="11:00">
+                  </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <h3 class="section-title mt-4">通知設定</h3>
+                <div class="remoteset-toggle-row mb-3">
+                  <div class="remoteset-toggle-info">
+                    <div class="remoteset-toggle-label">クライアントへのリマインダー送信</div>
+                    <div class="remoteset-toggle-desc">相談日の前日にリマインダーメールを送信します。</div>
+                  </div>
+                  <div class="toggle-switch" id="remote-reminder-toggle" onclick="App.toggleRemoteReminder()">
+                    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+                    <span class="toggle-label-text">無効</span>
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="remote-client-email">クライアントメールアドレス</label>
+                  <input type="email" id="remote-client-email" class="form-control" placeholder="client@example.com">
+                </div>
+
+                <!-- Shared Documents -->
+                <h3 class="section-title mt-4">共有資料</h3>
+                <p class="text-secondary mb-2">リモート相談時に画面共有する資料のメモを記録できます。</p>
+                <div class="form-field">
+                  <label for="remote-shared-docs">共有予定の資料一覧</label>
+                  <textarea id="remote-shared-docs" class="form-control" rows="3" placeholder="例:&#10;・収支分析レポート&#10;・賃貸vs購入シミュレーション結果&#10;・ライフプラン概要"></textarea>
+                </div>
+
+                <!-- Session Notes -->
+                <h3 class="section-title mt-4">セッションメモ</h3>
+                <div class="form-field">
+                  <label for="remote-session-notes">相談メモ・議事録</label>
+                  <textarea id="remote-session-notes" class="form-control" rows="5" placeholder="リモート相談時のメモや議事録を記録..."></textarea>
+                </div>
+
+                <!-- Save Button -->
+                <div class="flex mt-4" style="gap: 12px;">
+                  <button class="btn-primary btn-large" onclick="App.saveRemoteSettings()">
+                    <span class="material-icons">save</span> リモート設定を保存
+                  </button>
+                  <button class="btn-secondary" onclick="App.resetRemoteSettings()">
+                    <span class="material-icons">refresh</span> リセット
+                  </button>
+                  <button class="btn-secondary" onclick="App.copyMeetingLink()">
+                    <span class="material-icons">content_copy</span> ミーティングリンクをコピー
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Remote Session History -->
+          <div class="card">
+            <div class="card-header">
+              <h2><span class="material-icons">history</span> リモート相談履歴</h2>
+            </div>
+            <div class="card-body">
+              <div id="remote-session-history">
+                <p class="text-secondary text-center p-4">リモート相談の履歴はまだありません。</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 

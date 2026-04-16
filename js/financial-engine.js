@@ -778,15 +778,17 @@ var FinancialEngine = (function () {
   function projectAssetFormation(params) {
     var currentAge             = params.currentAge             || 35;
     var retirementAge          = params.retirementAge          || 65;
-    var currentSavings         = params.currentSavings         || 5000000;
-    var monthlySavings         = params.monthlySavings         || 50000;
+    var currentSavings         = params.currentSavings  || params.initialAssets    || 5000000;
+    var monthlySavings         = params.monthlySavings  || params.monthlyInvestment || 50000;
     var propertyValue          = params.propertyValue          || 40000000;
     var loanBalance            = params.loanBalance            || 35000000;
     var annualPropertyAppreciation = params.annualPropertyAppreciation || -0.01;
-    var investmentReturn       = params.investmentReturnRate   || 0.03;
+    var investmentReturn       = params.investmentReturnRate || params.annualReturnRate || 0.03;
     var inflationRate          = params.inflationRate          || 0.01;
+    var simYears               = params.years                  || 0;
 
-    var yearsToRetirement = retirementAge - currentAge;
+    var yearsToRetirement = simYears > 0 ? simYears : (retirementAge - currentAge);
+    if (simYears > 0) retirementAge = currentAge + simYears;
     var yearlyProjection  = [];
 
     var financialAssets   = currentSavings;
@@ -804,7 +806,10 @@ var FinancialEngine = (function () {
       70: '退職後の安定生活期'
     };
 
-    for (var y = 1; y <= Math.max(yearsToRetirement + 10, 30); y++) {
+    // simYears 指定時は指定年数のみ、退職プランニング時は退職後10年まで
+    var maxLoopYears = simYears > 0 ? simYears : Math.max(yearsToRetirement + 10, 30);
+
+    for (var y = 1; y <= maxLoopYears; y++) {
       var age = currentAge + y;
 
       // 金融資産：複利運用＋月次積立
@@ -831,7 +836,7 @@ var FinancialEngine = (function () {
         event:           event
       });
 
-      if (age >= retirementAge + 10) break;
+      if (simYears <= 0 && age >= retirementAge + 10) break;
     }
 
     var retirementIdx    = yearlyProjection.findIndex(function (p) { return p.age >= retirementAge; });
@@ -1052,86 +1057,193 @@ var FinancialEngine = (function () {
 
   /**
    * AFPレポート用データをまとめて生成
+   * ReportGenerator の各ページが期待するフィールド名に正確にマッピングする
    * @param {object} clientInfo    顧客基本情報
-   * @param {object} allAnalysis   各分析結果オブジェクト
+   * @param {object} allAnalysis   各分析結果オブジェクト (state.financialResults)
    */
   function generateReportData(clientInfo, allAnalysis) {
-    var info = clientInfo || {};
-
-    var clientSummary = {
-      name:          info.name         || '',
-      age:           info.age          || '',
-      familyCompo:   info.familyCompo  || '',
-      annualIncome:  info.annualIncome  || 0,
-      reportDate:    new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }),
-      advisorName:   info.advisorName  || ''
-    };
-
+    var info     = clientInfo  || {};
     var analysis = allAnalysis || {};
 
-    var incomeExpenseSummary = analysis.incomeExpense
-      ? {
-          monthlyNetIncome:    analysis.incomeExpense.monthlyNetIncome,
-          monthlyTotalExpense: analysis.incomeExpense.monthlyTotalExpense,
-          monthlySurplus:      analysis.incomeExpense.monthlySurplus,
-          savingsRate:         analysis.incomeExpense.savingsRate,
-          diagnosis:           analysis.incomeExpense.diagnosis
-        }
-      : null;
+    var reportDate = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
 
-    var affordabilityResult = analysis.affordability
-      ? {
-          maxLoanAmount:         analysis.affordability.maxLoanAmount,
-          recommendedLoanAmount: analysis.affordability.recommendedLoanAmount,
-          riskLevel:             analysis.affordability.riskLevel,
-          riskLevelJa:           analysis.affordability.riskLevelJa,
-          explanation:           analysis.affordability.explanation
-        }
-      : null;
+    /* ---- clientSummary (Page 2) ---- */
+    var clientSummary = {
+      name:           info.name          || '',
+      age:            info.age           || 0,
+      familyCompo:    info.familyCompo   || '',
+      annualIncome:   info.annualIncome  || 0,
+      currentHousing: (info.currentRent && info.currentRent > 0) ? 'rent' : 'own',
+      currentRent:    info.currentRent   || 0,
+      reportDate:     reportDate,
+      advisorName:    info.advisorName   || ''
+    };
 
-    var keyRecommendations = [];
+    /* ---- incomeExpenseSummary (Page 2 & 3) ---- */
+    var incomeExpenseSummary = null;
+    if (analysis.incomeExpense) {
+      var ie = analysis.incomeExpense;
+
+      // expenseBreakdown: 配列→オブジェクトに変換 (ReportGenerator が期待する形式)
+      var expObj = {};
+      var labelToKey = {
+        '住居費': 'housing', '食費': 'food', '交通費': 'transport',
+        '保険料': 'insurance', '教育費': 'education', '娯楽費': 'entertainment',
+        '貯蓄': 'savings', 'その他': 'other', '水道光熱費': 'other', '通信費': 'other'
+      };
+      if (ie.expenseBreakdown && Array.isArray(ie.expenseBreakdown)) {
+        ie.expenseBreakdown.forEach(function (item) {
+          var key = labelToKey[item.label];
+          if (key) expObj[key] = (expObj[key] || 0) + item.value;
+        });
+      }
+      if (!expObj.housing && info.currentRent) {
+        expObj.housing = info.currentRent;
+      }
+
+      incomeExpenseSummary = {
+        monthlyGrossIncome: ie.monthlyGrossIncome    || 0,
+        monthlyNetIncome:   ie.monthlyNetIncome      || 0,
+        monthlyExpense:     ie.monthlyTotalExpense   || 0,
+        monthlySurplus:     ie.monthlySurplus        || 0,
+        savingsRate:        ie.savingsRate            || 0,
+        expenseBreakdown:   expObj,
+        commentary:         [ie.diagnosis].concat(ie.recommendations || []).filter(Boolean)
+      };
+    }
+
+    /* ---- affordabilityResult (Page 2 & 5) ---- */
+    var affordabilityResult = null;
+    if (analysis.affordability) {
+      var af = analysis.affordability;
+      affordabilityResult = {
+        maxLoanAmount:             af.maxLoanAmount,
+        recommendedLoanAmount:     af.recommendedLoanAmount,
+        maxMonthlyPayment:         af.maxMonthlyPayment,
+        recommendedMonthlyPayment: af.recommendedMonthlyPayment,
+        housingCostRatio:          af.housingCostRatio,
+        riskLevel:                 af.riskLevel,
+        riskLevelJa:               af.riskLevelJa,
+        explanation:               af.explanation,
+        recommendation:            af.explanation
+      };
+    }
+
+    /* ---- rentVsBuyResult (Page 5) ---- */
+    var rentVsBuyResult = null;
+    if (analysis.rentVsBuy) {
+      var rvb = analysis.rentVsBuy;
+      // 月次ローン支払額・物件価格を再計算
+      var rvbPropertyPrice = 40000000;
+      var rvbDownPayment   = info.savings ? Math.min(Math.round(info.savings * 0.5), 8000000) : 4000000;
+      var rvbLoanAmount    = rvbPropertyPrice - rvbDownPayment;
+      var rvbMortgage      = calculateMortgage({ loanAmount: rvbLoanAmount, interestRate: 0.015, termYears: 35 });
+
+      rentVsBuyResult = {
+        monthlyRent:        info.currentRent || 80000,
+        monthlyLoanPayment: rvbMortgage.monthlyPayment,
+        propertyPrice:      rvbPropertyPrice,
+        totalRentCost:      rvb.rentTotal,
+        totalBuyCost:       rvb.buyTotal,
+        breakEvenYear:      rvb.breakEvenYear,
+        difference:         rvb.difference,
+        recommendation:     rvb.recommendation,
+        analysis:           rvb.analysis
+      };
+    }
+
+    /* ---- assetProjection (Page 4) ---- */
+    var assetProjection = null;
+    if (analysis.assetProjection) {
+      var ap     = analysis.assetProjection;
+      var yearly = ap.yearlyProjection || [];
+      var apYears = yearly.length || 30;
+      var monthlyContrib = 50000;
+      var totalContrib   = monthlyContrib * 12 * apYears;
+      var finalFinancial = yearly.length > 0 ? (yearly[yearly.length - 1].financialAssets || 0) : 0;
+
+      assetProjection = {
+        monthlyContribution: monthlyContrib,
+        years:               apYears,
+        annualReturnRate:    3,
+        finalAmount:         finalFinancial,
+        totalContributed:    totalContrib,
+        totalGain:           Math.max(0, finalFinancial - totalContrib),
+        yearlyProjection:    yearly.map(function (row, i) {
+          var yContrib = monthlyContrib * 12 * (i + 1);
+          return {
+            year:             i + 1,
+            totalAssets:      row.financialAssets || row.netWorth || 0,
+            totalContributed: yContrib,
+            amount:           row.financialAssets || row.netWorth || 0,
+            contributed:      yContrib
+          };
+        })
+      };
+    }
+
+    /* ---- recommendations (Page 6) ---- */
+    var actions = [];
+    var priorityIdx = 1;
+
     if (analysis.incomeExpense && analysis.incomeExpense.recommendations) {
-      analysis.incomeExpense.recommendations.forEach(function (r) {
-        keyRecommendations.push({ category: '家計改善', text: r });
+      var ieTitles = ['家計の収支改善', '固定費の見直し', '変動費の最適化'];
+      analysis.incomeExpense.recommendations.slice(0, 2).forEach(function (r, i) {
+        actions.push({ priority: priorityIdx++, title: ieTitles[i] || ('家計改善 #' + (i + 1)), detail: r });
       });
     }
-    if (analysis.affordability && analysis.affordability.explanation) {
-      keyRecommendations.push({ category: '借入能力', text: analysis.affordability.explanation });
+    if (!actions.length) {
+      actions.push({
+        priority: priorityIdx++,
+        title: '家計の収支改善',
+        detail: '月次余剰を増やし、頭金積立を加速させましょう。固定費の見直しが最優先です。'
+      });
     }
+    actions.push({
+      priority: priorityIdx++,
+      title: '頭金・緊急資金の確保',
+      detail: '頭金（物件価格の10〜20%目安）と半年分の生活費を貯蓄することを目標にしてください。'
+    });
+    actions.push({
+      priority: priorityIdx++,
+      title: '住宅ローン事前審査',
+      detail: '銀行・フラット35で事前審査を受け、借入可能額を確認しましょう。複数行の比較がお得です。'
+    });
     if (analysis.taxBenefits && analysis.taxBenefits.totalBenefit > 0) {
-      keyRecommendations.push({
-        category: '税制優遇',
-        text: '住宅ローン控除により最大約' + toManEn(analysis.taxBenefits.totalBenefit) + 'の税負担軽減が見込まれます。'
+      actions.push({
+        priority: priorityIdx++,
+        title: '住宅ローン控除の活用',
+        detail: '住宅ローン控除により最大約' + toManEn(analysis.taxBenefits.totalBenefit) + 'の税負担軽減が見込まれます。初年度は確定申告が必要です。'
+      });
+    } else {
+      actions.push({
+        priority: priorityIdx++,
+        title: 'NISA・iDeCoの活用開始',
+        detail: '住宅購入後も月3万円以上を非課税口座で積立運用し、老後資産を形成しましょう。'
       });
     }
-    if (analysis.assetFormation && analysis.assetFormation.recommendations) {
-      analysis.assetFormation.recommendations.slice(0, 2).forEach(function (r) {
-        keyRecommendations.push({ category: '資産形成', text: r });
-      });
+    actions.push({
+      priority: priorityIdx++,
+      title: '生命保険・団信の見直し',
+      detail: '住宅ローン加入時は団信が付帯します。既存の生命保険との重複を整理し、保険料を最適化しましょう。'
+    });
+
+    var summaryText = '';
+    if (analysis.affordability) {
+      summaryText = analysis.affordability.explanation;
+    } else if (analysis.incomeExpense) {
+      summaryText = analysis.incomeExpense.diagnosis;
+    } else {
+      summaryText = '詳細なライフプランニングをご一緒に進めましょう。';
     }
-
-    var lifeplanProjection = analysis.assetFormation
-      ? analysis.assetFormation.yearlyProjection
-      : [];
-
-    var disclaimer = '【重要事項・免責事項】\n'
-      + '本レポートに記載された試算・分析結果は、提供いただいた情報をもとにしたシミュレーションであり、'
-      + '将来の収益または成果を保証するものではありません。\n'
-      + '金融商品の購入・ローンの借入・不動産の取得等の最終的な意思決定は、'
-      + 'お客様ご自身の責任において行ってください。\n'
-      + '税務に関するご相談は税理士、法律に関するご相談は弁護士・司法書士に別途ご相談ください。\n'
-      + '本レポートの内容は作成時点の法令・税制に基づいており、制度改正により変更になる場合があります。\n'
-      + '当事務所はAFP（日本FP協会認定アフィリエイテッド ファイナンシャル・プランナー）として、'
-      + 'お客様の最善の利益を追求したアドバイスの提供に努めております。';
 
     return {
       clientSummary:        clientSummary,
       incomeExpenseSummary: incomeExpenseSummary,
       affordabilityResult:  affordabilityResult,
-      recommendedOptions:   analysis.rentVsBuy ? [analysis.rentVsBuy] : [],
-      lifeplanProjection:   lifeplanProjection,
-      keyRecommendations:   keyRecommendations,
-      disclaimer:           disclaimer
+      rentVsBuyResult:      rentVsBuyResult,
+      assetProjection:      assetProjection,
+      recommendations:      { actions: actions, summary: summaryText }
     };
   }
 
