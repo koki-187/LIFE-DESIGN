@@ -482,9 +482,9 @@
     border-radius: 50%;
     background: conic-gradient(
       var(--primary) 0deg 141deg,
-      #2e7d32 141deg 304deg,
-      var(--accent) 304deg 337deg,
-      #78909c 337deg 360deg
+      #2e7d32 141deg 303deg,
+      var(--accent) 303deg 336deg,
+      #78909c 336deg 360deg
     );
     position: relative;
     flex-shrink: 0;
@@ -864,7 +864,7 @@
     <ol>
       <li><strong>年収500万円を絶対安全基準として設計</strong><br>一時的な年収800万円ではなく、安定収入ベースで無理のない返済計画を策定します。</li>
       <li><strong>フルローンにより150万円の自己資金を緊急予備資金として確保</strong><br>頭金を入れず、手元資金を生活防衛資金として温存します。</li>
-      <li><strong>金利1.5%上昇まで返済比率25%以内を維持</strong><br>変動金利リスクに対し、十分なバッファを持たせた設計です。</li>
+      <li><strong>金利1.5%到達時でも返済比率26%以内を維持</strong><br>変動金利リスクに対し、十分なバッファを持たせた設計です（1.5%時: 25.7%）。</li>
       <li><strong>住宅ローン控除273万円（13年）を最大活用</strong><br>税制優遇をフル活用し、実質的な住居コストを削減します。</li>
       <li><strong>NISA月3万円の積立投資を購入後も継続</strong><br>住宅取得と資産形成の両立を実現します。</li>
       <li><strong>団信を死亡保障の主軸として活用し、医療・就業不能保険を新規取得</strong><br>現在生命保険未加入のため、住宅ローンで付帯する団信が第一の死亡保障となります。これに加え、医療保険・就業不能保険への加入を優先課題とします。</li>
@@ -1016,8 +1016,8 @@
   </table>
 
   <div class="highlight-box">
-    <strong>住宅ローン控除:</strong> 0.7% &times; 残債 &times; 13年 = <strong>273万円</strong>（13年累計）<br>
-    毎年約21万円の税額控除が受けられ、実質金利はほぼゼロに近づきます。
+    <strong>住宅ローン控除:</strong> 年末残高 &times; 0.7% を13年間毎年控除 = <strong>最大273万円</strong>（13年累計）<br>
+    毎年約21万円の税額控除が受けられ、実質金利はほぼゼロに近づきます。（借入限度額3,000万円適用時）
   </div>
 
   <div class="page-footer">
@@ -1272,7 +1272,7 @@
       </div>
       <div class="legend-item">
         <div class="legend-color" style="background:#78909c"></div>
-        <span class="legend-pct">6%</span>
+        <span class="legend-pct">7%</span>
         <span>余剰（21,176円）<span style="font-size:10px; color:var(--warning);">※保険加入前</span></span>
       </div>
     </div>
@@ -1384,14 +1384,14 @@
         <td style="color:var(--danger)">未加入</td>
         <td style="color:var(--warning)">&#9888; 新規加入が必要</td>
         <td>7,000〜10,000円</td>
-        <td><span class="badge badge-danger">&#11088; 優先①</span> 日額5,000〜10,000円</td>
+        <td><span class="badge badge-danger">&#11088; 優先②</span> 日額5,000〜10,000円</td>
       </tr>
       <tr>
         <td><strong>就業不能保険</strong><br><small>長期病欠・障害備え</small></td>
         <td style="color:var(--danger)">未加入</td>
         <td style="color:var(--warning)">&#9888; 新規加入が必要</td>
         <td>加入率15〜20%</td>
-        <td><span class="badge badge-danger">&#11088; 優先②</span> 月収の60〜70%補償</td>
+        <td><span class="badge badge-danger">&#11088; 優先①</span> 月収の60〜70%補償</td>
       </tr>
       <tr>
         <td><strong>がん保険</strong></td>
@@ -1449,7 +1449,7 @@
         <li><strong>初年度確定申告で住宅ローン控除申請</strong>&#8212; 初年度は確定申告が必須（2年目以降は年末調整）。273万円の控除を確実に取得</li>
         <li><strong>団信の保障内容を確認・記録</strong>&#8212; 死亡・高度障害時のローン免除条件を把握。就業不能特約付き団信も検討</li>
         <li><strong>NISA継続</strong>&#8212; 月3万円を維持し、住宅取得と資産形成を両立</li>
-        <li><strong>緊急予備資金150万円は保全</strong>&#8212; 諸費用支出後の残額を絶対に手付かずで維持</li>
+        <li><strong>緊急予備資金の保全</strong>&#8212; 諸費用105万円支出後の残額（約45万円）を生活防衛資金として死守。年収800万円期間中に150万円まで早期回復を目指す</li>
       </ol>
     </div>
 
@@ -1459,7 +1459,7 @@
         <li><strong>年収800万円期間中は繰上返済検討</strong>&#8212; ただしNISA投資を優先（期待リターン &gt; ローン金利）</li>
         <li><strong>残債3,000万以下になったら固定金利への借換検討</strong>&#8212; 金利上昇リスクの軽減</li>
         <li><strong>5年ごとに収支見直し</strong>&#8212; ライフステージの変化に合わせた計画修正</li>
-        <li><strong>65歳完済後の生活費計画策定</strong>&#8212; 老後資金2,000万円問題への対応</li>
+        <li><strong>69歳ローン完済後の生活費計画策定</strong>&#8212; 老後資金2,000万円問題への対応（65歳以降の収入減少期も想定）</li>
       </ol>
     </div>
   </div>
