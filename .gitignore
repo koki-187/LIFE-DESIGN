@@ -9,6 +9,11 @@ Thumbs.db
 
 # Dependencies
 node_modules/
+package.json
+package-lock.json
+
+# Generated
+*.pdf
 
 # Temp
 *.tmp
