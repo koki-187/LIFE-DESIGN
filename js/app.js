@@ -601,6 +601,21 @@ var App = (function () {
     html += _formRow('備考・メモ', '<textarea id="client-notes" class="form-control" rows="3" placeholder="相談内容、要望、注意点など">' + _escape(c && c.notes || '') + '</textarea>');
     html += '</div>';
 
+    // 月間支出
+    var cex = (c && c.expenses) || {};
+    html += '<div class="form-section"><h3>月間支出（概算）</h3>';
+    html += '<p class="text-secondary" style="margin-bottom:0.5rem">未入力の場合は標準的な支出額が自動適用されます</p>';
+    html += '<div class="form-grid form-grid-4">';
+    html += _formRow('食費（万円/月）', '<input type="number" id="exp-food" class="form-control form-control-sm" min="0" step="0.5" placeholder="5" value="' + (cex.food ? Math.round(cex.food / 10000) : '') + '">');
+    html += _formRow('光熱費（万円/月）', '<input type="number" id="exp-utilities" class="form-control form-control-sm" min="0" step="0.5" placeholder="1.5" value="' + (cex.utilities ? Math.round(cex.utilities / 10000) : '') + '">');
+    html += _formRow('通信費（万円/月）', '<input type="number" id="exp-communication" class="form-control form-control-sm" min="0" step="0.5" placeholder="1" value="' + (cex.communication ? Math.round(cex.communication / 10000) : '') + '">');
+    html += _formRow('交通費（万円/月）', '<input type="number" id="exp-transportation" class="form-control form-control-sm" min="0" step="0.5" placeholder="2" value="' + (cex.transportation ? Math.round(cex.transportation / 10000) : '') + '">');
+    html += _formRow('保険料（万円/月）', '<input type="number" id="exp-insurance" class="form-control form-control-sm" min="0" step="0.5" placeholder="3" value="' + (cex.insurance ? Math.round(cex.insurance / 10000) : '') + '">');
+    html += _formRow('教育費（万円/月）', '<input type="number" id="exp-education" class="form-control form-control-sm" min="0" step="0.5" placeholder="0" value="' + (cex.education ? Math.round(cex.education / 10000) : '') + '">');
+    html += _formRow('娯楽費（万円/月）', '<input type="number" id="exp-entertainment" class="form-control form-control-sm" min="0" step="0.5" placeholder="3" value="' + (cex.entertainment ? Math.round(cex.entertainment / 10000) : '') + '">');
+    html += _formRow('その他（万円/月）', '<input type="number" id="exp-other" class="form-control form-control-sm" min="0" step="0.5" placeholder="2" value="' + (cex.other ? Math.round(cex.other / 10000) : '') + '">');
+    html += '</div></div>';
+
     html += '<div class="form-actions">';
     html += '<button class="btn-primary btn-large" onclick="App.saveClient()">保存する</button>';
     if (c) {
@@ -654,6 +669,16 @@ var App = (function () {
       desiredArea:    (document.getElementById('desired-area').value || '').trim(),
       purpose:        _radioValue('purpose'),
       notes:          (document.getElementById('client-notes').value || '').trim(),
+      expenses: {
+        food:           (parseFloat(document.getElementById('exp-food').value) || 0) * 10000,
+        utilities:      (parseFloat(document.getElementById('exp-utilities').value) || 0) * 10000,
+        communication:  (parseFloat(document.getElementById('exp-communication').value) || 0) * 10000,
+        transportation: (parseFloat(document.getElementById('exp-transportation').value) || 0) * 10000,
+        insurance:      (parseFloat(document.getElementById('exp-insurance').value) || 0) * 10000,
+        education:      (parseFloat(document.getElementById('exp-education').value) || 0) * 10000,
+        entertainment:  (parseFloat(document.getElementById('exp-entertainment').value) || 0) * 10000,
+        other:          (parseFloat(document.getElementById('exp-other').value) || 0) * 10000
+      },
       createdAt:      (state.currentClient && state.currentClient.createdAt) || new Date().toISOString(),
       updatedAt:      new Date().toISOString()
     };
@@ -1399,14 +1424,15 @@ var App = (function () {
     var params = collectFinancialParams();
 
     try {
+      var existing = state.financialResults || {};
       state.financialResults = {
-        incomeExpense:   FinancialEngine.analyzeIncomeExpense(params.ie),
-        affordability:   FinancialEngine.calculateAffordability(params.afford),
-        rentVsBuy:       FinancialEngine.compareRentVsBuy(params.rvb),
-        insurance:       FinancialEngine.compareInsurance(params.ins),
-        taxBenefits:     FinancialEngine.calculateTaxBenefits(params.tax),
-        interestRate:    FinancialEngine.analyzeInterestRateImpact(params.rate),
-        assetProjection: FinancialEngine.projectAssetFormation(params.asset),
+        incomeExpense:   existing.incomeExpense   || FinancialEngine.analyzeIncomeExpense(params.ie),
+        affordability:   existing.affordability   || FinancialEngine.calculateAffordability(params.afford),
+        rentVsBuy:       existing.rentVsBuy       || FinancialEngine.compareRentVsBuy(params.rvb),
+        insurance:       existing.insurance       || FinancialEngine.compareInsurance(params.ins),
+        taxBenefits:     existing.taxBenefits     || FinancialEngine.calculateTaxBenefits(params.tax),
+        interestRate:    existing.interestRate    || FinancialEngine.analyzeInterestRateImpact(params.rate),
+        assetProjection: existing.assetProjection || FinancialEngine.projectAssetFormation(params.asset),
         guideline:       FinancialEngine.getHousingCostGuideline(c.annualIncome)
       };
     } catch (e) {
@@ -1419,15 +1445,36 @@ var App = (function () {
     renderFinancialResults();
   }
 
+  function runAllAnalyses() {
+    if (!state.currentClient) {
+      showAlert('先にクライアント情報を登録してください。', 'warning');
+      return;
+    }
+    runFinancialAnalysis();
+    showAlert('全分析を実行しました。レポートを生成できます。', 'success');
+    renderReport();
+  }
+
   function collectFinancialParams() {
     var c = state.currentClient || {};
+    var ex = c.expenses || {};
+    var hasExpenses = ex.food || ex.utilities || ex.insurance || ex.entertainment;
     return {
       ie: {
         annualIncome: c.annualIncome || 0,
         spouseIncome: c.spouseIncome || 0,
         currentRent:  c.currentRent  || 0,
-        savings:      50000,
-        expenses: {
+        savings:      c.savings      || 50000,
+        expenses: hasExpenses ? {
+          food:           ex.food           || 0,
+          utilities:      ex.utilities      || 0,
+          communication:  ex.communication  || 0,
+          transportation: ex.transportation || 0,
+          insurance:      ex.insurance      || 0,
+          education:      ex.education      || 0,
+          entertainment:  ex.entertainment  || 0,
+          other:          ex.other          || 0
+        } : {
           food:           50000,
           utilities:      15000,
           communication:  10000,
@@ -1694,6 +1741,18 @@ var App = (function () {
     html += '<li class="' + (state.financialResults.taxBenefits ? 'checked' : 'unchecked') + '">住宅ローン控除試算</li>';
     html += '<li class="' + (state.financialResults.assetProjection ? 'checked' : 'unchecked') + '">資産形成シミュレーション</li>';
     html += '</ul>';
+
+    // 未実行の分析がある場合、一括実行ボタンを表示
+    var fr = state.financialResults;
+    var missingAnalyses = !fr.incomeExpense || !fr.affordability || !fr.rentVsBuy || !fr.assetProjection;
+    if (missingAnalyses) {
+      html += '<div class="result-block" style="background:#fff8e1;border-left:4px solid #f57f17;padding:12px 16px;margin-bottom:16px;">';
+      html += '<p style="margin:0;color:#5d4037"><span class="material-icons" style="vertical-align:middle;font-size:18px;margin-right:4px;">info</span>';
+      html += '一部の分析が未実行です。レポートの精度を高めるには、全分析を実行してください。</p>';
+      html += '<button class="btn-secondary" onclick="App.runAllAnalyses()" style="margin-top:8px">';
+      html += '<span class="material-icons" style="font-size:16px;vertical-align:middle">play_circle</span> 全分析を一括実行</button>';
+      html += '</div>';
+    }
 
     html += '<div class="form-actions">';
     html += '<button class="btn-primary btn-large" onclick="App.generateReport()">PDFレポートを生成</button>';
@@ -2513,6 +2572,7 @@ var App = (function () {
     runTaxBenefit:      runFinancialAnalysis_Tax,
     runRateAnalysis:    runFinancialAnalysis_Rate,
     runAssetProjection: runFinancialAnalysis_Asset,
+    runAllAnalyses:     runAllAnalyses,
 
     // レポート
     generateReport: generateReport,
