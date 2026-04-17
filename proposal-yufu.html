@@ -186,20 +186,6 @@
     margin-bottom: 24px;
   }
 
-  .cover-subtitle {
-    font-size: 16px;
-    color: rgba(255,255,255,0.75);
-    margin-bottom: 50px;
-    letter-spacing: 1px;
-  }
-
-  .cover-gold-line {
-    width: 200px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    margin: 0 auto 50px;
-  }
-
   .cover-client {
     font-size: 26px;
     font-weight: 700;
@@ -242,13 +228,6 @@
     font-family: 'Noto Serif JP', serif;
   }
 
-  .cover-company {
-    font-size: 10px;
-    color: rgba(255,255,255,0.38);
-    margin-top: 6px;
-    letter-spacing: 2px;
-  }
-
   /* ===== PAGE HEADERS ===== */
   .page-header {
     border-bottom: 2px solid var(--primary);
@@ -288,13 +267,6 @@
     margin: 28px 0 14px;
     padding-left: 14px;
     border-left: 3px solid var(--accent);
-  }
-
-  .subsection-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--primary);
-    margin: 20px 0 10px;
   }
 
   /* ===== PROFILE CARD ===== */
@@ -458,8 +430,6 @@
   }
   .badge-safe { background: #e8f5e9; color: var(--success); }
   .badge-ok { background: #e3f2fd; color: #1565c0; }
-  .badge-warn { background: #fff3e0; color: var(--warning); }
-  .badge-danger { background: #ffebee; color: var(--danger); }
 
   /* ===== TWO COLUMNS ===== */
   .two-col {
@@ -648,28 +618,8 @@
   }
 
   /* ===== ICON LIST ===== */
-  .icon-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin: 16px 0;
-  }
 
-  .icon-list-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    padding: 10px 14px;
-    background: var(--surface-2);
-    border-radius: 6px;
-    border-left: 3px solid var(--accent);
-  }
-
-  .icon-list-item .icon {
-    font-size: 18px;
-    flex-shrink: 0;
-  }
+  .icon-list-item
 
   /* ===== TIMELINE ===== */
   .timeline {
@@ -821,32 +771,10 @@
   }
 
   /* ===== NISA TABLE ===== */
-  .nisa-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin: 16px 0;
-  }
 
-  .nisa-card {
-    text-align: center;
-    background: var(--accent-pale);
-    border: 1px solid var(--accent);
-    border-radius: 8px;
-    padding: 16px;
-  }
+  .nisa-card
 
-  .nisa-card .nc-period {
-    font-size: 11px;
-    color: #888;
-  }
-
-  .nisa-card .nc-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--primary);
-    margin-top: 4px;
-  }
+  .nisa-card
 
   /* ===== FOOTER ===== */
   .page-footer {
@@ -941,14 +869,12 @@
     .page.cover .cover-date,
     .page.cover .cover-client-label,
     .page.cover .cover-brand-line,
-    .page.cover .cover-company {
-      color: #ffffff !important;
-    }
-    .page.cover .cover-subtitle { color: rgba(255,255,255,0.8) !important; }
+    .page.cover
+    .page.cover
     .page.cover .cover-client-label { color: rgba(255,255,255,0.5) !important; }
     .page.cover .cover-date { color: rgba(255,255,255,0.6) !important; }
     .page.cover .cover-brand-line { color: rgba(255,255,255,0.55) !important; }
-    .page.cover .cover-company { color: rgba(255,255,255,0.38) !important; }
+    .page.cover
     .page.cover .cover-label,
     .page.cover .cover-planner { color: #b8922e !important; }
     .page-footer {
@@ -960,7 +886,6 @@
     }
     /* Tighten spacing for PDF */
     .section-title { margin: 14px 0 8px; font-size: 13pt; }
-    .subsection-title { margin: 12px 0 6px; }
     table { margin: 8px 0; font-size: 9pt; }
     table thead th { padding: 6px 8px; font-size: 9pt; }
     table tbody td { padding: 5px 8px; }
@@ -973,7 +898,7 @@
     }
     .gold-box li { margin-bottom: 4px; font-size: 9pt; line-height: 1.55; }
     .timeline-phase { margin-bottom: 16px; }
-    .two-col, .annual-summary, .nisa-grid { gap: 12px; margin: 10px 0; }
+    .two-col, .annual-summary,
     .bar-row { margin-bottom: 3px; font-size: 10px; }
     .bar-track { height: 16px; padding-left: 6px; font-size: 9px; }
     .bar-label { width: 42px; margin-right: 6px; font-size: 10px; }

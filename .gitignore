@@ -12,12 +12,17 @@ node_modules/
 package.json
 package-lock.json
 
-# Generated
+# Environment
+*.env
+.env.local
+
+# Claude Code internal
+.claude/scheduled_tasks.lock
+.claude/session_*.jsonl
+
+# Generated PDFs
 *.pdf
 
 # Temp
 *.tmp
 *.log
-
-# Generated PDFs
-*.pdf
