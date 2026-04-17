@@ -814,9 +814,25 @@
       break-after: auto;
     }
     .page.cover {
-      padding: 0;
+      padding: 0 !important;
       page-break-before: avoid;
+      background: #0a1628 !important;
+      color: #ffffff !important;
     }
+    .page.cover h1,
+    .page.cover .cover-client,
+    .page.cover .cover-subtitle,
+    .page.cover .cover-date,
+    .page.cover .cover-client-label,
+    .page.cover .cover-company {
+      color: #ffffff !important;
+    }
+    .page.cover .cover-subtitle { color: rgba(255,255,255,0.8) !important; }
+    .page.cover .cover-client-label { color: rgba(255,255,255,0.5) !important; }
+    .page.cover .cover-date { color: rgba(255,255,255,0.6) !important; }
+    .page.cover .cover-company { color: rgba(255,255,255,0.4) !important; }
+    .page.cover .cover-label,
+    .page.cover .cover-planner { color: #b8922e !important; }
     .page-footer {
       position: absolute;
       left: 12mm;
@@ -840,7 +856,11 @@
     .gold-box li { margin-bottom: 4px; font-size: 9pt; line-height: 1.55; }
     .timeline-phase { margin-bottom: 16px; }
     .two-col, .annual-summary, .nisa-grid { gap: 12px; margin: 10px 0; }
-    .bar-row { margin-bottom: 6px; }
+    .bar-row { margin-bottom: 3px; font-size: 10px; }
+    .bar-track { height: 16px; padding-left: 6px; font-size: 9px; }
+    .bar-label { width: 42px; margin-right: 6px; font-size: 10px; }
+    .bar-chart { margin: 10px 0; }
+    table tbody td { padding: 4px 8px; font-size: 9pt; line-height: 1.4; }
     .donut-container { margin: 14px 0; gap: 28px; }
     .donut { width: 140px; height: 140px; }
     .donut::after { top: 28px; left: 28px; width: 84px; height: 84px; }
@@ -898,7 +918,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">02 / 11</span>
+    <span class="page-num">02 / 12</span>
     <h2>クライアントプロフィール &amp; FP基本方針</h2>
   </div>
 
@@ -970,7 +990,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">03 / 11</span>
+    <span class="page-num">03 / 12</span>
     <h2>借入シミュレーション ― ローン年数×NISA最適化</h2>
   </div>
 
@@ -1106,7 +1126,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">04 / 11</span>
+    <span class="page-num">04 / 12</span>
     <h2>賃貸 vs 購入 生涯50年比較（34歳〜84歳）</h2>
   </div>
 
@@ -1145,17 +1165,20 @@
     </div>
     <div class="col-card">
       <h4>&#127970; 賃貸を続けた場合（50年）</h4>
-      <div class="cost-item"><span>家賃〜35年分</span><span>3,941万円</span></div>
-      <div class="cost-item"><span>家賃 36〜50年（上昇想定10万/月）</span><span>1,800万円</span></div>
+      <div class="cost-item"><span>家賃〜35年分（月98,000×420）</span><span>4,116万円</span></div>
+      <div class="cost-item"><span>家賃 36〜50年（月110,000×180）</span><span>1,980万円</span></div>
       <div class="cost-item"><span>更新料（25回）</span><span>235万円</span></div>
-      <div class="cost-total"><span>総家賃支出</span><span>5,976万円</span></div>
+      <div class="cost-total"><span>総家賃支出</span><span>6,331万円</span></div>
       <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border);">
-        <div class="cost-item"><span>節約分投資（月3.5万×3%×50年）</span><span>4,875万円</span></div>
-        <div class="cost-item"><span>初期費用節約分（運用後）</span><span>460万円</span></div>
-        <div class="cost-total"><span>投資資産</span><span style="color:var(--accent)">5,335万円</span></div>
+        <div class="cost-item"><span>住居費差額投資（月17,500×3%×50年）</span><span>2,431万円</span></div>
+        <div class="cost-item"><span>初期費用節約分（235万×3%×50年）</span><span>1,030万円</span></div>
+        <div class="cost-total"><span>投資資産</span><span style="color:var(--accent)">3,461万円</span></div>
         <div style="font-size:11px; color:var(--warning); margin-top:6px;">※住居資産ゼロ。老後の借家リスクあり</div>
       </div>
     </div>
+  </div>
+  <div style="background:#f0f4ff; border:1px solid #c5d0f0; border-radius:6px; padding:10px 14px; margin:10px 0; font-size:11px; color:#555;">
+    <strong style="color:var(--primary);">&#9670; 試算の前提：</strong> 両シナリオとも <strong>月5万円NISA積立を50年継続</strong>（年利3%・50年後 <strong style="color:var(--success)">+6,947万円</strong>）は共通項として別途加算されます。上記「投資資産」は、賃貸選択時に発生する住居費差額（月17,500円）と初期費用節約分（235万円）を3%運用した場合の追加資産のみを示しています。
   </div>
 
   <!-- Phase 2 highlight -->
@@ -1165,15 +1188,36 @@
       <div>&#127968; <strong>購入者</strong>: 月<strong style="font-size:16px; color:var(--success)">5.5万円</strong>（管理費・修繕・固定資産税のみ）</div>
       <div>&#127970; <strong>賃貸者</strong>: 月<strong style="font-size:16px; color:var(--danger)">10万円（上昇想定）</strong>～11万円以上（家賃上昇・借家審査困難）</div>
     </div>
-    <div style="margin-top:8px; font-weight:700; color:var(--primary);">5年間の差額 約270万円（保守試算） &#8594; 45年後ローン完済時の純資産は賃貸とほぼ同水準に到達</div>
+    <div style="margin-top:8px; font-weight:700; color:var(--primary);">5年間の差額 約270万円（保守試算） &#8594; ローン完済後は家計にゆとりが生まれ、老後の住居安定性を確保</div>
   </div>
 
   <div class="breakeven-box">
-    <div class="be-title">&#9670; 財務的損益分岐ポイント</div>
-    <div class="be-value">50年後に物件価値が 5,888万円以上 あれば購入が財務的に有利</div>
+    <div class="be-title">&#9670; 財務的損益分岐ポイント（両シナリオ共通NISAを除いた比較）</div>
+    <div class="be-value">50年後に物件価値が 3,659万円以上 あれば購入が財務的に有利</div>
     <div class="be-detail">
-      3,500万円から +68.2%（年率+1.05%上昇）で達成 &#8594; 東京都心の過去実績では十分現実的
+      3,500万円から +4.5%（年率+0.09%）で達成 &#8594; 物件価値がほぼ横ばいでも購入が有利<br>
+      &#128142; 推定4,492万円（+0.5%/年）なら購入が <strong style="color:var(--accent)">+833万円</strong> の純利益
     </div>
+  </div>
+
+  <div style="background:#f5f3ef; border-left:3px solid var(--accent); border-radius:4px; padding:10px 14px; margin-top:10px; font-size:11px; line-height:1.7;">
+    <strong style="color:var(--primary); font-size:12px;">&#9670; 購入の非財務的メリット：</strong>
+    &#127968; 老後住居費が月5.5万に激減 ／ &#128737; 借家審査リスク回避 ／ &#128176; 家賃値上・立退きリスクなし ／ &#128296; 自由なリフォーム・バリアフリー化可能
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 4B: RENT vs BUY DETAILED TABLE + BAR CHART               -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">05 / 12</span>
+    <h2>賃貸 vs 購入 純資産推移（詳細）</h2>
   </div>
 
   <div class="section-title">年次 純資産推移（50年）</div>
@@ -1188,105 +1232,102 @@
       </tr>
     </thead>
     <tbody>
-      <tr><td>5年（39歳）</td><td>3,375万</td><td>3,590万</td><td>215万</td><td>348万</td></tr>
-      <tr><td>10年（44歳）</td><td>3,002万</td><td>3,680万</td><td>678万</td><td>631万</td></tr>
-      <tr><td>15年（49歳）</td><td>2,615万</td><td>3,770万</td><td>1,155万</td><td>959万</td></tr>
-      <tr><td>20年（54歳）</td><td>2,217万</td><td>3,870万</td><td>1,653万</td><td>1,340万</td></tr>
-      <tr><td>25年（59歳）</td><td>1,804万</td><td>3,965万</td><td>2,161万</td><td>1,783万</td></tr>
-      <tr><td>30年（64歳）</td><td>1,375万</td><td>4,065万</td><td>2,690万</td><td>2,298万</td></tr>
-      <tr style="background:#fff8e1;"><td>35年（69歳）<br><span style="font-size:10px; color:var(--warning);">※まだ返済中</span></td><td>931万</td><td>4,167万</td><td style="font-weight:700">3,236万</td><td style="color:var(--accent); font-weight:700">2,895万</td></tr>
-      <tr style="background:#fff8e1;"><td>40年（74歳）<br><span style="font-size:10px; color:var(--warning);">※まだ返済中</span></td><td>473万</td><td>4,273万</td><td style="font-weight:700">3,800万</td><td>3,580万</td></tr>
-      <tr style="background:#e8f5e9;"><td><strong>45年（79歳）&#x1F3E0;完済</strong></td><td><strong>0万</strong></td><td><strong>4,381万</strong></td><td style="color:var(--success); font-weight:700">4,381万</td><td style="color:var(--accent); font-weight:700">4,380万</td></tr>
-      <tr style="background:#fff8e1;"><td><strong>50年（84歳）</strong></td><td>—</td><td>4,492万</td><td style="color:var(--success); font-weight:700">4,492万</td><td style="color:var(--accent); font-weight:700">5,335万</td></tr>
+      <tr><td>5年（39歳）</td><td>3,375万</td><td>3,590万</td><td>215万</td><td>385万</td></tr>
+      <tr style="background:#e3f2fd;"><td>10年（44歳）<br><span style="font-size:10px; color:#1565c0;">★購入が逆転</span></td><td>3,002万</td><td>3,680万</td><td style="font-weight:700">678万</td><td>560万</td></tr>
+      <tr><td>15年（49歳）</td><td>2,615万</td><td>3,770万</td><td>1,155万</td><td>763万</td></tr>
+      <tr><td>20年（54歳）</td><td>2,217万</td><td>3,870万</td><td>1,653万</td><td>999万</td></tr>
+      <tr><td>25年（59歳）</td><td>1,804万</td><td>3,965万</td><td>2,161万</td><td>1,277万</td></tr>
+      <tr><td>30年（64歳）</td><td>1,375万</td><td>4,065万</td><td>2,690万</td><td>1,590万</td></tr>
+      <tr style="background:#fff8e1;"><td>35年（69歳）<br><span style="font-size:10px; color:var(--warning);">※まだ返済中</span></td><td>931万</td><td>4,167万</td><td style="font-weight:700">3,236万</td><td>1,959万</td></tr>
+      <tr style="background:#fff8e1;"><td>40年（74歳）<br><span style="font-size:10px; color:var(--warning);">※まだ返済中</span></td><td>473万</td><td>4,273万</td><td style="font-weight:700">3,800万</td><td>2,306万</td></tr>
+      <tr style="background:#e8f5e9;"><td><strong>45年（79歳）&#x1F3E0;完済</strong></td><td><strong>0万</strong></td><td><strong>4,381万</strong></td><td style="color:var(--success); font-weight:700">4,381万</td><td>2,710万</td></tr>
+      <tr style="background:#fff8e1;"><td><strong>50年（84歳）</strong></td><td>—</td><td>4,492万</td><td style="color:var(--success); font-weight:700">4,492万</td><td style="color:var(--accent); font-weight:700">2,656万</td></tr>
     </tbody>
   </table>
-  <div style="font-size:11px; color:#999; text-align:right; margin-top:4px;">※物件価値は年率+0.5%緩やかな上昇想定。賃貸投資は管理費等節約分3.5万/月を年3%複利運用の試算</div>
+  <div style="font-size:11px; color:#999; margin-top:4px;">※物件価値は年率+0.5%緩やかな上昇想定。賃貸投資は住居費差額（月17,500円＋初期費用235万）を年3%複利運用の試算。<strong style="color:var(--primary)">両シナリオ共通の月5万円NISA積立（50年後+6,947万円）は上表から除外</strong>し、住宅関連資産のみを比較。</div>
 
-  <div class="section-title">純資産推移チャート（50年）</div>
+  <div class="section-title">純資産推移チャート（50年・NISA共通項を除く住宅関連のみ）</div>
   <div class="bar-chart">
     <div class="bar-row">
       <div class="bar-label">5年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:4%">215万</div>
-        <div class="bar-track bar-rent" style="width:7%">348万</div>
+        <div class="bar-track bar-purchase" style="width:5%">215万</div>
+        <div class="bar-track bar-rent" style="width:9%">385万</div>
       </div>
     </div>
-    <div class="bar-row">
-      <div class="bar-label">10年</div>
+    <div class="bar-row" style="background:#e3f2fd; border-radius:4px; padding:2px 0;">
+      <div class="bar-label">10年<br><small style="font-size:9px; color:#1565c0;">★逆転</small></div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:13%">678万</div>
-        <div class="bar-track bar-rent" style="width:12%">631万</div>
+        <div class="bar-track bar-purchase" style="width:15%">678万</div>
+        <div class="bar-track bar-rent" style="width:13%">560万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">15年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:22%">1,155万</div>
-        <div class="bar-track bar-rent" style="width:18%">959万</div>
+        <div class="bar-track bar-purchase" style="width:26%">1,155万</div>
+        <div class="bar-track bar-rent" style="width:17%">763万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">20年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:31%">1,653万</div>
-        <div class="bar-track bar-rent" style="width:25%">1,340万</div>
+        <div class="bar-track bar-purchase" style="width:37%">1,653万</div>
+        <div class="bar-track bar-rent" style="width:22%">999万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">25年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:41%">2,161万</div>
-        <div class="bar-track bar-rent" style="width:34%">1,783万</div>
+        <div class="bar-track bar-purchase" style="width:48%">2,161万</div>
+        <div class="bar-track bar-rent" style="width:28%">1,277万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">30年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:51%">2,690万</div>
-        <div class="bar-track bar-rent" style="width:43%">2,298万</div>
+        <div class="bar-track bar-purchase" style="width:60%">2,690万</div>
+        <div class="bar-track bar-rent" style="width:35%">1,590万</div>
       </div>
     </div>
     <div class="bar-row" style="background:#fff8e1; border-radius:4px; padding:2px 0;">
       <div class="bar-label">35年<br><small style="font-size:9px; color:var(--warning);">返済中</small></div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:61%">3,236万</div>
-        <div class="bar-track bar-rent" style="width:55%">2,895万</div>
+        <div class="bar-track bar-purchase" style="width:72%">3,236万</div>
+        <div class="bar-track bar-rent" style="width:44%">1,959万</div>
       </div>
     </div>
     <div class="bar-row" style="background:#fff8e1; border-radius:4px; padding:2px 0;">
       <div class="bar-label">40年<br><small style="font-size:9px; color:var(--warning);">返済中</small></div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:72%">3,800万</div>
-        <div class="bar-track bar-rent" style="width:68%">3,580万</div>
+        <div class="bar-track bar-purchase" style="width:85%">3,800万</div>
+        <div class="bar-track bar-rent" style="width:51%">2,306万</div>
       </div>
     </div>
     <div class="bar-row" style="background:#e8f5e9; border-radius:4px; padding:2px 0;">
       <div class="bar-label" style="font-weight:700;">45年<br><small style="font-size:9px;">完済★</small></div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:83%">4,381万</div>
-        <div class="bar-track bar-rent" style="width:83%">4,380万</div>
+        <div class="bar-track bar-purchase" style="width:98%">4,381万</div>
+        <div class="bar-track bar-rent" style="width:60%">2,710万</div>
       </div>
     </div>
-    <div class="bar-row" style="background:#fff8e1; border-radius:4px; padding:2px 0;">
+    <div class="bar-row" style="background:#e8f5e9; border-radius:4px; padding:2px 0;">
       <div class="bar-label"><strong>50年</strong></div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:85%">4,492万</div>
-        <div class="bar-track bar-rent" style="width:100%">5,300万</div>
+        <div class="bar-track bar-purchase" style="width:100%">4,492万</div>
+        <div class="bar-track bar-rent" style="width:59%">2,656万</div>
       </div>
     </div>
   </div>
-  <div style="display:flex; gap:20px; justify-content:center; font-size:12px; color:#888; margin-top:6px;">
+  <div style="display:flex; flex-wrap:wrap; gap:16px; justify-content:center; font-size:12px; color:#555; margin-top:8px;">
     <span><span style="display:inline-block;width:12px;height:12px;background:var(--primary);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>購入 純資産（物件価値−ローン残高）</span>
-    <span><span style="display:inline-block;width:12px;height:12px;background:var(--accent);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>賃貸 投資資産</span>
-    <span style="color:var(--success); font-weight:700;">&#9733; 45年完済時に購入純資産≒賃貸投資資産（奇跡の一致）</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:var(--accent);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>賃貸 投資資産（住居費差額+初期節約の複利運用）</span>
   </div>
+  <div style="text-align:center; color:var(--success); font-weight:700; font-size:12px; margin-top:4px;">&#9733; 10年目以降は購入が優位に転換 ／ 50年後には約<strong style="font-size:14px;">1,836万円</strong>の差で購入が有利</div>
 
-  <div class="section-title">住宅購入の非財務的メリット</div>
-  <div class="icon-list">
-    <div class="icon-list-item"><span class="icon">&#127968;</span>老後の住居費が月5.5万円に激減（賃貸10万円超と比較）</div>
-    <div class="icon-list-item"><span class="icon">&#128737;</span>65歳以降の借家審査困難リスクをゼロに</div>
-    <div class="icon-list-item"><span class="icon">&#128176;</span>家賃値上げ・立退きリスクなし（老後の安心）</div>
-    <div class="icon-list-item"><span class="icon">&#128296;</span>自由なリフォーム・バリアフリー化が可能</div>
+  <div class="highlight-box" style="background:#f0f4ff; border-left-color:var(--primary); margin-top:14px;">
+    <strong>&#9670; 結論：推奨Cプラン（45年ローン）で購入が最も有利</strong><br>
+    <span style="font-size:12px;">両シナリオとも月5万円NISAを継続する前提で、住居関連資産のみを比較した場合でも、購入の優位性は10年目以降に逆転し、時間とともに差が拡大します。50年後には購入が賃貸を<strong style="color:var(--primary); font-size:14px;">約1,836万円上回る</strong>計算となります。加えて、NISA資産は両シナリオとも <strong style="color:var(--success)">約6,947万円</strong> を50年後に保有。</span>
   </div>
 
   <div class="page-footer">
@@ -1300,7 +1341,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">05 / 11</span>
+    <span class="page-num">06 / 12</span>
     <h2>月次収支計画（購入後）</h2>
   </div>
 
@@ -1441,7 +1482,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">06 / 11</span>
+    <span class="page-num">07 / 12</span>
     <h2>同世代比較レポート</h2>
   </div>
 
@@ -1552,7 +1593,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">07 / 11</span>
+    <span class="page-num">08 / 12</span>
     <h2>NISA積立シミュレーション ― 月額別・将来資産比較</h2>
   </div>
 
@@ -1689,7 +1730,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">08 / 11</span>
+    <span class="page-num">09 / 12</span>
     <h2>FP推奨アクションプラン</h2>
   </div>
 
@@ -1762,7 +1803,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">09 / 11</span>
+    <span class="page-num">10 / 12</span>
     <h2>カウンセリングシート ― お客様理解と設計方針</h2>
   </div>
 
@@ -1907,7 +1948,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">10 / 11</span>
+    <span class="page-num">11 / 12</span>
     <h2>金融機関比較 &amp; 最適ローン銀行診断（2026年4月現在）</h2>
   </div>
 
@@ -2139,7 +2180,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">11 / 11</span>
+    <span class="page-num">12 / 12</span>
     <h2>免責事項・ご留意事項</h2>
   </div>
 
