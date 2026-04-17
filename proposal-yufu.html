@@ -67,9 +67,12 @@
     position: relative;
   }
 
-  /* ===== COVER PAGE ===== */
+  /* ===== COVER PAGE (Luxury Redesign) ===== */
   .cover {
-    background: var(--primary);
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(184,146,46,0.10) 0%, transparent 55%),
+      radial-gradient(ellipse at 50% 100%, rgba(184,146,46,0.08) 0%, transparent 55%),
+      linear-gradient(180deg, #0e1b34 0%, #0a1628 50%, #081324 100%);
     color: #ffffff;
     display: flex;
     flex-direction: column;
@@ -79,24 +82,91 @@
     padding: 60px 50px 70px;
     min-height: 297mm;
     box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+  }
+  /* 角装飾（4隅にゴールドL字装飾） */
+  .cover::before, .cover::after {
+    content: '';
+    position: absolute;
+    width: 70px; height: 70px;
+    border-color: var(--accent);
+    border-style: solid;
+    opacity: 0.7;
+    z-index: 0;
+  }
+  .cover::before {
+    top: 28px; left: 28px;
+    border-width: 2px 0 0 2px;
+  }
+  .cover::after {
+    bottom: 28px; right: 28px;
+    border-width: 0 2px 2px 0;
+  }
+  .cover-corner-tr {
+    position: absolute;
+    top: 28px; right: 28px;
+    width: 70px; height: 70px;
+    border: 2px solid var(--accent);
+    border-width: 2px 2px 0 0;
+    opacity: 0.7;
+    z-index: 0;
+  }
+  .cover-corner-bl {
+    position: absolute;
+    bottom: 28px; left: 28px;
+    width: 70px; height: 70px;
+    border: 2px solid var(--accent);
+    border-width: 0 0 2px 2px;
+    opacity: 0.7;
+    z-index: 0;
   }
   .cover-top-section {
     display: flex; flex-direction: column; align-items: center;
+    position: relative; z-index: 1;
   }
   .cover-middle {
     display: flex; flex-direction: column; align-items: center;
     flex-grow: 1;
     justify-content: center;
+    position: relative; z-index: 1;
   }
   .cover-footer-section {
     display: flex; flex-direction: column; align-items: center;
+    position: relative; z-index: 1;
   }
 
   .cover-top-line {
-    width: 60px;
-    height: 3px;
+    width: 72px;
+    height: 2px;
     background: var(--accent);
-    margin-bottom: 24px;
+    margin-bottom: 14px;
+    box-shadow: 0 0 14px rgba(184,146,46,0.5);
+  }
+  .cover-ornament {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 14px 0 0;
+  }
+  .cover-ornament-line {
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  .cover-diamond {
+    width: 9px;
+    height: 9px;
+    background: var(--accent);
+    transform: rotate(45deg);
+    box-shadow: 0 0 10px rgba(184,146,46,0.6);
+  }
+  .cover-double-line {
+    width: 240px;
+    border-top: 1px solid rgba(184,146,46,0.8);
+    border-bottom: 1px solid rgba(184,146,46,0.4);
+    padding: 4px 0;
+    margin: 24px 0;
   }
 
   .cover-label {
@@ -851,14 +921,19 @@
       break-after: auto;
     }
     .page.cover {
-      padding: 50px 50px 70px !important;
+      padding: 60px 50px 70px !important;
       page-break-before: avoid;
-      background: #0a1628 !important;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(184,146,46,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 100%, rgba(184,146,46,0.08) 0%, transparent 55%),
+        linear-gradient(180deg, #0e1b34 0%, #0a1628 50%, #081324 100%) !important;
       color: #ffffff !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
       align-items: center !important;
+      position: relative !important;
+      overflow: hidden !important;
     }
     .page.cover h1,
     .page.cover .cover-client,
@@ -942,19 +1017,32 @@
 <!-- PAGE 1: COVER                                                 -->
 <!-- ============================================================ -->
 <div class="page cover">
+  <div class="cover-corner-tr"></div>
+  <div class="cover-corner-bl"></div>
+
   <div class="cover-top-section">
     <div class="cover-top-line"></div>
     <div class="cover-label">LIFE DESIGN PROPOSAL</div>
+    <div class="cover-ornament">
+      <div class="cover-ornament-line"></div>
+      <div class="cover-diamond"></div>
+      <div class="cover-ornament-line"></div>
+    </div>
   </div>
 
   <div class="cover-middle">
     <h1>住宅購入ライフプランニング<br>提案書</h1>
-    <div class="cover-gold-line" style="margin-top:50px;"></div>
+    <div class="cover-double-line"></div>
     <div class="cover-client">油布 智美 様</div>
     <div class="cover-client-label">CLIENT</div>
   </div>
 
   <div class="cover-footer-section">
+    <div class="cover-ornament" style="margin-bottom:14px;">
+      <div class="cover-ornament-line"></div>
+      <div class="cover-diamond"></div>
+      <div class="cover-ornament-line"></div>
+    </div>
     <div class="cover-date">2026年4月16日</div>
     <div class="cover-brand-line">— LIFE DESIGN PARTNER —</div>
     <div class="cover-planner">KOKI TAKAHASHI</div>
@@ -966,7 +1054,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">02 / 12</span>
+    <span class="page-num">02 / 13</span>
     <h2>クライアントプロフィール &amp; FP基本方針</h2>
   </div>
 
@@ -1021,7 +1109,7 @@
       <li><strong>年収500万円を安全設計ベースとして試算</strong><br>実績800万円・最低保証500万円のうち、最も保守的な500万円を設計ラインとして採用。最低収入時でも無理なく返済・生活・資産形成を継続できることを最優先に設計しています。</li>
       <li><strong>諸費用込みフルローン（3,735万円）で貯蓄400万円を全額温存</strong><br>諸費用（約235万円：仲介手数料122万円・融資手数料77万円・登記費用他36万円）もローンに含め、手元400万円を緊急予備資金・将来投資資金として確保します。</li>
       <li><strong>金利1.5%上昇まで返済比率25%以内を維持</strong><br>変動金利リスクに対し、十分なバッファを持たせた設計です。</li>
-      <li><strong>住宅ローン控除273万円（13年）を最大活用</strong><br>税制優遇をフル活用し、実質的な住居コストを削減します。</li>
+      <li><strong>住宅ローン控除を最大活用</strong><br>新築・中古・住宅性能に応じた制度を最大限活用し、実質的な住居コストを削減します（物件条件により控除額が異なるため詳細は物件選定時に試算）。</li>
       <li><strong>NISA月5万円の積立投資を継続・ライフプランに応じて増減を検討</strong><br>住宅取得と資産形成の両立を実現します。ローン年数を長く設定することで月々のキャッシュフローを確保し、余剰資金をNISAに回す戦略をご提案。生活余力を増やしたい場合は<strong>停止ではなく減額</strong>で調整を行うことを推奨いたします。</li>
       <li><strong>ローン年数を伸ばして月々支払いを最小化し、差額を投資へ</strong><br>返済額を抑えた分をNISAに回すことで、想定ローン金利（<strong>0.69%〜1%前後</strong>）を大きく上回る資産形成が可能です。生活の安全圏を第一に確保した上で、資産形成を優先します。</li>
     </ol>
@@ -1038,7 +1126,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">03 / 12</span>
+    <span class="page-num">03 / 13</span>
     <h2>借入シミュレーション ― ローン年数×NISA最適化</h2>
   </div>
 
@@ -1067,7 +1155,7 @@
       <div class="recommend-item"><div class="label">諸費用（ローン込み）</div><div class="value" style="font-size:13px;">合計 235万円<br><span style="font-size:10px; opacity:0.7;">（内訳は上表参照）</span></div></div>
       <div class="recommend-item"><div class="label">頭金</div><div class="value">0円</div></div>
       <div class="recommend-item"><div class="label">借入総額</div><div class="value gold">3,735万円</div></div>
-      <div class="recommend-item"><div class="label">適用金利</div><div class="value">0.69%<span style="font-size:11px;opacity:0.6">（変動・SBI）</span></div></div>
+      <div class="recommend-item"><div class="label">想定適用金利</div><div class="value">0.69%<span style="font-size:11px;opacity:0.6">（変動・SBI想定）</span></div></div>
       <div class="recommend-item"><div class="label">住宅ローン控除</div><div class="value" style="color:#4caf50">▲273万円</div></div>
       <div class="recommend-item"><div class="label">手元資金</div><div class="value gold">400万円 全額温存</div></div>
       <div class="recommend-item"><div class="label">月手取り（500万基準）</div><div class="value">330,000円</div></div>
@@ -1143,7 +1231,7 @@
     </tbody>
   </table>
   <div style="background:#f0f4ff; border-left:3px solid var(--primary); padding:5px 10px; margin-top:4px; font-size:10px; line-height:1.55; color:#333;">
-    <strong style="color:var(--primary);">※住宅ローン控除：</strong>中古住宅の場合、最大<strong style="color:var(--accent);">140万円</strong>（年14万×10年）が所得税等から控除見込み。新築最大273万とは枠組みが異なるが、油布様の<strong>年収500万ベースの納税額</strong>から<strong>140万枠を無駄なくフル活用可能</strong>で、<strong style="color:var(--success);">最も効率的で賢い選択</strong>となります。
+    <strong style="color:var(--primary);">※住宅ローン控除について：</strong>物件種別（新築／中古）・住宅性能（認定長期優良・ZEH・省エネ基準適合・一般）により<strong>借入限度額・控除期間・年間上限が異なります</strong>。物件選定後に最適な試算を実施しますが、油布様の<strong>年収500万ベースの納税額</strong>であっても、控除枠を<strong style="color:var(--success);">無駄なくフル活用できる範囲</strong>で物件選定することが最も効率的で賢い選択です。
   </div>
 
   <div class="page-footer">
@@ -1153,11 +1241,118 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 4: RENT vs BUY LIFETIME 50-YEAR COMPARISON               -->
+<!-- PAGE 4: EARLY REPAYMENT SCENARIOS                             -->
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">04 / 12</span>
+    <span class="page-num">04 / 13</span>
+    <h2>早期弁済シナリオ ― 繰上返済・一括弁済による利息圧縮</h2>
+  </div>
+
+  <p style="font-size:11.5px; color:#666; margin-bottom:10px; line-height:1.65;">
+    推奨Cプラン（45年ローン・月80,500円）をベースに、ボーナスや退職金等を活用した繰上返済・一括弁済のシナリオを比較します。
+    <strong style="color:var(--primary);">低金利(0.69%)環境下ではNISA運用益のほうが有利</strong>なケースもあるため、精神的安心・完済時期の早期化とのバランスで選択してください。
+  </p>
+
+  <!-- シナリオ比較 3カード -->
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
+    <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:12px 14px;">
+      <div style="font-size:10px; color:#888; letter-spacing:1px; margin-bottom:3px;">SCENARIO A</div>
+      <div style="font-weight:700; color:var(--primary); font-size:14px; margin-bottom:8px;">基本（満期）</div>
+      <div style="font-size:11px; color:#555; line-height:1.6;">
+        繰上なし・45年満期<br>
+        <strong>完済時期：79歳</strong><br>
+        総返済：<strong>4,347万円</strong><br>
+        総利息：<strong>612万円</strong><br>
+        <span style="color:var(--success); font-size:10px;">★月々のキャッシュフローを最大確保。差額はNISAへ</span>
+      </div>
+    </div>
+
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-left:4px solid var(--accent); border-radius:8px; padding:12px 14px;">
+      <div style="font-size:10px; color:var(--accent); letter-spacing:1px; margin-bottom:3px;">SCENARIO B</div>
+      <div style="font-weight:700; color:var(--primary); font-size:14px; margin-bottom:8px;">5年毎 繰上返済</div>
+      <div style="font-size:11px; color:#555; line-height:1.6;">
+        ボーナス等で5年毎100万 × 7回＝計700万繰上<br>
+        <strong>完済時期：約71歳</strong>（8年短縮）<br>
+        総返済：<strong>4,241万円</strong><br>
+        利息節約：<strong style="color:var(--success);">▲97万円</strong><br>
+        <span style="color:var(--accent); font-size:10px;">★段階的圧縮で着実に残高削減</span>
+      </div>
+    </div>
+
+    <div style="background:#e8f5e9; border:1px solid #a5d6a7; border-left:4px solid var(--success); border-radius:8px; padding:12px 14px;">
+      <div style="font-size:10px; color:var(--success); letter-spacing:1px; margin-bottom:3px;">SCENARIO C</div>
+      <div style="font-weight:700; color:var(--primary); font-size:14px; margin-bottom:8px;">退職時 一括弁済</div>
+      <div style="font-size:11px; color:#555; line-height:1.6;">
+        31年目（65歳・退職時）に残債1,288万を一括弁済<br>
+        <strong>完済時期：65歳</strong>（14年短縮）<br>
+        総返済：<strong>4,282万円</strong><br>
+        利息節約：<strong style="color:var(--success);">▲64万円</strong><br>
+        <span style="color:var(--success); font-size:10px;">★退職金活用で定年後の無借金生活</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 年次残高シミュレーション -->
+  <div class="section-title" style="margin-top:10px;">年次ローン残高推移（3シナリオ比較）</div>
+  <table style="font-size:10.5pt; margin:4px 0;">
+    <thead>
+      <tr>
+        <th style="padding:4px 6px;">年次（年齢）</th>
+        <th style="padding:4px 6px;">A 基本残高</th>
+        <th style="padding:4px 6px;">B 5年繰上 残高</th>
+        <th style="padding:4px 6px;">C 退職完済 残高</th>
+        <th style="padding:4px 6px;">備考</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="padding:3px 6px;">5年（39歳）</td><td style="padding:3px 6px;">3,375万</td><td style="padding:3px 6px;">3,275万</td><td style="padding:3px 6px;">3,375万</td><td style="padding:3px 6px; font-size:10px; color:#666;">B: 初回100万繰上</td></tr>
+      <tr><td style="padding:3px 6px;">10年（44歳）</td><td style="padding:3px 6px;">3,002万</td><td style="padding:3px 6px;">2,799万</td><td style="padding:3px 6px;">3,002万</td><td style="padding:3px 6px; font-size:10px; color:#666;">B: 2回目</td></tr>
+      <tr><td style="padding:3px 6px;">15年（49歳）</td><td style="padding:3px 6px;">2,615万</td><td style="padding:3px 6px;">2,306万</td><td style="padding:3px 6px;">2,615万</td><td style="padding:3px 6px; font-size:10px; color:#666;">B: 3回目</td></tr>
+      <tr><td style="padding:3px 6px;">20年（54歳）</td><td style="padding:3px 6px;">2,217万</td><td style="padding:3px 6px;">1,795万</td><td style="padding:3px 6px;">2,217万</td><td style="padding:3px 6px; font-size:10px; color:#666;">B: 4回目</td></tr>
+      <tr><td style="padding:3px 6px;">25年（59歳）</td><td style="padding:3px 6px;">1,804万</td><td style="padding:3px 6px;">1,267万</td><td style="padding:3px 6px;">1,804万</td><td style="padding:3px 6px; font-size:10px; color:#666;">B: 5回目</td></tr>
+      <tr><td style="padding:3px 6px;">30年（64歳）</td><td style="padding:3px 6px;">1,375万</td><td style="padding:3px 6px;">721万</td><td style="padding:3px 6px;">1,375万</td><td style="padding:3px 6px; font-size:10px; color:#666;">B: 6回目</td></tr>
+      <tr style="background:#e8f5e9;"><td style="padding:3px 6px;"><strong>31年（65歳）</strong></td><td style="padding:3px 6px;">1,288万</td><td style="padding:3px 6px;">～620万</td><td style="padding:3px 6px; color:var(--success); font-weight:700;">0万（★完済）</td><td style="padding:3px 6px; font-size:10px; color:var(--success);">C: 退職金で一括</td></tr>
+      <tr style="background:#fff8e1;"><td style="padding:3px 6px;"><strong>35年（69歳）</strong></td><td style="padding:3px 6px;">931万</td><td style="padding:3px 6px;">155万</td><td style="padding:3px 6px;">—</td><td style="padding:3px 6px; font-size:10px; color:var(--accent);">B: 7回目(最終)</td></tr>
+      <tr style="background:#fff8e1;"><td style="padding:3px 6px;"><strong>約37年（71歳）</strong></td><td style="padding:3px 6px;">713万</td><td style="padding:3px 6px; color:var(--accent); font-weight:700;">0万（★完済）</td><td style="padding:3px 6px;">—</td><td style="padding:3px 6px; font-size:10px; color:var(--accent);">B: 完済</td></tr>
+      <tr><td style="padding:3px 6px;"><strong>45年（79歳）</strong></td><td style="padding:3px 6px; color:var(--primary); font-weight:700;">0万（完済）</td><td style="padding:3px 6px;">—</td><td style="padding:3px 6px;">—</td><td style="padding:3px 6px; font-size:10px; color:#888;">A: 満期完済</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 戦略選択ガイド -->
+  <div class="section-title" style="margin-top:10px;">戦略選択ガイド ― 油布様のライフプラン別推奨</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+    <div style="background:#f0f4ff; border-left:3px solid var(--primary); padding:10px 14px; font-size:11px; line-height:1.7;">
+      <strong style="color:var(--primary);">&#128185; 資産形成重視の場合 → A or 控えめB</strong><br>
+      ローン金利0.69% < NISA期待リターン3%のため、繰上より<strong>NISA積立拡大</strong>が有利。
+      45年満期で月々の差額をNISAへ回し、79歳時NISA 5,715万＋物件4,381万＝<strong>約1億円</strong>を目指す戦略。
+    </div>
+    <div style="background:#e8f5e9; border-left:3px solid var(--success); padding:10px 14px; font-size:11px; line-height:1.7;">
+      <strong style="color:var(--success);">&#128176; 安心重視・退職金活用の場合 → C</strong><br>
+      定年65歳時に退職金で残債1,288万を一括弁済。老後の無借金生活を実現。
+      NISA積立も継続することで、<strong>完済＋NISA資産</strong>の両立が可能。
+    </div>
+  </div>
+
+  <div style="background:#fff8e1; border:1px solid #ffe082; border-radius:6px; padding:8px 12px; margin-top:10px; font-size:10.5px; line-height:1.6; color:#555;">
+    <strong>&#9888; 繰上返済の注意点：</strong>
+    ①住宅ローン控除期間（13年）中は残高維持で控除額最大化が有利。繰上は14年目以降推奨。
+    ②手元資金を割り込む繰上は避ける（緊急予備資金400万は常時確保）。
+    ③団信加入中は残債が保険でカバーされるため、過度な繰上は保険的機能を手放すトレードオフも考慮。
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>— LIFE DESIGN PARTNER — KOKI TAKAHASHI</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 5: RENT vs BUY LIFETIME 50-YEAR COMPARISON               -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">05 / 13</span>
     <h2>賃貸 vs 購入 生涯50年比較（34歳〜84歳）</h2>
   </div>
 
@@ -1249,7 +1444,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">05 / 12</span>
+    <span class="page-num">06 / 13</span>
     <h2>賃貸 vs 購入 純資産推移（詳細）</h2>
   </div>
 
@@ -1373,7 +1568,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">06 / 12</span>
+    <span class="page-num">07 / 13</span>
     <h2>月次収支計画（購入後）</h2>
   </div>
 
@@ -1514,7 +1709,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">07 / 12</span>
+    <span class="page-num">08 / 13</span>
     <h2>同世代比較レポート</h2>
   </div>
 
@@ -1553,7 +1748,7 @@
     </div>
     <div class="col-card" style="text-align:center;">
       <div style="font-size:12px; color:#888;">同属性 平均 / 中央値</div>
-      <div style="font-size:28px; font-weight:700; color:var(--accent); margin:8px 0;">450〜600万 / 110〜200万</div>
+      <div style="font-size:20px; font-weight:700; color:var(--accent); margin:6px 0; line-height:1.35;">平均 450〜600万<br>中央値 110〜200万</div>
     </div>
   </div>
   <div class="highlight-box" style="text-align:center;">
@@ -1619,7 +1814,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">08 / 12</span>
+    <span class="page-num">09 / 13</span>
     <h2>NISA積立シミュレーション ― 月額別・将来資産比較</h2>
   </div>
 
@@ -1756,7 +1951,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">09 / 12</span>
+    <span class="page-num">10 / 13</span>
     <h2>FP推奨アクションプラン</h2>
   </div>
 
@@ -1829,7 +2024,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">10 / 12</span>
+    <span class="page-num">11 / 13</span>
     <h2>カウンセリングシート ― お客様理解と設計方針</h2>
   </div>
 
@@ -1966,7 +2161,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">11 / 12</span>
+    <span class="page-num">12 / 13</span>
     <h2>金融機関比較 &amp; 最適ローン銀行診断（2026年4月現在）</h2>
   </div>
 
@@ -2202,7 +2397,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">12 / 12</span>
+    <span class="page-num">13 / 13</span>
     <h2>免責事項・ご留意事項</h2>
   </div>
 
