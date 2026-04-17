@@ -4,8 +4,9 @@
     {
       "name": "LIFE DESIGN PARTNER - Dev Server",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8181"],
-      "port": 8181
+      "runtimeArgs": ["-m", "http.server"],
+      "port": 8181,
+      "autoPort": true
     },
     {
       "name": "LIFE DESIGN PARTNER - Node Server",
