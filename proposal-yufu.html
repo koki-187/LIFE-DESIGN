@@ -33,7 +33,7 @@
   }
 
   body {
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
     font-size: 14px;
     line-height: 1.7;
     color: var(--text-primary);
@@ -43,7 +43,7 @@
   }
 
   h1, h2, h3, h4, .serif {
-    font-family: 'Noto Serif JP', serif;
+    font-family: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
   }
 
   .page {
@@ -480,12 +480,6 @@
     width: 180px;
     height: 180px;
     border-radius: 50%;
-    background: conic-gradient(
-      var(--primary) 0deg 141deg,
-      #2e7d32 141deg 304deg,
-      var(--accent) 304deg 337deg,
-      #78909c 337deg 360deg
-    );
     position: relative;
     flex-shrink: 0;
   }
@@ -761,6 +755,29 @@
     padding-top: 8px;
   }
 
+  /* ===== PRINT BUTTON ===== */
+  .print-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 9999;
+    transition: background 0.2s;
+  }
+  .print-btn:hover { background: #1e3a5f; }
+  .print-btn .print-icon { font-size: 16px; }
+
   /* ===== PRINT ===== */
   @media print {
     body {
@@ -782,10 +799,24 @@
       position: fixed;
       bottom: 0;
     }
+    .print-btn {
+      display: none;
+    }
+    /* P10 grid: prevent splitting across pages */
+    .bank-pattern-grid {
+      page-break-inside: avoid;
+    }
+    .bank-pattern-grid > div {
+      page-break-inside: avoid;
+    }
   }
 </style>
 </head>
 <body>
+
+<button class="print-btn" onclick="window.print()">
+  <span class="print-icon">🖨️</span> 印刷・PDF保存
+</button>
 
 <!-- ============================================================ -->
 <!-- PAGE 1: COVER                                                 -->
@@ -794,7 +825,7 @@
   <div class="cover-top-line"></div>
   <div class="cover-label">LIFE DESIGN PROPOSAL</div>
   <h1>住宅購入ライフプランニング<br>提案書</h1>
-  <div class="cover-subtitle">年収500万円安全設計・フルローン3,500万円プラン</div>
+  <div class="cover-subtitle">年収500万円最低ライン設計・フルローン3,500万円プラン</div>
   <div class="cover-gold-line"></div>
   <div class="cover-client">油布 智美 様</div>
   <div class="cover-client-label">CLIENT</div>
@@ -810,7 +841,7 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">02 / 08</span>
+    <span class="page-num">02 / 11</span>
     <h2>クライアントプロフィール &amp; FP基本方針</h2>
   </div>
 
@@ -830,11 +861,11 @@
     </div>
     <div class="profile-item">
       <span class="profile-label">現在の居住</span>
-      <span class="profile-value">賃貸 9.5万円/月</span>
+      <span class="profile-value">賃貸 98,000円/月</span>
     </div>
     <div class="profile-item">
       <span class="profile-label">年収（設計ベース）</span>
-      <span class="profile-value">500万円</span>
+      <span class="profile-value">500万円（最低ライン）</span>
     </div>
     <div class="profile-item">
       <span class="profile-label">実績年収</span>
@@ -842,7 +873,7 @@
     </div>
     <div class="profile-item">
       <span class="profile-label">現在の貯蓄</span>
-      <span class="profile-value">150万円</span>
+      <span class="profile-value">400万円</span>
     </div>
     <div class="profile-item">
       <span class="profile-label">希望</span>
@@ -850,7 +881,7 @@
     </div>
     <div class="profile-item">
       <span class="profile-label">生命保険</span>
-      <span class="profile-value" style="color:var(--warning); font-weight:700">現在未加入 → 住宅ローン加入で団信が主軸となる</span>
+      <span class="profile-value" style="color:var(--success); font-weight:700">住宅購入後は団信を中心に保障を検討</span>
     </div>
     <div class="profile-item">
       <span class="profile-label">趣味・習慣</span>
@@ -860,14 +891,14 @@
 
   <div class="section-title">FP基本方針</div>
   <div class="gold-box">
-    <h3>ファイナンシャルプランニング 5つの基本方針</h3>
+    <h3>ファイナンシャルプランニング 6つの基本方針</h3>
     <ol>
-      <li><strong>年収500万円を絶対安全基準として設計</strong><br>一時的な年収800万円ではなく、安定収入ベースで無理のない返済計画を策定します。</li>
-      <li><strong>フルローンにより150万円の自己資金を緊急予備資金として確保</strong><br>頭金を入れず、手元資金を生活防衛資金として温存します。</li>
+      <li><strong>年収500万円を安全設計ベースとして試算</strong><br>実績800万円・最低保証500万円のうち、最も保守的な500万円を設計ラインとして採用。最低収入時でも無理なく返済・生活・資産形成を継続できることを最優先に設計しています。</li>
+      <li><strong>諸費用込みフルローン（3,735万円）で貯蓄400万円を全額温存</strong><br>諸費用（約235万円：仲介手数料122万円・融資手数料77万円・登記費用他36万円）もローンに含め、手元400万円を緊急予備資金・将来投資資金として確保します。</li>
       <li><strong>金利1.5%上昇まで返済比率25%以内を維持</strong><br>変動金利リスクに対し、十分なバッファを持たせた設計です。</li>
       <li><strong>住宅ローン控除273万円（13年）を最大活用</strong><br>税制優遇をフル活用し、実質的な住居コストを削減します。</li>
-      <li><strong>NISA月3万円の積立投資を購入後も継続</strong><br>住宅取得と資産形成の両立を実現します。</li>
-      <li><strong>団信を死亡保障の主軸として活用し、医療・就業不能保険を新規取得</strong><br>現在生命保険未加入のため、住宅ローンで付帯する団信が第一の死亡保障となります。これに加え、医療保険・就業不能保険への加入を優先課題とします。</li>
+      <li><strong>NISA月5万円の積立投資を継続・ライフプランに応じて増額を検討</strong><br>住宅取得と資産形成の両立を実現します。ローン年数を長く設定することで月々のキャッシュフローを確保し、余剰資金をNISAに回す戦略を推奨します。</li>
+      <li><strong>ローン年数を伸ばして月々支払いを最小化し、差額を投資へ</strong><br>返済額を抑えた分をNISAに回すことで、ローン金利（0.69%）を大きく上回る資産形成が可能です。生活の安全圏を第一に確保した上で、資産形成を優先します。</li>
     </ol>
   </div>
 
@@ -878,146 +909,133 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 3: RECOMMENDED PLAN & SIMULATION                         -->
+<!-- PAGE 3: LOAN SCENARIOS — YEAR EXTENSION × NISA STRATEGY      -->
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">03 / 08</span>
-    <h2>推奨プランと借入シミュレーション</h2>
+    <span class="page-num">03 / 11</span>
+    <h2>借入シミュレーション ― ローン年数×NISA最適化</h2>
   </div>
 
-  <div class="section-title">推奨プラン</div>
-  <div class="recommend-box">
-    <h3>&#9670; RECOMMENDED PLAN</h3>
-    <div class="recommend-grid">
-      <div class="recommend-item">
-        <div class="label">物件価格</div>
-        <div class="value gold">3,500万円</div>
-      </div>
-      <div class="recommend-item">
-        <div class="label">借入額（フルローン）</div>
-        <div class="value gold">3,500万円</div>
-      </div>
-      <div class="recommend-item">
-        <div class="label">頭金</div>
-        <div class="value">0円</div>
-      </div>
-      <div class="recommend-item">
-        <div class="label">返済期間</div>
-        <div class="value">35年</div>
-      </div>
-      <div class="recommend-item">
-        <div class="label">適用金利</div>
-        <div class="value">0.69%<span style="font-size:11px;opacity:0.6">（変動・SBI）</span></div>
-      </div>
-      <div class="recommend-item">
-        <div class="label">月々返済額</div>
-        <div class="value gold">93,824円</div>
-      </div>
-      <div class="recommend-item">
-        <div class="label">総返済額</div>
-        <div class="value">3,941万円</div>
-      </div>
-      <div class="recommend-item">
-        <div class="label">利息総額</div>
-        <div class="value">441万円</div>
-      </div>
-      <div class="recommend-item">
-        <div class="label">住宅ローン控除</div>
-        <div class="value" style="color:#4caf50">▲273万円</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section-title">金利変動リスクシミュレーション</div>
-  <table>
+  <!-- 諸費用内訳 -->
+  <div class="section-title" style="margin-top:0; margin-bottom:8px;">不動産購入時の諸費用内訳（ローン組込み）</div>
+  <table style="margin-bottom:14px; font-size:12px;">
     <thead>
-      <tr>
-        <th>適用金利</th>
-        <th>月々返済額</th>
-        <th>返済比率</th>
-        <th>評価</th>
-      </tr>
+      <tr><th>項目</th><th>計算根拠・内容</th><th>目安金額</th><th>支払タイミング</th></tr>
     </thead>
     <tbody>
-      <tr class="highlight-row">
-        <td>0.69%</td>
-        <td>93,824円</td>
-        <td>22.5%</td>
-        <td><span class="badge badge-safe">&#128142; 絶対安全</span></td>
-      </tr>
-      <tr>
-        <td>1.00%</td>
-        <td>98,800円</td>
-        <td>23.7%</td>
-        <td><span class="badge badge-ok">&#9989; 安全</span></td>
-      </tr>
-      <tr>
-        <td>1.50%</td>
-        <td>107,165円</td>
-        <td>25.7%</td>
-        <td><span class="badge badge-warn">&#9651; 注意</span></td>
-      </tr>
-      <tr>
-        <td>2.00%</td>
-        <td>115,942円</td>
-        <td>27.8%</td>
-        <td><span class="badge badge-danger">&#9888; 要対策</span></td>
-      </tr>
+      <tr><td><strong>仲介手数料</strong></td><td>（3,500万×3%＋6万円）×消費税1.1<br><span style="font-size:10px; color:#888;">3,500万超：法定上限 = 111万円（税抜）</span></td><td><strong style="color:var(--danger);">1,221,000円<br><span style="font-size:10px;">（約122万円）</span></strong></td><td>契約時・決済時<br>各半金</td></tr>
+      <tr><td><strong>登記費用（司法書士報酬含む）</strong></td><td>所有権移転登記・抵当権設定登記等<br><span style="font-size:10px; color:#888;">固定資産税評価額基準・司法書士報酬含む</span></td><td>約 20万円</td><td>決済時</td></tr>
+      <tr><td><strong>住宅ローン融資手数料</strong></td><td>借入額×2.2%（融資手数料型）<br><span style="font-size:10px; color:#888;">3,500万×2.2%≒77万円（金融機関により異なる）</span></td><td>約 77万円</td><td>ローン契約時</td></tr>
+      <tr><td><strong>印紙代</strong></td><td>売買契約書（1万円）＋金銭消費貸借契約書（2万円）<br><span style="font-size:10px; color:#888;">軽減税率適用後の額面</span></td><td>約 3万円</td><td>各契約時</td></tr>
+      <tr><td><strong>火災保険料（初年度）</strong></td><td>建物・地震保険・家財保険含む<br><span style="font-size:10px; color:#888;">加入期間・補償内容により変動</span></td><td>約 8万円</td><td>引渡し時</td></tr>
+      <tr><td><strong>固定資産税等清算金</strong></td><td>引渡し日以降分を日割精算（売主へ支払い）</td><td>約 5万円</td><td>決済時</td></tr>
+      <tr class="highlight-row"><td><strong>諸費用 合計</strong></td><td>全額ローン組込み可・手出し不要<br><span style="font-size:10px; color:#888;">物件価格の約6.7%相当（業界目安：6〜8%）</span></td><td><strong style="color:var(--accent); font-size:14px;">約 235万円</strong></td><td></td></tr>
     </tbody>
   </table>
 
-  <div class="section-title">4プラン比較</div>
+  <!-- フルローン基本情報 -->
+  <div class="recommend-box">
+    <h3>&#9670; 諸費用込みフルローン 3,735万円（SBI新生銀行 変動0.69%）</h3>
+    <div class="recommend-grid">
+      <div class="recommend-item"><div class="label">物件価格</div><div class="value gold">3,500万円</div></div>
+      <div class="recommend-item"><div class="label">諸費用（ローン込み）</div><div class="value" style="font-size:13px;">合計 235万円<br><span style="font-size:10px; opacity:0.7;">（内訳は上表参照）</span></div></div>
+      <div class="recommend-item"><div class="label">頭金</div><div class="value">0円</div></div>
+      <div class="recommend-item"><div class="label">借入総額</div><div class="value gold">3,735万円</div></div>
+      <div class="recommend-item"><div class="label">適用金利</div><div class="value">0.69%<span style="font-size:11px;opacity:0.6">（変動・SBI）</span></div></div>
+      <div class="recommend-item"><div class="label">住宅ローン控除</div><div class="value" style="color:#4caf50">▲273万円</div></div>
+      <div class="recommend-item"><div class="label">手元資金</div><div class="value gold">400万円 全額温存</div></div>
+      <div class="recommend-item"><div class="label">月手取り（500万基準）</div><div class="value">330,000円</div></div>
+    </div>
+  </div>
+
+  <!-- ローン年数別シナリオ -->
+  <div class="section-title">ローン年数別シナリオ比較（月手取り330,000円基準・年収500万円）</div>
+  <p style="font-size:12px; color:#888; margin-bottom:10px;">ローン年数を延ばすと月返済が減少 &#8594; 差額をNISAに回すことでローン金利（0.69%）を大幅に上回る資産形成が可能</p>
   <table>
     <thead>
       <tr>
-        <th>プラン</th>
-        <th>借入額</th>
+        <th>シナリオ</th>
+        <th>返済年数</th>
         <th>月返済額</th>
         <th>返済比率</th>
-        <th>1.5%時</th>
+        <th>推奨NISA</th>
+        <th>月間余剰</th>
         <th>判定</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td>A 超安全</td>
-        <td>3,000万</td>
-        <td>80,421円</td>
-        <td>19.3%</td>
-        <td>22.0%</td>
-        <td><span class="badge badge-safe">&#9989;</span></td>
+        <td><strong>A 保守</strong></td>
+        <td>35年</td>
+        <td>100,100円</td>
+        <td>24.0%</td>
+        <td>30,000円</td>
+        <td>27,900円</td>
+        <td><span class="badge badge-safe">&#128142;</span></td>
+      </tr>
+      <tr>
+        <td><strong>B バランス</strong></td>
+        <td>40年</td>
+        <td>89,000円</td>
+        <td>21.4%</td>
+        <td>30,000円</td>
+        <td>39,000円</td>
+        <td><span class="badge badge-safe">&#128142;</span></td>
       </tr>
       <tr class="highlight-row">
-        <td><strong>B 推奨 &#9733;</strong></td>
-        <td>3,500万</td>
-        <td>93,824円</td>
-        <td>22.5%</td>
-        <td>25.7%</td>
-        <td><span class="badge badge-safe">&#9989;</span></td>
-      </tr>
-      <tr>
-        <td>C 上限</td>
-        <td>3,700万</td>
-        <td>99,186円</td>
-        <td>23.8%</td>
-        <td>27.2%</td>
-        <td><span class="badge badge-warn">&#9888;</span></td>
-      </tr>
-      <tr>
-        <td>D 旧案</td>
-        <td>4,350万</td>
-        <td>116,610円</td>
-        <td>28.0%</td>
-        <td>32.0%</td>
-        <td><span class="badge badge-danger">&#10060;</span></td>
+        <td><strong>C 推奨 &#9733;</strong></td>
+        <td>45年</td>
+        <td>80,500円</td>
+        <td>19.3%</td>
+        <td>50,000円</td>
+        <td>27,500円</td>
+        <td><span class="badge badge-safe">&#128142;</span></td>
       </tr>
     </tbody>
   </table>
+  <div style="font-size:11px; color:#999; background:#f9f9f9; border-radius:4px; padding:8px 12px; margin:6px 0 10px;">
+    ※住居費（管理費25,000+固定資産税10,000）込み。生活費137,000円を差引後の余剰。返済比率は月収41.7万円基準（年収500万円）。<br>
+    ※A:24.0%・B:21.4%・C:19.3%で全て安全圏（25%以内目標を達成）。45年ローンはSBI新生銀行等で対応可能（完済時79歳）。
+  </div>
 
-  <div class="highlight-box">
-    <strong>住宅ローン控除:</strong> 0.7% &times; 残債 &times; 13年 = <strong>273万円</strong>（13年累計）<br>
-    毎年約21万円の税額控除が受けられ、実質金利はほぼゼロに近づきます。
+  <!-- NISA投資効果 -->
+  <div class="section-title">&#128200; ローン延長×NISA増額の効果（vs 35年一括）</div>
+  <table>
+    <thead>
+      <tr>
+        <th>比較</th>
+        <th>35年シナリオA</th>
+        <th>40年シナリオB</th>
+        <th>45年シナリオC &#9733;</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>追加利息（vs 35年）</td><td>—</td><td>+70万円</td><td>+145万円</td></tr>
+      <tr><td>増額NISA（月差額分）×40年 3%運用</td><td>—</td><td class="highlight-row"><strong style="color:var(--success)">+1,030万円</strong></td><td class="highlight-row"><strong style="color:var(--success)">+1,500万円</strong></td></tr>
+      <tr class="highlight-row"><td><strong>差し引き純利益</strong></td><td>基準</td><td><strong style="color:var(--success)">+960万円</strong></td><td><strong style="color:var(--success)">+1,355万円</strong></td></tr>
+    </tbody>
+  </table>
+  <div class="highlight-box" style="margin-top:10px;">
+    &#9670; <strong>ローン金利0.69% &lt; NISA期待リターン3〜5%</strong> &#8594; 差額を投資に回すほど生涯資産が増える<br>
+    現在のNISA月5万円は継続OK。余剰次第で増額が最も効果的な戦略です。
+  </div>
+
+  <!-- 金利上昇リスク -->
+  <div class="section-title">金利変動リスク（推奨シナリオC・45年の場合）</div>
+  <table>
+    <thead>
+      <tr><th>適用金利</th><th>月返済額</th><th>返済比率（年収500万基準）</th><th>評価</th></tr>
+    </thead>
+    <tbody>
+      <tr class="highlight-row"><td>0.69%</td><td>80,500円</td><td>19.3%</td><td><span class="badge badge-safe">&#128142; 絶対安全</span></td></tr>
+      <tr><td>1.00%</td><td>85,900円</td><td>20.6%</td><td><span class="badge badge-safe">&#128142; 絶対安全</span></td></tr>
+      <tr><td>1.50%</td><td>95,100円</td><td>22.8%</td><td><span class="badge badge-safe">&#128142; 絶対安全</span></td></tr>
+      <tr><td>2.00%</td><td>105,000円</td><td>25.2%</td><td><span class="badge badge-ok">&#9989; 安全圏</span></td></tr>
+    </tbody>
+  </table>
+  <div style="font-size:11px; color:#999; background:#f9f9f9; border-radius:4px; padding:8px 12px; margin-top:8px;">
+    ※住宅ローン控除: 0.7%×残債×13年 = <strong>273万円</strong>（初年度確定申告で取得）。実質金利は控除後ほぼゼロ水準。
   </div>
 
   <div class="page-footer">
@@ -1027,54 +1045,85 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 4: RENT vs BUY 35-YEAR COMPARISON                        -->
+<!-- PAGE 4: RENT vs BUY LIFETIME 50-YEAR COMPARISON               -->
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">04 / 08</span>
-    <h2>賃貸 vs 購入 35年比較</h2>
+    <span class="page-num">04 / 11</span>
+    <h2>賃貸 vs 購入 生涯50年比較（34歳〜84歳）</h2>
   </div>
 
-  <p style="text-align:center; color:#888; font-size:13px; margin-bottom:20px;">
-    同額家賃で賃貸を続けた場合との比較 &#8212; 月93,824円を家賃として払い続けた場合 vs 購入した場合
+  <p style="text-align:center; color:#888; font-size:13px; margin-bottom:16px;">
+    推奨Cプラン（45年ローン）: 返済期45年（34〜79歳）＋ 完済後5年（79〜84歳）= 人生の総住居コスト分析
   </p>
 
-  <div class="section-title">35年間 総コスト比較</div>
+  <!-- Phase banner -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+    <div style="background:var(--primary); color:#fff; border-radius:6px; padding:10px 14px; text-align:center;">
+      <div style="font-size:11px; letter-spacing:2px; opacity:0.7; margin-bottom:4px;">PHASE 1</div>
+      <div style="font-weight:700;">ローン返済期 45年 <span style="font-size:11px; color:var(--accent);">★推奨C</span></div>
+      <div style="font-size:12px; opacity:0.8;">34〜79歳 ／ 月80,500円</div>
+    </div>
+    <div style="background:var(--accent); color:#fff; border-radius:6px; padding:10px 14px; text-align:center;">
+      <div style="font-size:11px; letter-spacing:2px; opacity:0.8; margin-bottom:4px;">PHASE 2</div>
+      <div style="font-weight:700;">完済後 5年</div>
+      <div style="font-size:12px; opacity:0.9;">79〜84歳 ／ 住居費 月5.5万円のみ</div>
+    </div>
+  </div>
+
+  <div class="section-title">50年間 総コスト比較</div>
   <div class="two-col">
     <div class="col-card">
-      <h4>&#127968; 購入した場合</h4>
-      <div class="cost-item"><span>諸費用</span><span>105万円</span></div>
-      <div class="cost-item"><span>ローン総返済</span><span>3,941万円</span></div>
-      <div class="cost-item"><span>管理費・修繕・固定資産税</span><span>1,470万円</span></div>
+      <h4>&#127968; 購入した場合（50年）</h4>
+      <div class="cost-item"><span>諸費用</span><span>235万円</span></div>
+      <div class="cost-item"><span>ローン総返済（45年）</span><span>4,347万円</span></div>
+      <div class="cost-item"><span>管理費・修繕・固定資産税（〜45年）</span><span>1,890万円</span></div>
+      <div class="cost-item"><span>維持費（完済後5年・修繕増）</span><span>330万円</span></div>
       <div class="cost-item"><span>住宅ローン控除</span><span style="color:var(--success)">&#9650; 273万円</span></div>
-      <div class="cost-total"><span>総支出</span><span>5,243万円</span></div>
+      <div class="cost-total"><span>総支出</span><span>6,529万円</span></div>
+      <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border);">
+        <div class="cost-item"><span>50年後 物件推定価値（+0.5%/年）</span><span style="color:var(--accent); font-weight:700">4,492万円</span></div>
+        <div class="cost-total"><span>実質コスト（物件価値控除後）</span><span style="color:var(--success)">2,037万円</span></div>
+      </div>
     </div>
     <div class="col-card">
-      <h4>&#127970; 賃貸を続けた場合</h4>
-      <div class="cost-item"><span>家賃35年分</span><span>3,941万円</span></div>
-      <div class="cost-item"><span>更新料</span><span>160万円</span></div>
-      <div class="cost-total"><span>総支出</span><span>4,101万円</span></div>
-      <div style="margin-top:14px; padding-top:10px; border-top:1px dashed var(--border);">
-        <div class="cost-item"><span>節約分投資（月3.5万&times;3%）</span><span>2,596万円</span></div>
-        <div class="cost-item"><span>初期費用節約分</span><span>300万円</span></div>
-        <div class="cost-total"><span>投資資産</span><span style="color:var(--accent)">2,895万円</span></div>
+      <h4>&#127970; 賃貸を続けた場合（50年）</h4>
+      <div class="cost-item"><span>家賃〜35年分</span><span>3,941万円</span></div>
+      <div class="cost-item"><span>家賃 36〜50年（上昇想定10万/月）</span><span>1,800万円</span></div>
+      <div class="cost-item"><span>更新料（25回）</span><span>235万円</span></div>
+      <div class="cost-total"><span>総家賃支出</span><span>5,976万円</span></div>
+      <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border);">
+        <div class="cost-item"><span>節約分投資（月3.5万×3%×50年）</span><span>4,875万円</span></div>
+        <div class="cost-item"><span>初期費用節約分（運用後）</span><span>460万円</span></div>
+        <div class="cost-total"><span>投資資産</span><span style="color:var(--accent)">5,335万円</span></div>
+        <div style="font-size:11px; color:var(--warning); margin-top:6px;">※住居資産ゼロ。老後の借家リスクあり</div>
       </div>
     </div>
   </div>
 
+  <!-- Phase 2 highlight -->
+  <div style="background:#e8f5e9; border-left:4px solid var(--success); padding:12px 16px; border-radius:4px; margin-bottom:14px;">
+    <strong>&#127881; 完済後（79〜84歳）の住居費比較</strong><br>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; font-size:13px;">
+      <div>&#127968; <strong>購入者</strong>: 月<strong style="font-size:16px; color:var(--success)">5.5万円</strong>（管理費・修繕・固定資産税のみ）</div>
+      <div>&#127970; <strong>賃貸者</strong>: 月<strong style="font-size:16px; color:var(--danger)">11万円以上</strong>（家賃上昇・借家審査困難）</div>
+    </div>
+    <div style="margin-top:8px; font-weight:700; color:var(--primary);">5年間の差額 約270万円 &#8594; さらに45年後ローン完済時の純資産が賃貸と同水準に到達</div>
+  </div>
+
   <div class="breakeven-box">
-    <div class="be-title">&#9670; 損益分岐ポイント</div>
-    <div class="be-value">35年後に物件価値が 4,038万円以上 あれば購入が有利</div>
+    <div class="be-title">&#9670; 財務的損益分岐ポイント</div>
+    <div class="be-value">50年後に物件価値が 5,888万円以上 あれば購入が財務的に有利</div>
     <div class="be-detail">
-      3,500万円から +15.4%（年率+0.4%上昇）で達成 &#8594; 東京都内なら十分実現可能
+      3,500万円から +68.2%（年率+1.05%上昇）で達成 &#8594; 東京都心の過去実績では十分現実的
     </div>
   </div>
 
-  <div class="section-title">年次 純資産推移</div>
+  <div class="section-title">年次 純資産推移（50年）</div>
   <table>
     <thead>
       <tr>
-        <th>年数</th>
+        <th>年数（年齢）</th>
         <th>ローン残高</th>
         <th>推定物件価値</th>
         <th>購入 純資産</th>
@@ -1082,80 +1131,105 @@
       </tr>
     </thead>
     <tbody>
-      <tr><td>5年</td><td>3,050万</td><td>3,254万</td><td>203万</td><td>348万</td></tr>
-      <tr><td>10年</td><td>2,585万</td><td>3,025万</td><td>440万</td><td>631万</td></tr>
-      <tr><td>13年</td><td>2,298万</td><td>2,895万</td><td>598万</td><td>822万</td></tr>
-      <tr><td>15年</td><td>2,103万</td><td>2,812万</td><td>709万</td><td>959万</td></tr>
-      <tr><td>20年</td><td>1,604万</td><td>2,614万</td><td>1,010万</td><td>1,340万</td></tr>
-      <tr><td>25年</td><td>1,088万</td><td>2,430万</td><td>1,342万</td><td>1,783万</td></tr>
-      <tr><td>30年</td><td>553万</td><td>2,259万</td><td>1,706万</td><td>2,298万</td></tr>
-      <tr><td>35年</td><td>0万</td><td>2,100万</td><td style="color:var(--success); font-weight:700">2,100万</td><td style="color:var(--accent); font-weight:700">2,895万</td></tr>
+      <tr><td>5年（39歳）</td><td>3,375万</td><td>3,590万</td><td>215万</td><td>348万</td></tr>
+      <tr><td>10年（44歳）</td><td>3,002万</td><td>3,680万</td><td>678万</td><td>631万</td></tr>
+      <tr><td>15年（49歳）</td><td>2,615万</td><td>3,770万</td><td>1,155万</td><td>959万</td></tr>
+      <tr><td>20年（54歳）</td><td>2,217万</td><td>3,870万</td><td>1,653万</td><td>1,340万</td></tr>
+      <tr><td>25年（59歳）</td><td>1,804万</td><td>3,965万</td><td>2,161万</td><td>1,783万</td></tr>
+      <tr><td>30年（64歳）</td><td>1,375万</td><td>4,065万</td><td>2,690万</td><td>2,298万</td></tr>
+      <tr style="background:#fff8e1;"><td>35年（69歳）<br><span style="font-size:10px; color:var(--warning);">※まだ返済中</span></td><td>931万</td><td>4,167万</td><td style="font-weight:700">3,236万</td><td style="color:var(--accent); font-weight:700">2,895万</td></tr>
+      <tr style="background:#fff8e1;"><td>40年（74歳）<br><span style="font-size:10px; color:var(--warning);">※まだ返済中</span></td><td>473万</td><td>4,273万</td><td style="font-weight:700">3,800万</td><td>3,580万</td></tr>
+      <tr style="background:#e8f5e9;"><td><strong>45年（79歳）&#x1F3E0;完済</strong></td><td><strong>0万</strong></td><td><strong>4,381万</strong></td><td style="color:var(--success); font-weight:700">4,381万</td><td style="color:var(--accent); font-weight:700">4,380万</td></tr>
+      <tr style="background:#fff8e1;"><td><strong>50年（84歳）</strong></td><td>—</td><td>4,492万</td><td style="color:var(--success); font-weight:700">4,492万</td><td style="color:var(--accent); font-weight:700">5,300万</td></tr>
     </tbody>
   </table>
+  <div style="font-size:11px; color:#999; text-align:right; margin-top:4px;">※物件価値は年率+0.5%緩やかな上昇想定。賃貸投資は管理費等節約分3.5万/月を年3%複利運用の試算</div>
 
-  <div class="section-title">純資産推移チャート</div>
+  <div class="section-title">純資産推移チャート（50年）</div>
   <div class="bar-chart">
     <div class="bar-row">
       <div class="bar-label">5年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:7%">203万</div>
-        <div class="bar-track bar-rent" style="width:12%">348万</div>
+        <div class="bar-track bar-purchase" style="width:4%">215万</div>
+        <div class="bar-track bar-rent" style="width:7%">348万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">10年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:15%">440万</div>
-        <div class="bar-track bar-rent" style="width:22%">631万</div>
+        <div class="bar-track bar-purchase" style="width:13%">678万</div>
+        <div class="bar-track bar-rent" style="width:12%">631万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">15年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:24%">709万</div>
-        <div class="bar-track bar-rent" style="width:33%">959万</div>
+        <div class="bar-track bar-purchase" style="width:22%">1,155万</div>
+        <div class="bar-track bar-rent" style="width:18%">959万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">20年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:35%">1,010万</div>
-        <div class="bar-track bar-rent" style="width:46%">1,340万</div>
+        <div class="bar-track bar-purchase" style="width:31%">1,653万</div>
+        <div class="bar-track bar-rent" style="width:25%">1,340万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">25年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:46%">1,342万</div>
-        <div class="bar-track bar-rent" style="width:62%">1,783万</div>
+        <div class="bar-track bar-purchase" style="width:41%">2,161万</div>
+        <div class="bar-track bar-rent" style="width:34%">1,783万</div>
       </div>
     </div>
     <div class="bar-row">
       <div class="bar-label">30年</div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:59%">1,706万</div>
-        <div class="bar-track bar-rent" style="width:79%">2,298万</div>
+        <div class="bar-track bar-purchase" style="width:51%">2,690万</div>
+        <div class="bar-track bar-rent" style="width:43%">2,298万</div>
       </div>
     </div>
-    <div class="bar-row">
-      <div class="bar-label">35年</div>
+    <div class="bar-row" style="background:#fff8e1; border-radius:4px; padding:2px 0;">
+      <div class="bar-label">35年<br><small style="font-size:9px; color:var(--warning);">返済中</small></div>
       <div class="bar-group">
-        <div class="bar-track bar-purchase" style="width:73%">2,100万</div>
-        <div class="bar-track bar-rent" style="width:100%">2,895万</div>
+        <div class="bar-track bar-purchase" style="width:61%">3,236万</div>
+        <div class="bar-track bar-rent" style="width:55%">2,895万</div>
+      </div>
+    </div>
+    <div class="bar-row" style="background:#fff8e1; border-radius:4px; padding:2px 0;">
+      <div class="bar-label">40年<br><small style="font-size:9px; color:var(--warning);">返済中</small></div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:72%">3,800万</div>
+        <div class="bar-track bar-rent" style="width:68%">3,580万</div>
+      </div>
+    </div>
+    <div class="bar-row" style="background:#e8f5e9; border-radius:4px; padding:2px 0;">
+      <div class="bar-label" style="font-weight:700;">45年<br><small style="font-size:9px;">完済★</small></div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:83%">4,381万</div>
+        <div class="bar-track bar-rent" style="width:83%">4,380万</div>
+      </div>
+    </div>
+    <div class="bar-row" style="background:#fff8e1; border-radius:4px; padding:2px 0;">
+      <div class="bar-label"><strong>50年</strong></div>
+      <div class="bar-group">
+        <div class="bar-track bar-purchase" style="width:85%">4,492万</div>
+        <div class="bar-track bar-rent" style="width:100%">5,300万</div>
       </div>
     </div>
   </div>
   <div style="display:flex; gap:20px; justify-content:center; font-size:12px; color:#888; margin-top:6px;">
-    <span><span style="display:inline-block;width:12px;height:12px;background:var(--primary);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>購入 純資産</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:var(--primary);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>購入 純資産（物件価値−ローン残高）</span>
     <span><span style="display:inline-block;width:12px;height:12px;background:var(--accent);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>賃貸 投資資産</span>
+    <span style="color:var(--success); font-weight:700;">&#9733; 45年完済時に購入純資産≒賃貸投資資産（奇跡の一致）</span>
   </div>
 
   <div class="section-title">住宅購入の非財務的メリット</div>
   <div class="icon-list">
-    <div class="icon-list-item"><span class="icon">&#127968;</span>老後の住居費ゼロ（ローン完済後）</div>
-    <div class="icon-list-item"><span class="icon">&#128296;</span>自由なリフォーム・カスタマイズ</div>
-    <div class="icon-list-item"><span class="icon">&#128176;</span>家賃値上げリスクなし</div>
-    <div class="icon-list-item"><span class="icon">&#128737;</span>団信による生命保険効果</div>
+    <div class="icon-list-item"><span class="icon">&#127968;</span>老後の住居費が月5.5万円に激減（賃貸10万円超と比較）</div>
+    <div class="icon-list-item"><span class="icon">&#128737;</span>65歳以降の借家審査困難リスクをゼロに</div>
+    <div class="icon-list-item"><span class="icon">&#128176;</span>家賃値上げ・立退きリスクなし（老後の安心）</div>
+    <div class="icon-list-item"><span class="icon">&#128296;</span>自由なリフォーム・バリアフリー化が可能</div>
   </div>
 
   <div class="page-footer">
@@ -1169,25 +1243,47 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">05 / 08</span>
+    <span class="page-num">05 / 11</span>
     <h2>月次収支計画（購入後）</h2>
   </div>
 
   <div class="highlight-box" style="text-align:center;">
-    月手取り収入: <strong style="font-size:20px; color:var(--primary);">328,000円</strong>
-    <span style="font-size:12px; color:#888;">（年収500万円基準）</span>
+    月手取り収入: <strong style="font-size:20px; color:var(--primary);">330,000円</strong>
+    <span style="font-size:12px; color:#888;">（年収500万円最低ライン基準・手取り約396万円/年）</span>
   </div>
 
-  <div class="section-title">住居費</div>
+  <!-- シナリオ参照カード（静的表示） -->
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; font-size:12px;">
+    <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:6px; padding:8px; text-align:center;">
+      <div style="font-size:10px; color:#aaa; letter-spacing:1px; margin-bottom:3px;">SCENARIO A</div>
+      <div style="font-weight:700; color:var(--primary);">35年ローン</div>
+      <div style="color:#888; margin-top:3px;">月返済 100,100円</div>
+      <div style="color:#888;">余剰 27,900円</div>
+    </div>
+    <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:6px; padding:8px; text-align:center;">
+      <div style="font-size:10px; color:#aaa; letter-spacing:1px; margin-bottom:3px;">SCENARIO B</div>
+      <div style="font-weight:700; color:var(--primary);">40年ローン</div>
+      <div style="color:#888; margin-top:3px;">月返済 89,000円</div>
+      <div style="color:#888;">余剰 39,000円</div>
+    </div>
+    <div style="background:var(--primary); color:#fff; border:2px solid var(--accent); border-radius:6px; padding:8px; text-align:center;">
+      <div style="font-size:10px; color:var(--accent); letter-spacing:1px; margin-bottom:3px;">★ 推奨プラン C</div>
+      <div style="font-weight:700;">45年ローン</div>
+      <div style="opacity:0.9; margin-top:3px;">月返済 80,500円</div>
+      <div style="color:var(--accent); font-weight:700;">余剰 27,500円</div>
+    </div>
+  </div>
+
+  <div class="section-title">住居費（推奨Cプラン・45年ローン）</div>
   <table>
     <thead>
       <tr><th>項目</th><th>月額</th><th>備考</th></tr>
     </thead>
     <tbody>
-      <tr><td>住宅ローン返済</td><td>93,824円</td><td>0.69% 変動 35年</td></tr>
+      <tr><td>住宅ローン返済</td><td>80,500円</td><td>0.69% 変動 45年（諸費用込み3,735万）</td></tr>
       <tr><td>管理費・修繕積立金</td><td>25,000円</td><td>マンション想定</td></tr>
       <tr><td>固定資産税積立</td><td>10,000円</td><td>年12万÷12月</td></tr>
-      <tr class="highlight-row"><td><strong>住居費 小計</strong></td><td><strong>128,824円</strong></td><td></td></tr>
+      <tr class="highlight-row"><td><strong>住居費 小計</strong></td><td><strong>115,500円</strong></td><td></td></tr>
     </tbody>
   </table>
 
@@ -1197,63 +1293,63 @@
       <tr><th>項目</th><th>月額</th><th>備考</th></tr>
     </thead>
     <tbody>
-      <tr><td>食費</td><td>55,000円</td><td>自炊+外食</td></tr>
-      <tr><td>光熱費</td><td>15,000円</td><td>電気・ガス・水道</td></tr>
-      <tr><td>通信費</td><td>12,000円</td><td>スマホ+ネット</td></tr>
+      <tr><td>食費</td><td>25,000円</td><td>外食少なく倹約スタイル</td></tr>
+      <tr><td>光熱費</td><td>15,000円</td><td>リモートワークで若干高め想定</td></tr>
+      <tr><td>通信費</td><td>7,000円</td><td>格安SIM＋Wi-Fi</td></tr>
       <tr><td>交通費</td><td>15,000円</td><td>定期代等</td></tr>
-      <tr><td>保険料</td><td style="color:var(--warning)">0円</td><td style="color:var(--warning)">現在未加入 ※購入後に医療・就業不能を新規加入推奨</td></tr>
-      <tr><td>マシンピラティス</td><td>16,000円</td><td>週1回（スタジオ月額）</td></tr>
+      <tr><td>被服・美容</td><td>15,000円</td><td>衣類・美容院等</td></tr>
+      <tr><td>マシンピラティス</td><td>25,000円</td><td>週1回（2ヶ月5万円）</td></tr>
       <tr><td>娯楽・交際費</td><td>20,000円</td><td>外食・レジャー等</td></tr>
       <tr><td>その他</td><td>15,000円</td><td>日用品・雑費</td></tr>
-      <tr class="highlight-row"><td><strong>生活費 小計</strong></td><td><strong>148,000円</strong></td><td></td></tr>
+      <tr class="highlight-row"><td><strong>生活費 小計</strong></td><td><strong>137,000円</strong></td><td></td></tr>
     </tbody>
   </table>
 
-  <div class="section-title">資産形成</div>
+  <div class="section-title">資産形成（NISA）</div>
   <table>
     <thead>
       <tr><th>項目</th><th>月額</th><th>備考</th></tr>
     </thead>
     <tbody>
-      <tr><td>NISA積立投資</td><td>30,000円</td><td>インデックスファンド</td></tr>
-      <tr class="highlight-row"><td><strong>合計支出</strong></td><td><strong>306,824円</strong></td><td></td></tr>
+      <tr><td>NISA積立投資</td><td>50,000円</td><td>2026年4月〜開始・インデックスファンド（Cプラン時）</td></tr>
+      <tr class="highlight-row"><td><strong>合計支出</strong></td><td><strong>302,500円</strong></td><td></td></tr>
     </tbody>
   </table>
 
   <div class="surplus-box">
-    <div class="surplus-label">月間余剰</div>
-    <div class="surplus-value">21,176円</div>
-    <div class="surplus-note">&#8594; 緊急資金積立へ（購入後の保険加入時は月12,000円程度を保険料へ充当）</div>
+    <div class="surplus-label">月間余剰（45年プラン・NISA5万）</div>
+    <div class="surplus-value">27,500円</div>
+    <div class="surplus-note">&#8594; 年収500万円の最低ラインでも安全圏内。余剰は繰上返済や追加積立への充当が可能</div>
   </div>
 
   <div class="section-title">支出内訳</div>
   <div class="donut-container">
-    <div class="donut" style="position:relative;">
+    <div class="donut" style="position:relative; background: conic-gradient(var(--primary) 0deg 126deg, #2e7d32 126deg 275deg, var(--accent) 275deg 329deg, #78909c 329deg 360deg);">
       <div class="donut-center">
-        <div class="dc-value">328,000</div>
+        <div class="dc-value">330,000</div>
         <div class="dc-label">円/月</div>
       </div>
     </div>
     <div class="donut-legend">
       <div class="legend-item">
         <div class="legend-color" style="background:var(--primary)"></div>
-        <span class="legend-pct">39%</span>
-        <span>住居費（128,824円）</span>
+        <span class="legend-pct">35%</span>
+        <span>住居費（115,500円）</span>
       </div>
       <div class="legend-item">
         <div class="legend-color" style="background:#2e7d32"></div>
-        <span class="legend-pct">45%</span>
-        <span>生活費（148,000円）</span>
+        <span class="legend-pct">42%</span>
+        <span>生活費（137,000円）</span>
       </div>
       <div class="legend-item">
         <div class="legend-color" style="background:var(--accent)"></div>
-        <span class="legend-pct">9%</span>
-        <span>資産形成（30,000円）</span>
+        <span class="legend-pct">15%</span>
+        <span>NISA（50,000円）</span>
       </div>
       <div class="legend-item">
         <div class="legend-color" style="background:#78909c"></div>
-        <span class="legend-pct">6%</span>
-        <span>余剰（21,176円）</span>
+        <span class="legend-pct">8%</span>
+        <span>余剰（27,500円）</span>
       </div>
     </div>
   </div>
@@ -1262,18 +1358,18 @@
   <div class="annual-summary">
     <div class="annual-card">
       <div class="ac-label">月間余剰</div>
-      <div class="ac-value">21,176円</div>
-      <div class="ac-note">購入後・保険加入前の試算</div>
+      <div class="ac-value">27,500円</div>
+      <div class="ac-note">45年ローン・NISA5万円時</div>
     </div>
     <div class="annual-card">
       <div class="ac-label">年間余剰</div>
-      <div class="ac-value">254,112円</div>
-      <div class="ac-note">21,176円 &times; 12ヶ月</div>
+      <div class="ac-value">330,000円</div>
+      <div class="ac-note">27,500円 &times; 12ヶ月</div>
     </div>
     <div class="annual-card">
-      <div class="ac-label">緊急資金回復目標</div>
-      <div class="ac-value">約15年で500万円</div>
-      <div class="ac-note">現150万 + 年25万積立（保険加入後）</div>
+      <div class="ac-label">手元400万円は全額温存</div>
+      <div class="ac-value">緊急予備資金</div>
+      <div class="ac-note">諸費用フルローンにより400万は手付かず</div>
     </div>
   </div>
 
@@ -1288,12 +1384,12 @@
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">06 / 08</span>
+    <span class="page-num">06 / 11</span>
     <h2>同世代比較レポート</h2>
   </div>
 
   <p style="text-align:center; font-size:15px; color:var(--primary); font-weight:700; margin-bottom:6px;">
-    単身女性・34歳・会社員・年収500万 同属性比較
+    単身女性・34歳・会社員・年収500万（最低ライン）同属性比較
   </p>
   <p style="text-align:center; font-size:11px; color:#999; margin-bottom:24px;">
     出典: 総務省家計調査 / 生命保険文化センター / 金融広報中央委員会 2022-2023年データ
@@ -1305,16 +1401,16 @@
       <tr><th>費目</th><th>油布様</th><th>同属性平均</th><th>評価</th></tr>
     </thead>
     <tbody>
-      <tr><td>住居費</td><td>95,000円</td><td>90,000〜110,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
-      <tr><td>食費</td><td>55,000円</td><td>45,000〜60,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>住居費</td><td>80,500円（推奨C・45年ローン）</td><td>90,000〜110,000円</td><td><span class="badge badge-safe">&#128142; 絶対安全</span></td></tr>
+      <tr><td>食費</td><td style="color:var(--success); font-weight:600">25,000円</td><td>45,000〜60,000円</td><td><span class="badge badge-safe">&#128142; 同世代最高水準の倹約</span></td></tr>
       <tr><td>光熱費</td><td>15,000円</td><td>10,000〜15,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
-      <tr><td>通信費</td><td>12,000円</td><td>8,000〜12,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>通信費</td><td style="color:var(--success); font-weight:600">7,000円</td><td>8,000〜12,000円</td><td><span class="badge badge-safe">&#128142; 格安SIM優秀</span></td></tr>
       <tr><td>交通費</td><td>15,000円</td><td>10,000〜20,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
-      <tr><td>被服・美容</td><td>未設定</td><td>15,000〜25,000円</td><td><span class="badge badge-warn">&#9888; 要確認</span></td></tr>
+      <tr><td>被服・美容</td><td>15,000円</td><td>15,000〜25,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
       <tr><td>娯楽費</td><td>20,000円</td><td>20,000〜30,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
-      <tr><td>マシンピラティス</td><td>16,000円</td><td>スポーツジム: 5,000〜15,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
-      <tr><td>保険料</td><td style="color:var(--danger); font-weight:700">0円（未加入）</td><td>13,000〜18,000円</td><td><span class="badge badge-danger">&#9888; 要加入</span></td></tr>
-      <tr><td>積立投資</td><td>30,000円</td><td>20,000〜40,000円</td><td><span class="badge badge-safe">&#9989;</span></td></tr>
+      <tr><td>マシンピラティス</td><td>25,000円</td><td>スポーツジム: 5,000〜15,000円</td><td><span class="badge badge-ok">&#9989; 趣味・健康投資</span></td></tr>
+      <tr><td>保険料</td><td style="color:var(--success); font-weight:700">0円（団信のみ）</td><td>13,000〜18,000円</td><td><span class="badge badge-ok">&#9989; 本人方針</span></td></tr>
+      <tr><td>NISA積立</td><td style="color:var(--success); font-weight:600">50,000円</td><td>20,000〜40,000円</td><td><span class="badge badge-safe">&#128142; 同世代上位</span></td></tr>
     </tbody>
   </table>
 
@@ -1322,11 +1418,12 @@
   <div class="two-col" style="gap:16px;">
     <div class="col-card" style="text-align:center;">
       <div style="font-size:12px; color:#888;">油布様 現在の貯蓄</div>
-      <div style="font-size:28px; font-weight:700; color:var(--primary); margin:8px 0;">150万円</div>
+      <div style="font-size:28px; font-weight:700; color:var(--primary); margin:8px 0;">400万円</div>
+      <div style="font-size:11px; color:var(--success);">諸費用フルローンで全額温存</div>
     </div>
     <div class="col-card" style="text-align:center;">
       <div style="font-size:12px; color:#888;">同属性 平均 / 中央値</div>
-      <div style="font-size:28px; font-weight:700; color:var(--accent); margin:8px 0;">450〜600万 / 100〜200万</div>
+      <div style="font-size:28px; font-weight:700; color:var(--accent); margin:8px 0;">450〜600万 / 110〜200万</div>
     </div>
   </div>
   <div class="highlight-box" style="text-align:center;">
@@ -1335,61 +1432,56 @@
 
   <div class="section-title">生命保険 現状と住宅購入後の保障設計</div>
 
-  <div class="highlight-box" style="border-left-color:var(--accent); background:var(--accent-pale); margin-bottom:16px;">
-    <strong>&#127968; 住宅購入で団信が自動付帯 &#8594; 死亡保障の主軸に</strong><br>
-    油布様は現在生命保険に未加入です。住宅ローン加入時に<strong>団体信用生命保険（団信）</strong>が付帯し、
-    万一の死亡・高度障害時はローン残債が全額免除されます。<br>
-    これが実質的な<strong>最初の生命保険</strong>となります。
+  <div class="highlight-box" style="border-left-color:var(--success); background:#e8f5e9; margin-bottom:16px;">
+    <strong>&#127968; 住宅購入で団信が自動付帯 &#8594; 死亡保障の主軸として活用</strong><br>
+    住宅ローン加入時に<strong>団体信用生命保険（団信）</strong>が付帯します。
+    万一の死亡・高度障害時はローン残債が全額免除。<br>
+    油布様の意向を踏まえ、<strong>追加保険は加入せず団信のみで対応する方針</strong>で設計します。
+    その分の保険料（月13,000〜18,000円）をNISAに回すことで、より効果的な資産形成が可能です。
   </div>
 
   <table>
     <thead>
-      <tr><th>保障種類</th><th>油布様（現在）</th><th>住宅購入後</th><th>同属性平均月額</th><th>FP推奨</th></tr>
+      <tr><th>保障種類</th><th>油布様（現在）</th><th>住宅購入後</th><th>同属性平均月額</th><th>油布様方針</th></tr>
     </thead>
     <tbody>
       <tr>
         <td><strong>死亡・高度障害保障</strong></td>
-        <td style="color:var(--danger)">未加入</td>
-        <td style="color:var(--success); font-weight:700">&#9989; 団信で補完（ローン免除）</td>
+        <td style="color:var(--warning)">未加入</td>
+        <td style="color:var(--success); font-weight:700">&#9989; 団信で完全対応</td>
         <td>2,000〜5,000円</td>
-        <td>団信のみで十分。別途加入不要</td>
+        <td style="color:var(--success)"><strong>団信で基本対応。追加保険は不要な場合が多い</strong></td>
       </tr>
       <tr>
         <td><strong>医療保険</strong><br><small>入院・手術保障</small></td>
-        <td style="color:var(--danger)">未加入</td>
-        <td style="color:var(--warning)">&#9888; 新規加入が必要</td>
+        <td style="color:var(--warning)">未加入</td>
+        <td style="color:var(--warning)">未加入のまま</td>
         <td>7,000〜10,000円</td>
-        <td><span class="badge badge-danger">&#11088; 優先①</span> 日額5,000〜10,000円</td>
+        <td><strong>加入を検討余地あり</strong><br><small style="color:var(--success);">月数千円で入院・手術・女性疾病などをカバー</small></td>
       </tr>
       <tr>
         <td><strong>就業不能保険</strong><br><small>長期病欠・障害備え</small></td>
-        <td style="color:var(--danger)">未加入</td>
-        <td style="color:var(--warning)">&#9888; 新規加入が必要</td>
+        <td style="color:var(--warning)">未加入</td>
+        <td style="color:var(--warning)">未加入のまま</td>
         <td>加入率15〜20%</td>
-        <td><span class="badge badge-danger">&#11088; 優先②</span> 月収の60〜70%補償</td>
-      </tr>
-      <tr>
-        <td><strong>がん保険</strong></td>
-        <td style="color:var(--danger)">未加入</td>
-        <td style="color:var(--warning)">&#9888; 推奨加入</td>
-        <td>3,000〜5,000円</td>
-        <td>診断一時金100万円以上</td>
+        <td><strong>団信でカバー可能</strong><br><small style="color:#888;">団信の就業不能特約で長期病欠・障害をカバー</small></td>
       </tr>
       <tr class="highlight-row">
-        <td><strong>合計保険料（目安）</strong></td>
-        <td><strong style="color:var(--danger)">0円</strong></td>
-        <td colspan="2"><strong>月12,000〜18,000円（新規加入後）</strong></td>
-        <td><strong>13,000〜18,000円</strong></td>
+        <td><strong>保険料合計</strong></td>
+        <td><strong>0円</strong></td>
+        <td><strong style="color:var(--success)">0円（変わらず）</strong></td>
+        <td>13,000〜18,000円</td>
+        <td><strong style="color:var(--success);">浮いた分をNISAへ &#128200;</strong></td>
       </tr>
     </tbody>
   </table>
 
-  <div class="highlight-box" style="border-left-color:var(--danger); background:#fff5f5; border-color:#ef9a9a;">
-    <strong>&#128680; 単身者の保険戦略：優先順位</strong><br><br>
-    <strong>① 就業不能保険（最優先）</strong> &#8212; 単身者が長期間働けなくなると収入ゼロ＋住居費が直撃します。ローンは団信で守られますが、生活費は自分で確保する必要があります。<br><br>
-    <strong>② 医療保険</strong> &#8212; 入院・手術費用をカバー。公的医療保険の自己負担3割＋差額ベッド代を補完します。<br><br>
-    <strong>③ がん保険</strong> &#8212; 女性は30代からの乳がん・子宮頸がんリスクが上昇。診断一時金型が実用的です。<br><br>
-    <span style="color:var(--success)"><strong>&#10003; 死亡保険は団信が代替するため、別途加入不要です。</strong></span>
+  <div class="highlight-box" style="border-left-color:var(--success); background:#e8f5e9;">
+    <strong>&#10003; FP所見：油布様の保険設計について</strong><br><br>
+    <strong>死亡・高度障害保障</strong> &#8212; 住宅ローン付帯の団信が自動適用されるため、追加の死亡保険は不要な場合がほとんどです。万一の際はローン残債が免除され、不動産資産として残ります。<br><br>
+    <strong>医療保険・女性疾病特約</strong> &#8212; 月数千円で入院・手術・女性特有の疾病（子宮・乳がん等）をカバーできる商品があります。健康に不安がある場合や、将来の保障を手厚くしたい場合は加入を検討する価値があります。高額療養費制度（公的保険）との組み合わせも効果的です。<br><br>
+    <strong>就業不能保険</strong> &#8212; 団信の就業不能特約が適用されます。万一の長期病欠・障害時は保険がローン返済をカバーするため、別途就業不能保険への加入は必須ではありません。<br><br>
+    <span style="color:var(--primary)"><strong>&#9670; ライフイベント（結婚・出産等）や健康状態の変化に応じて、定期的に保険設計を見直すことを推奨します。</strong></span>
   </div>
 
   <div class="page-footer">
@@ -1399,11 +1491,148 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 7: ACTION PLAN                                           -->
+<!-- PAGE 7: NISA SCENARIO COMPARISON                              -->
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">07 / 08</span>
+    <span class="page-num">07 / 11</span>
+    <h2>NISA積立シミュレーション ― 月額別・将来資産比較</h2>
+  </div>
+
+  <p style="font-size:12px; color:#888; margin-bottom:12px; line-height:1.7;">
+    現在月5万円でスタートしたNISA積立を、金額を変えた場合の将来資産を年齢ごとに比較します。<br>
+    <strong>45年ローンで月々のキャッシュフローを確保し、NISAを継続・増額することが最も効果的な資産形成戦略です。</strong>
+  </p>
+
+  <!-- NISA新旧法比較 -->
+  <div class="section-title">新NISA制度の主なポイント（2024年〜）</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; font-size:12px;">
+    <div style="background:#f5f5f5; border:1px solid #ddd; border-radius:8px; padding:12px 14px;">
+      <div style="font-weight:700; color:#999; margin-bottom:8px; font-size:11px; letter-spacing:1px;">旧NISA（〜2023年）</div>
+      <div style="color:#666; line-height:1.8;">
+        ・つみたてNISA: 年40万円上限（月3.3万円）<br>
+        ・非課税期間: <strong>20年間</strong>（期間終了で終了）<br>
+        ・生涯投資枠: <strong>800万円</strong><br>
+        ・売却後の枠: <strong>復活しない</strong>
+      </div>
+    </div>
+    <div style="background:#e8f5e9; border:1px solid #a5d6a7; border-left:4px solid var(--success); border-radius:8px; padding:12px 14px;">
+      <div style="font-weight:700; color:var(--success); margin-bottom:8px; font-size:11px; letter-spacing:1px;">新NISA（2024年〜）★大幅改善</div>
+      <div style="color:#333; line-height:1.8;">
+        ・つみたて枠: 年120万円（月10万円）<br>
+        ・成長投資枠: 年240万円（月20万円）<br>
+        ・非課税期間: <strong style="color:var(--success);">無期限（恒久化）</strong><br>
+        ・生涯投資枠: <strong style="color:var(--success);">1,800万円</strong><br>
+        ・売却後の枠: <strong style="color:var(--success);">翌年に復活</strong>
+      </div>
+    </div>
+  </div>
+  <div style="font-size:11px; color:#888; background:#fff8e1; border:1px solid #ffe082; border-radius:4px; padding:8px 12px; margin-bottom:16px;">
+    &#9888; 油布様は2026年4月より<strong>新NISAのつみたて投資枠（月5万円）</strong>でスタート済み。旧NISA口座の資産は別管理で引き続き非課税運用されます。
+  </div>
+
+  <!-- 将来資産シミュレーション表 -->
+  <div class="section-title">月額別 NISA将来資産シミュレーション（年利3% 複利運用）</div>
+  <p style="font-size:11px; color:#999; margin-bottom:8px;">
+    ※ 現在34歳・インデックスファンド積立想定（年利3%）。実際の運用成績は変動します。括弧内は積立元本。
+  </p>
+
+  <table style="margin-bottom:16px; font-size:12px;">
+    <thead>
+      <tr>
+        <th style="width:18%">NISA月額</th>
+        <th><strong>40歳</strong><br><small style="font-weight:400; color:#ccc;">（6年後）</small></th>
+        <th><strong>50歳</strong><br><small style="font-weight:400; color:#ccc;">（16年後）</small></th>
+        <th><strong>60歳</strong><br><small style="font-weight:400; color:#ccc;">（26年後）</small></th>
+        <th><strong>70歳</strong><br><small style="font-weight:400; color:#ccc;">（36年後）</small></th>
+        <th><strong>79歳</strong><br><small style="font-weight:400; color:#ccc;">（完済時）</small></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="color:#aaa;"><strong>1万円</strong><br><small style="color:#ccc;">（最小限）</small></td>
+        <td style="color:#999;">79万円<br><small style="color:#ccc;">(元本72万)</small></td>
+        <td style="color:#999;">246万円<br><small style="color:#ccc;">(元本192万)</small></td>
+        <td style="color:#999;">473万円<br><small style="color:#ccc;">(元本312万)</small></td>
+        <td style="color:#999;">778万円<br><small style="color:#ccc;">(元本432万)</small></td>
+        <td style="color:#999;">1,143万円<br><small style="color:#ccc;">(元本540万)</small></td>
+      </tr>
+      <tr>
+        <td><strong>3万円</strong><br><small style="color:#888;">（減額検討）</small></td>
+        <td>237万円<br><small style="color:#aaa;">(元本216万)</small></td>
+        <td>739万円<br><small style="color:#aaa;">(元本576万)</small></td>
+        <td>1,418万円<br><small style="color:#aaa;">(元本936万)</small></td>
+        <td>2,334万円<br><small style="color:#aaa;">(元本1,296万)</small></td>
+        <td>3,429万円<br><small style="color:#aaa;">(元本1,620万)</small></td>
+      </tr>
+      <tr class="highlight-row">
+        <td><strong style="color:var(--accent);">5万円 ★</strong><br><small style="color:var(--success);">（現状維持・推奨）</small></td>
+        <td><strong>394万円</strong><br><small style="color:#aaa;">(元本360万)</small></td>
+        <td><strong>1,232万円</strong><br><small style="color:#aaa;">(元本960万)</small></td>
+        <td><strong>2,363万円</strong><br><small style="color:#aaa;">(元本1,560万)</small></td>
+        <td><strong>3,889万円</strong><br><small style="color:#aaa;">(元本2,160万)</small></td>
+        <td><strong>5,715万円</strong><br><small style="color:#aaa;">(元本2,700万)</small></td>
+      </tr>
+      <tr>
+        <td><strong>7万円</strong><br><small style="color:var(--success);">（余裕時に増額）</small></td>
+        <td style="color:var(--success);">552万円<br><small style="color:#aaa;">(元本504万)</small></td>
+        <td style="color:var(--success);">1,725万円<br><small style="color:#aaa;">(元本1,344万)</small></td>
+        <td style="color:var(--success);">3,308万円<br><small style="color:#aaa;">(元本2,184万)</small></td>
+        <td style="color:var(--success);">5,445万円<br><small style="color:#aaa;">(元本3,024万)</small></td>
+        <td style="color:var(--success);">8,001万円<br><small style="color:#aaa;">(元本3,780万)</small></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 完済時総資産カード -->
+  <div class="section-title">79歳（ローン完済時）の総資産イメージ ＋ 住宅資産（推定4,273万円）</div>
+  <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:14px;">
+    <div style="text-align:center; background:#f5f5f5; border:1px solid #ddd; border-radius:8px; padding:12px 8px;">
+      <div style="font-size:11px; color:#aaa; margin-bottom:4px;">月1万円</div>
+      <div style="font-size:18px; font-weight:700; color:#999;">1,143万</div>
+      <div style="font-size:10px; color:#aaa; margin-top:3px;">NISA＋4,273万（住宅）</div>
+    </div>
+    <div style="text-align:center; background:#fff8f0; border:1px solid #f0d080; border-radius:8px; padding:12px 8px;">
+      <div style="font-size:11px; color:#888; margin-bottom:4px;">月3万円</div>
+      <div style="font-size:18px; font-weight:700; color:var(--accent);">3,429万</div>
+      <div style="font-size:10px; color:#aaa; margin-top:3px;">NISA＋4,273万（住宅）</div>
+    </div>
+    <div style="text-align:center; background:var(--accent-pale); border:2px solid var(--accent); border-radius:8px; padding:12px 8px;">
+      <div style="font-size:11px; color:var(--accent); font-weight:700; margin-bottom:4px;">月5万円 ★</div>
+      <div style="font-size:18px; font-weight:700; color:var(--primary);">5,715万</div>
+      <div style="font-size:10px; color:var(--success); margin-top:3px;">合計<strong>約9,988万円</strong></div>
+    </div>
+    <div style="text-align:center; background:#e8f5e9; border:1px solid #a5d6a7; border-radius:8px; padding:12px 8px;">
+      <div style="font-size:11px; color:#2e7d32; font-weight:700; margin-bottom:4px;">月7万円</div>
+      <div style="font-size:18px; font-weight:700; color:var(--success);">8,001万</div>
+      <div style="font-size:10px; color:var(--success); margin-top:3px;">合計<strong>約1.2億円</strong></div>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="border-left-color:var(--primary); background:#f0f4ff;">
+    <strong>&#9670; FP推奨戦略：45年ローン × NISA月5万円の継続・段階的増額</strong><br><br>
+    <strong>&#9312; 生活の安全圏を第一に</strong> &#8212; 45年ローン（月80,500円）で返済比率19.3%を維持。生活費・NISA後も月27,500円の余剰を確保します。<br><br>
+    <strong>&#9313; NISAは継続が最重要</strong> &#8212; 月5万円を維持するだけで79歳時に5,715万円（＋住宅資産）。停止よりも少額でも継続が圧倒的に有利です。<br><br>
+    <strong>&#9314; 効率的な資産運用で金利上昇リスクをヘッジ</strong> &#8212; NISAの運用益（期待リターン3〜5%）が積み上がれば、金利が大幅に上昇した際に<strong>一部を繰上返済の原資として活用</strong>することも可能です。NISA資産が「保険的機能」を果たします。
+  </div>
+
+  <div style="margin-top:12px; padding:12px 16px; background:#fff8e1; border:1px solid #ffe082; border-radius:6px; font-size:12px; color:#666;">
+    <strong>&#9888; NISA減額・停止を検討している場合</strong><br>
+    月5万円が家計に負担であれば3万円への減額も選択肢ですが、<strong>停止は避けることを強く推奨</strong>します。複利の力は時間が長いほど大きく、早期に停止すると将来の差は大きくなります（5万継続 vs 停止で79歳時に約5,715万円の差）。
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 8: ACTION PLAN                                           -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">08 / 11</span>
     <h2>FP推奨アクションプラン</h2>
   </div>
 
@@ -1411,10 +1640,11 @@
     <div class="timeline-phase">
       <div class="phase-title">Phase 1: 購入前<span>&#8212; 2026年中</span></div>
       <ol class="phase-list">
-        <li><strong>医療保険・就業不能保険への新規加入</strong>（合計月12,000〜18,000円）&#8212; 現在未加入のため最優先。就業不能保険は単身者の生活防衛の要</li>
+        <li><strong>ローン年数シナリオの最終決定</strong>&#8212; A（35年）/ B（40年）/ C（45年）の中から希望するライフプランに合わせて選択。<strong>C（45年）推奨</strong></li>
         <li><strong>物件選定:</strong> 3,500万円以内・東京都内・管理費1.5万以内の条件で絞り込み</li>
-        <li><strong>住宅ローン事前審査</strong>&#8212; SBI / 楽天 / PayPay等3行比較で最有利条件を確保。団信の保障内容も必ず確認</li>
-        <li><strong>諸費用（約105万円）の資金計画確認</strong>&#8212; 貯蓄150万円からの支出範囲を精査</li>
+        <li><strong>住宅ローン事前審査（諸費用込みフルローン対応行を選定）</strong>&#8212; 住信SBIネット銀行・SBI・楽天等で比較。40〜45年対応・諸費用込みローンを確認</li>
+        <li><strong>NISA月5万円は継続</strong>&#8212; 2026年4月開始済み。購入後にシナリオに応じて増額を検討</li>
+        <li><strong>手元400万円は手付かずで維持</strong>&#8212; 諸費用はローンに組み込み、緊急予備資金として温存</li>
       </ol>
     </div>
 
@@ -1422,47 +1652,46 @@
       <div class="phase-title">Phase 2: 購入直後<span>&#8212; 1年以内</span></div>
       <ol class="phase-list">
         <li><strong>初年度確定申告で住宅ローン控除申請</strong>&#8212; 初年度は確定申告が必須（2年目以降は年末調整）。273万円の控除を確実に取得</li>
-        <li><strong>団信の保障内容を確認・記録</strong>&#8212; 死亡・高度障害時のローン免除条件を把握。就業不能特約付き団信も検討</li>
-        <li><strong>NISA継続</strong>&#8212; 月3万円を維持し、住宅取得と資産形成を両立</li>
-        <li><strong>緊急予備資金150万円は保全</strong>&#8212; 諸費用支出後の残額を絶対に手付かずで維持</li>
+        <li><strong>団信の保障内容を確認・記録</strong>&#8212; 死亡・高度障害時のローン免除条件・特約内容を把握。就業不能特約付き団信があれば更に安心</li>
+        <li><strong>NISA継続・増額の検討</strong>&#8212; 生活が安定したら現在の月5万円を維持しつつ、余剰に応じて7万円への段階的増額を検討</li>
+        <li><strong>支出ログの把握</strong>&#8212; 現在「計算したことない」とのことだが、月1回収支確認をするだけで安心感が大きく上がります</li>
       </ol>
     </div>
 
     <div class="timeline-phase">
-      <div class="phase-title">Phase 3: 中長期<span>&#8212; 10年</span></div>
+      <div class="phase-title">Phase 3: 中長期<span>&#8212; 5〜10年</span></div>
       <ol class="phase-list">
-        <li><strong>年収800万円期間中は繰上返済検討</strong>&#8212; ただしNISA投資を優先（期待リターン &gt; ローン金利）</li>
-        <li><strong>残債3,000万以下になったら固定金利への借換検討</strong>&#8212; 金利上昇リスクの軽減</li>
-        <li><strong>5年ごとに収支見直し</strong>&#8212; ライフステージの変化に合わせた計画修正</li>
-        <li><strong>65歳完済後の生活費計画策定</strong>&#8212; 老後資金2,000万円問題への対応</li>
+        <li><strong>年収800万円期間中はNISA増額を最優先</strong>&#8212; 繰上返済より投資リターン（3〜5%）の方がローン金利（0.69%）を大きく上回るため有利</li>
+        <li><strong>金利上昇時は固定金利への借換検討</strong>&#8212; 変動金利が1.5%超えたら固定への切り替えシミュレーションを実施</li>
+        <li><strong>5年ごとに収支見直し</strong>&#8212; ライフステージ（転職・結婚・出産等）に合わせて計画を柔軟に修正</li>
+        <li><strong>ライフイベント時に保険を再検討</strong>&#8212; 家族構成・健康状態の変化に応じて、医療保険・女性疾病特約等の加入を見直すことを推奨</li>
       </ol>
     </div>
   </div>
 
-  <div class="section-title">NISA資産形成予測</div>
-  <p style="font-size:12px; color:#888; margin-bottom:12px;">月3万円 &times; 年利3% 複利運用</p>
-  <div class="nisa-grid">
-    <div class="nisa-card">
-      <div class="nc-period">5年後</div>
-      <div class="nc-value">200万円</div>
+  <div class="section-title">推奨Cプラン 資産形成サマリー</div>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:14px;">
+    <div style="text-align:center; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:14px;">
+      <div style="font-size:11px; color:#888;">月返済額（45年）</div>
+      <div style="font-size:22px; font-weight:700; color:var(--primary); margin:4px 0;">80,500円</div>
+      <div style="font-size:11px; color:var(--success);">返済比率 19.3%（年収500万基準・安全圏）</div>
     </div>
-    <div class="nisa-card">
-      <div class="nc-period">10年後</div>
-      <div class="nc-value">417万円</div>
+    <div style="text-align:center; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:14px;">
+      <div style="font-size:11px; color:#888;">NISA（現状維持・月5万）</div>
+      <div style="font-size:22px; font-weight:700; color:var(--accent); margin:4px 0;">5,715万円</div>
+      <div style="font-size:11px; color:#888;">79歳・完済時（年利3%）</div>
     </div>
-    <div class="nisa-card">
-      <div class="nc-period">20年後</div>
-      <div class="nc-value">986万円</div>
-    </div>
-    <div class="nisa-card">
-      <div class="nc-period">30年後</div>
-      <div class="nc-value">1,749万円</div>
+    <div style="text-align:center; background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:14px;">
+      <div style="font-size:11px; color:#888;">住宅資産（推定）</div>
+      <div style="font-size:22px; font-weight:700; color:var(--primary); margin:4px 0;">4,273万円</div>
+      <div style="font-size:11px; color:#888;">79歳時点 物件推定価値</div>
     </div>
   </div>
 
   <div class="highlight-box" style="text-align:center;">
-    <strong>住宅ローン完済（35年後・69歳）時点で:</strong><br>
-    &#127968; 物件資産（推定2,100万円）+ &#128200; NISA資産（推定1,749万円以上）= <strong style="font-size:18px; color:var(--primary);">約3,849万円</strong>の資産形成
+    <strong>推奨Cプラン（45年ローン・NISA月5万継続）でのローン完済（45年後・79歳）時点:</strong><br>
+    &#127968; 物件資産（推定4,273万円）+ &#128200; NISA資産（推定5,715万円）= <strong style="font-size:18px; color:var(--primary);">約9,988万円</strong>の資産形成<br>
+    <span style="font-size:12px; color:var(--success);">完済後は月5.5万円の住居費のみ。NISA資産の活用で安心した老後を実現。金利上昇時は繰上返済の原資にも活用可能</span>
   </div>
 
   <div class="page-footer">
@@ -1472,11 +1701,388 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- PAGE 8: DISCLAIMER                                            -->
+<!-- PAGE 8: PSYCHOLOGY / COUNSELING SHEET                         -->
 <!-- ============================================================ -->
 <div class="page">
   <div class="page-header">
-    <span class="page-num">08 / 08</span>
+    <span class="page-num">09 / 11</span>
+    <h2>カウンセリングシート ― お客様理解と設計方針</h2>
+  </div>
+
+  <p style="font-size:12px; color:#888; margin-bottom:20px; line-height:1.7;">
+    ヒアリング（2026年4月16日 オンライン打合せ）から読み取った油布様の行動特性・意思決定パターンを整理し、
+    本提案書の設計方針にどう活かしたかを記録しています。
+  </p>
+
+  <!-- ===== PROFILE GRID ===== -->
+  <div class="section-title">ヒアリングで見えた "本当の" 油布様</div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px;">
+
+    <div style="background:#f0f4ff; border:1px solid #c5d0f0; border-left:4px solid #4a6cf7; border-radius:8px; padding:14px 16px;">
+      <div style="font-size:11px; color:#4a6cf7; font-weight:700; letter-spacing:1px; margin-bottom:6px;">&#128100; 自己評価 vs 実態</div>
+      <div style="font-size:13px; font-weight:700; color:#1a1a2e; margin-bottom:4px;">「管理できてない」が実は超優秀</div>
+      <div style="font-size:12px; color:#555; line-height:1.7;">
+        「全然お金の管理できてないんです」と言いながら、食費2.5万・格安SIM7,000円・家賃98,000円・貯蓄400万円を自然に実現。
+        仲介手数料も事前に調べて200万円のバッファを計算済み。
+        <span style="color:#4a6cf7; font-weight:600;">自己評価を大幅に下げる謙遜型。</span>
+      </div>
+    </div>
+
+    <div style="background:#f0fff4; border:1px solid #a5d6a7; border-left:4px solid #2e7d32; border-radius:8px; padding:14px 16px;">
+      <div style="font-size:11px; color:#2e7d32; font-weight:700; letter-spacing:1px; margin-bottom:6px;">&#9881; 意思決定スタイル</div>
+      <div style="font-size:13px; font-weight:700; color:#1a1a2e; margin-bottom:4px;">ロジック × 具体的デメリット</div>
+      <div style="font-size:12px; color:#555; line-height:1.7;">
+        海辺エリアを除外した理由：津波リスク・潮風で洗濯物が干せない。感情ではなく
+        <span style="color:#2e7d32; font-weight:600;">具体的な不便を論拠に判断する合理型。</span>
+        「なぜか」が分かると即座に受け入れる。
+      </div>
+    </div>
+
+    <div style="background:#fff8e1; border:1px solid #ffe082; border-left:4px solid #f57f17; border-radius:8px; padding:14px 16px;">
+      <div style="font-size:11px; color:#f57f17; font-weight:700; letter-spacing:1px; margin-bottom:6px;">&#128184; 損失回避パターン</div>
+      <div style="font-size:13px; font-weight:700; color:#1a1a2e; margin-bottom:4px;">現金が一気に消えることへの恐怖</div>
+      <div style="font-size:12px; color:#555; line-height:1.7;">
+        「200万円が通帳からなくなるんだ」という具体的な不安を明確に言語化。
+        フルローンで諸費用も組めると分かった瞬間
+        <span style="color:#f57f17; font-weight:600;">「安心しました」と即座に解消。不安の正体を特定すれば動ける型。</span>
+      </div>
+    </div>
+
+    <div style="background:#fce4ec; border:1px solid #f48fb1; border-left:4px solid #c62828; border-radius:8px; padding:14px 16px;">
+      <div style="font-size:11px; color:#c62828; font-weight:700; letter-spacing:1px; margin-bottom:6px;">&#127774; 同調圧力への感度</div>
+      <div style="font-size:13px; font-weight:700; color:#1a1a2e; margin-bottom:4px;">周囲と違うことへの不安も持つ</div>
+      <div style="font-size:12px; color:#555; line-height:1.7;">
+        「周りで保険入ってないの私ぐらいな気がする」と不安を打ち明けるが、
+        「世界基準で見ると日本だけ異常」という論理で背中を押すと
+        <span style="color:#c62828; font-weight:600;">確信に変わる。数字と世界事実が刺さる。</span>
+      </div>
+    </div>
+
+    <div style="background:#f3e5f5; border:1px solid #ce93d8; border-left:4px solid #7b1fa2; border-radius:8px; padding:14px 16px;">
+      <div style="font-size:11px; color:#7b1fa2; font-weight:700; letter-spacing:1px; margin-bottom:6px;">&#128218; 学習・吸収スタイル</div>
+      <div style="font-size:13px; font-weight:700; color:#1a1a2e; margin-bottom:4px;">素直な驚きと高い吸収力</div>
+      <div style="font-size:12px; color:#555; line-height:1.7;">
+        「えー、そうなんですね！」「へー、そうなんですね」が頻出。
+        NISA複利の概念を自主的に理解し早期スタート済み。
+        <span style="color:#7b1fa2; font-weight:600;">正しい情報を信頼できる人から得ると、自分で考えて行動する自律型。</span>
+      </div>
+    </div>
+
+    <div style="background:#e8f5e9; border:1px solid #a5d6a7; border-left:4px solid var(--accent); border-radius:8px; padding:14px 16px;">
+      <div style="font-size:11px; color:var(--accent); font-weight:700; letter-spacing:1px; margin-bottom:6px;">&#127381; 人間関係・コネクション</div>
+      <div style="font-size:13px; font-weight:700; color:#1a1a2e; margin-bottom:4px;">人との縁を大切にする</div>
+      <div style="font-size:12px; color:#555; line-height:1.7;">
+        ピラティス先生とはスタジオオープン前からの付き合い。信頼関係から特別価格を実現。
+        FPに対しても返答が遅くなることを誠実に謝罪するなど、
+        <span style="color:var(--accent); font-weight:600;">関係性を長期で丁寧に育てるタイプ。</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== DESIGN INTENT TABLE ===== -->
+  <div class="section-title">行動特性 → 提案設計への落とし込み</div>
+
+  <table style="margin-bottom:16px;">
+    <thead>
+      <tr><th style="width:28%">行動特性</th><th style="width:40%">設計での対応</th><th style="width:32%">本提案書の該当箇所</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>セルフダウングレード</strong><br><small>「管理できてない」</small></td>
+        <td>同属性比較で客観的に「上位水準」を証明。数字で自信を裏付け</td>
+        <td>P6 同世代比較テーブル<br>「同世代最高水準の倹約」</td>
+      </tr>
+      <tr>
+        <td><strong>ロジック判断型</strong><br><small>具体デメリットで決断</small></td>
+        <td>全シミュレーションに根拠数値・計算式を明示。「なぜ安全か」を数字で示す</td>
+        <td>P3 ローン返済比率<br>P4 50年コスト比較</td>
+      </tr>
+      <tr>
+        <td><strong>損失回避・現金温存</strong><br><small>「200万消えるのが怖い」</small></td>
+        <td>諸費用フルローンで手元400万円を一切触れない設計を最優先に提示</td>
+        <td>P5 月次収支<br>「貯蓄400万円全額温存」</td>
+      </tr>
+      <tr>
+        <td><strong>不安の言語化ができる</strong><br><small>「5万で大丈夫かな」</small></td>
+        <td>A/B/C 3択シナリオで「自分で選べる」構造に。強制せず選択肢を提示</td>
+        <td>P3 シナリオA/B/C<br>P7 アクションプラン</td>
+      </tr>
+      <tr>
+        <td><strong>同調圧力への揺れ</strong><br><small>「周りが保険入ってる…」</small></td>
+        <td>「95%負けるギャンブル」「日本だけ異常」という世界事実で論理補強</td>
+        <td>P6 保険FP所見</td>
+      </tr>
+      <tr class="highlight-row">
+        <td><strong>自律的行動型</strong><br><small>理解すれば自分で動く</small></td>
+        <td>フェーズ別アクションプランで「次にすること」を明確化。背中を押す設計</td>
+        <td>P7 FP推奨アクションプラン<br>Phase 1/2/3</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ===== FP NOTE ===== -->
+  <div class="highlight-box" style="background: linear-gradient(135deg, #0a1628 0%, #1a2d4e 100%); color:#fff; border:none; border-radius:10px; padding:20px 24px;">
+    <div style="font-size:13px; font-weight:700; color:var(--accent); margin-bottom:10px; letter-spacing:1px;">&#9670; FPより ― 油布様へ</div>
+    <div style="font-size:13px; line-height:1.9; color:rgba(255,255,255,0.9);">
+      「お金の管理ができていない」とおっしゃっていましたが、今回のヒアリングを通じて、
+      <strong style="color:#f0d080;">油布様は既に「生涯資産を守る行動」を自然に実践されている方</strong>だとわかりました。<br><br>
+      格安SIM・食費2.5万・健全な貯蓄400万円・NISA即スタート ―― これは知識ではなく、
+      生活感覚として身についている本質的な財務センスです。<br><br>
+      本提案書は、そのセンスを「見える化」し、住宅購入という大きな決断を、
+      できるだけ安心・納得できる形で進んでいただくために作成しました。<br><br>
+      <strong style="color:#f0d080;">焦らず、納得できるまで一緒に考えていきましょう。</strong>
+    </div>
+    <div style="text-align:right; margin-top:14px; font-size:12px; color:rgba(255,255,255,0.6);">
+      AFP 高橋幸輝 / TERASS
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 10: BANK COMPARISON & FP RECOMMENDATION                  -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">10 / 11</span>
+    <h2>金融機関比較 &amp; 最適ローン銀行診断（2026年4月現在）</h2>
+  </div>
+
+  <div class="highlight-box" style="display:flex; align-items:center; gap:16px; padding:10px 16px; margin-bottom:12px;">
+    <div style="flex:1; font-size:12px; line-height:1.6;">
+      <strong>全121件の金融機関データ（2026年4月版）</strong>から、油布様の条件（借入3,735万円・年収500万円・45年・変動金利重視）に最適な銀行を4パターンでご提案します。<br>
+      <span style="color:#888;">※ 返済比率超過フラグのある銀行・借入上限3,735万円未満の銀行は除外しています</span>
+    </div>
+    <div style="text-align:center; background:var(--primary); color:#fff; border-radius:8px; padding:8px 16px; white-space:nowrap;">
+      <div style="font-size:10px; opacity:0.7;">現行市場最低金利</div>
+      <div style="font-size:22px; font-weight:700; color:var(--accent);">0.690%</div>
+      <div style="font-size:10px; opacity:0.7;">SBI新生銀行（変動）</div>
+    </div>
+  </div>
+
+  <!-- 4 Pattern Grid -->
+  <div class="bank-pattern-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+
+    <!-- Pattern 1: 金利重視 -->
+    <div style="border:2px solid var(--accent); border-radius:8px; overflow:hidden;">
+      <div style="background:var(--primary); color:#fff; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">💰</span>
+        <div>
+          <div style="font-weight:700; font-size:13px;">Pattern 1 ｜ 金利最優先</div>
+          <div style="font-size:10px; opacity:0.7;">月返済を最小化・総利息を抑える</div>
+        </div>
+      </div>
+      <table style="font-size:11px; margin:0;">
+        <thead style="background:#f5f3ef;">
+          <tr><th style="padding:4px 6px;">銀行</th><th style="padding:4px 6px;">金利</th><th style="padding:4px 6px;">月返済</th><th style="padding:4px 6px;">がん100</th><th style="padding:4px 6px;">手数料</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background:#fffbf0;">
+            <td style="padding:4px 6px;"><strong style="color:var(--accent);">★SBI新生銀行</strong><br><span style="font-size:9px; color:#888;">変動・現提案採用</span></td>
+            <td style="padding:4px 6px; font-weight:700; color:var(--danger);">0.690%</td>
+            <td style="padding:4px 6px; font-weight:700; color:var(--danger);">80,500円</td>
+            <td style="padding:4px 6px;">+0.10%</td>
+            <td style="padding:4px 6px;">77万</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 6px;"><strong>イオン銀行</strong><br><span style="font-size:9px; color:#888;">変動・全国対応</span></td>
+            <td style="padding:4px 6px; font-weight:700;">0.930%</td>
+            <td style="padding:4px 6px;">84,700円</td>
+            <td style="padding:4px 6px;">+0.10%</td>
+            <td style="padding:4px 6px;">77万</td>
+          </tr>
+          <tr style="background:#f5f3ef;">
+            <td style="padding:4px 6px;"><strong>PayPay銀行</strong><br><span style="font-size:9px; color:#888;">変動・5年/125%なし</span></td>
+            <td style="padding:4px 6px; font-weight:700;">0.999%</td>
+            <td style="padding:4px 6px;">85,900円</td>
+            <td style="padding:4px 6px;">+0.15%</td>
+            <td style="padding:4px 6px;">77万</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:5px 10px; font-size:10px; color:var(--success); background:#e8f5e9;">&#9670; SBI新生銀行が全行中最低金利。月返済差は最安vs3位で約5,400円（年間64,800円・45年で約291万円の差）</div>
+    </div>
+
+    <!-- Pattern 2: 団信重視 -->
+    <div style="border:2px solid var(--success); border-radius:8px; overflow:hidden;">
+      <div style="background:#1b5e20; color:#fff; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">🛡️</span>
+        <div>
+          <div style="font-weight:700; font-size:13px;">Pattern 2 ｜ 団信保障重視</div>
+          <div style="font-size:10px; opacity:0.7;">がん100%を金利上乗せなしで取得</div>
+        </div>
+      </div>
+      <table style="font-size:11px; margin:0;">
+        <thead style="background:#f5f3ef;">
+          <tr><th style="padding:4px 6px;">銀行</th><th style="padding:4px 6px;">金利</th><th style="padding:4px 6px;">月返済</th><th style="padding:4px 6px;">がん100上乗せ</th><th style="padding:4px 6px;">借入上限</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background:#f1f8e9;">
+            <td style="padding:4px 6px;"><strong style="color:var(--success);">★南都銀行</strong><br><span style="font-size:9px; color:#888;">変動・奈良本拠・全国対応</span></td>
+            <td style="padding:4px 6px; font-weight:700;">0.875%</td>
+            <td style="padding:4px 6px;">83,600円</td>
+            <td style="padding:4px 6px; color:var(--success); font-weight:700;">無料</td>
+            <td style="padding:4px 6px;">4,730万</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 6px;"><strong>広島銀行</strong><br><span style="font-size:9px; color:#888;">変動・中国地方最大</span></td>
+            <td style="padding:4px 6px; font-weight:700;">0.950%</td>
+            <td style="padding:4px 6px;">85,000円</td>
+            <td style="padding:4px 6px; color:var(--success); font-weight:700;">無料</td>
+            <td style="padding:4px 6px;">5,030万</td>
+          </tr>
+          <tr style="background:#f5f3ef;">
+            <td style="padding:4px 6px;"><strong>福島銀行</strong><br><span style="font-size:9px; color:#888;">変動・東北対応</span></td>
+            <td style="padding:4px 6px; font-weight:700;">0.940%</td>
+            <td style="padding:4px 6px;">84,800円</td>
+            <td style="padding:4px 6px; color:var(--success); font-weight:700;">無料</td>
+            <td style="padding:4px 6px;">4,400万</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:5px 10px; font-size:10px; color:#1b5e20; background:#f1f8e9;">&#9670; auじぶん銀行もがん100無料だが上限3,370万で3,735万借入不可。上記3行は全条件クリア</div>
+    </div>
+
+    <!-- Pattern 3: 諸費用重視 -->
+    <div style="border:2px solid #1565c0; border-radius:8px; overflow:hidden;">
+      <div style="background:#1565c0; color:#fff; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">💴</span>
+        <div>
+          <div style="font-weight:700; font-size:13px;">Pattern 3 ｜ 初期諸費用最小化</div>
+          <div style="font-size:10px; opacity:0.7;">借入時の手数料・事務費用を最小に</div>
+        </div>
+      </div>
+      <table style="font-size:11px; margin:0;">
+        <thead style="background:#f5f3ef;">
+          <tr><th style="padding:4px 6px;">銀行</th><th style="padding:4px 6px;">金利</th><th style="padding:4px 6px;">月返済</th><th style="padding:4px 6px; color:var(--danger);">手数料</th><th style="padding:4px 6px;">がん100</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background:#e3f2fd;">
+            <td style="padding:4px 6px;"><strong style="color:#1565c0;">★みずほ銀行</strong><br><span style="font-size:9px; color:#888;">借入時負担ゼロ型</span></td>
+            <td style="padding:4px 6px; font-weight:700;">1.325%</td>
+            <td style="padding:4px 6px;">91,800円</td>
+            <td style="padding:4px 6px; color:var(--danger); font-weight:700;">0円</td>
+            <td style="padding:4px 6px;">+0.10%</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 6px;"><strong>スルガ銀行</strong><br><span style="font-size:9px; color:#888;">変動・審査柔軟</span></td>
+            <td style="padding:4px 6px; font-weight:700;">1.425%</td>
+            <td style="padding:4px 6px;">93,700円</td>
+            <td style="padding:4px 6px; font-weight:700;">11万</td>
+            <td style="padding:4px 6px;">+0.10%</td>
+          </tr>
+          <tr style="background:#f5f3ef;">
+            <td style="padding:4px 6px;"><strong>楽天銀行</strong><br><span style="font-size:9px; color:#888;">変動・オンライン</span></td>
+            <td style="padding:4px 6px; font-weight:700;">1.578%</td>
+            <td style="padding:4px 6px;">96,700円</td>
+            <td style="padding:4px 6px; font-weight:700;">33万</td>
+            <td style="padding:4px 6px;">+0.20%</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:5px 10px; font-size:10px; color:#1565c0; background:#e3f2fd;">&#9670; 手数料0円のみずほは魅力的だが金利+0.635%。45年で利息差は試算約1,067万円 &#8594; 初期費用節約効果を大きく上回る点に注意</div>
+    </div>
+
+    <!-- Pattern 4: オンライン完結 -->
+    <div style="border:2px solid #6a1b9a; border-radius:8px; overflow:hidden;">
+      <div style="background:#6a1b9a; color:#fff; padding:7px 12px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:16px;">💻</span>
+        <div>
+          <div style="font-weight:700; font-size:13px;">Pattern 4 ｜ オンライン完結</div>
+          <div style="font-size:10px; opacity:0.7;">来店不要・スマホで全手続き完結</div>
+        </div>
+      </div>
+      <table style="font-size:11px; margin:0;">
+        <thead style="background:#f5f3ef;">
+          <tr><th style="padding:4px 6px;">銀行</th><th style="padding:4px 6px;">金利</th><th style="padding:4px 6px;">月返済</th><th style="padding:4px 6px;">特徴</th><th style="padding:4px 6px;">対応</th></tr>
+        </thead>
+        <tbody>
+          <tr style="background:#f3e5f5;">
+            <td style="padding:4px 6px;"><strong style="color:#6a1b9a;">★SBI新生銀行</strong><br><span style="font-size:9px; color:#888;">業界最低金利</span></td>
+            <td style="padding:4px 6px; font-weight:700; color:var(--danger);">0.690%</td>
+            <td style="padding:4px 6px; font-weight:700; color:var(--danger);">80,500円</td>
+            <td style="padding:4px 6px; font-size:10px;">最低金利・全国</td>
+            <td style="padding:4px 6px; font-size:10px; color:var(--success);">◎</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 6px;"><strong>PayPay銀行</strong><br><span style="font-size:9px; color:#888;">5年/125%ルールなし</span></td>
+            <td style="padding:4px 6px; font-weight:700;">0.999%</td>
+            <td style="padding:4px 6px;">85,900円</td>
+            <td style="padding:4px 6px; font-size:10px;">連生団信・柔軟審査</td>
+            <td style="padding:4px 6px; font-size:10px; color:var(--success);">◎</td>
+          </tr>
+          <tr style="background:#f5f3ef;">
+            <td style="padding:4px 6px;"><strong>住信SBIネット銀行</strong><br><span style="font-size:9px; color:#888;">45年対応</span></td>
+            <td style="padding:4px 6px; font-weight:700;">1.399%</td>
+            <td style="padding:4px 6px;">93,300円</td>
+            <td style="padding:4px 6px; font-size:10px;">スマート認証・全行程アプリ</td>
+            <td style="padding:4px 6px; font-size:10px; color:var(--success);">◎</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 6px;"><strong>ソニー銀行</strong><br><span style="font-size:9px; color:#888;">固定⇔変動切替可</span></td>
+            <td style="padding:4px 6px; font-weight:700;">1.097%</td>
+            <td style="padding:4px 6px;">87,600円</td>
+            <td style="padding:4px 6px; font-size:10px;">金利自由変更・全国</td>
+            <td style="padding:4px 6px; font-size:10px; color:var(--success);">◎</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:5px 10px; font-size:10px; color:#6a1b9a; background:#f3e5f5;">&#9670; 単身・多忙な会社員には来店不要のオンライン銀行が最適。SBI新生銀行が金利・利便性の最適解</div>
+    </div>
+  </div>
+
+  <!-- Summary FP Recommendation -->
+  <div style="background:var(--primary); color:#fff; border-radius:8px; padding:12px 16px; margin-bottom:8px;">
+    <div style="font-weight:700; font-size:13px; color:var(--accent); margin-bottom:6px;">&#9670; FP総合評価 ― 油布様への最終推奨</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; font-size:11px;">
+      <div style="text-align:center; background:rgba(255,255,255,0.1); border-radius:6px; padding:8px;">
+        <div style="color:var(--accent); font-weight:700; margin-bottom:3px;">💰 金利最優先</div>
+        <div style="font-weight:700;">SBI新生銀行</div>
+        <div style="opacity:0.8; font-size:10px;">0.690%</div>
+      </div>
+      <div style="text-align:center; background:rgba(255,255,255,0.1); border-radius:6px; padding:8px;">
+        <div style="color:#a5d6a7; font-weight:700; margin-bottom:3px;">🛡️ 団信最優先</div>
+        <div style="font-weight:700;">南都銀行</div>
+        <div style="opacity:0.8; font-size:10px;">0.875%・がん無料</div>
+      </div>
+      <div style="text-align:center; background:rgba(255,255,255,0.1); border-radius:6px; padding:8px;">
+        <div style="color:#90caf9; font-weight:700; margin-bottom:3px;">💴 諸費用最小</div>
+        <div style="font-weight:700;">みずほ銀行</div>
+        <div style="opacity:0.8; font-size:10px;">手数料0円・1.325%</div>
+      </div>
+      <div style="text-align:center; background:rgba(255,255,255,0.1); border-radius:6px; padding:8px;">
+        <div style="color:#ce93d8; font-weight:700; margin-bottom:3px;">💻 オンライン</div>
+        <div style="font-weight:700;">SBI新生銀行</div>
+        <div style="opacity:0.8; font-size:10px;">0.690%・全国完結</div>
+      </div>
+    </div>
+    <div style="margin-top:8px; font-size:11px; opacity:0.9; text-align:center;">
+      <strong style="color:var(--accent);">&#9733; 油布様の総合最優先推奨: SBI新生銀行（0.690%変動）</strong> ―― 金利・オンライン利便性・審査柔軟性の3点でトップクラス。現提案ベースとして採用済み。
+    </div>
+  </div>
+
+  <div style="font-size:10px; color:#aaa; line-height:1.6; border-top:1px solid var(--border); padding-top:6px;">
+    ※ データ出典: LoanChecker 2026年4月版（全121金融機関）。月返済額は油布様の実際の借入条件（3,735万円・45年）で算出。金利は毎月変動します。借入可否・条件の詳細は各金融機関にお問い合わせください。
+  </div>
+
+  <div class="page-footer">
+    <span>CONFIDENTIAL</span>
+    <span>AFP Koki Takahashi / TERASS</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PAGE 9: DISCLAIMER                                            -->
+<!-- ============================================================ -->
+<div class="page">
+  <div class="page-header">
+    <span class="page-num">11 / 11</span>
     <h2>免責事項・ご留意事項</h2>
   </div>
 
