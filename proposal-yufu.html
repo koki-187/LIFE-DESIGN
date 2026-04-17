@@ -22,8 +22,8 @@
   }
 
   @page {
-    size: A4;
-    margin: 15mm;
+    size: A4 portrait;
+    margin: 0;
   }
 
   * {
@@ -778,36 +778,93 @@
   .print-btn:hover { background: #1e3a5f; }
   .print-btn .print-icon { font-size: 16px; }
 
-  /* ===== PRINT ===== */
+  /* ===== PRINT (A4 portrait, zero-margin, high-quality PDF) ===== */
   @media print {
-    body {
-      background: white;
-      font-size: 10pt;
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 210mm;
+      background: #ffffff !important;
+      font-size: 9pt;
+      line-height: 1.45;
     }
     .page {
-      width: auto;
-      min-height: auto;
-      margin: 0;
-      padding: 0;
-      box-shadow: none;
-      page-break-before: always;
+      width: 210mm;
+      height: 297mm;
+      max-height: 297mm;
+      margin: 0 !important;
+      padding: 10mm 12mm 14mm;
+      box-shadow: none !important;
+      page-break-after: always;
+      break-after: page;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      position: relative;
+      background: #ffffff;
+      display: block;
+      overflow: hidden;
     }
-    .cover {
+    .page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .page.cover {
+      padding: 0;
       page-break-before: avoid;
     }
     .page-footer {
-      position: fixed;
-      bottom: 0;
+      position: absolute;
+      left: 12mm;
+      right: 12mm;
+      bottom: 5mm;
+      font-size: 8pt;
     }
+    /* Tighten spacing for PDF */
+    .section-title { margin: 14px 0 8px; font-size: 13pt; }
+    .subsection-title { margin: 12px 0 6px; }
+    table { margin: 8px 0; font-size: 9pt; }
+    table thead th { padding: 6px 8px; font-size: 9pt; }
+    table tbody td { padding: 5px 8px; }
+    .page-header { margin-bottom: 16px; padding-bottom: 8px; }
+    .page-header h2 { font-size: 16pt; }
+    .gold-box, .recommend-box, .breakeven-box, .highlight-box,
+    .surplus-box, .col-card, .profile-card {
+      padding: 12px 16px;
+      margin: 10px 0;
+    }
+    .gold-box li { margin-bottom: 4px; font-size: 9pt; line-height: 1.55; }
+    .timeline-phase { margin-bottom: 16px; }
+    .two-col, .annual-summary, .nisa-grid { gap: 12px; margin: 10px 0; }
+    .bar-row { margin-bottom: 6px; }
+    .donut-container { margin: 14px 0; gap: 28px; }
+    .donut { width: 140px; height: 140px; }
+    .donut::after { top: 28px; left: 28px; width: 84px; height: 84px; }
+    p, li, div { orphans: 3; widows: 3; }
     .print-btn {
-      display: none;
+      display: none !important;
     }
-    /* P10 grid: prevent splitting across pages */
-    .bank-pattern-grid {
+    /* Prevent awkward breaks */
+    table, .gold-box, .recommend-box, .breakeven-box, .highlight-box,
+    .surplus-box, .two-col, .donut-container, .icon-list,
+    .timeline-phase, .profile-card, .annual-summary, .nisa-grid,
+    .bank-pattern-grid, .bank-pattern-grid > div,
+    .section-title, .bar-row {
       page-break-inside: avoid;
     }
-    .bank-pattern-grid > div {
-      page-break-inside: avoid;
+    /* Keep section titles with following content */
+    .section-title {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+    /* Anti-aliasing for text clarity in PDF */
+    body, h1, h2, h3, h4, p, span, td, th, div {
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
     }
   }
 </style>
@@ -825,7 +882,7 @@
   <div class="cover-top-line"></div>
   <div class="cover-label">LIFE DESIGN PROPOSAL</div>
   <h1>住宅購入ライフプランニング<br>提案書</h1>
-  <div class="cover-subtitle">年収500万円最低ライン設計・フルローン3,500万円プラン</div>
+  <div class="cover-subtitle">年収500万円 最低ライン設計 ／ 諸費用込みフルローン3,735万円</div>
   <div class="cover-gold-line"></div>
   <div class="cover-client">油布 智美 様</div>
   <div class="cover-client-label">CLIENT</div>
@@ -1106,9 +1163,9 @@
     <strong>&#127881; 完済後（79〜84歳）の住居費比較</strong><br>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; font-size:13px;">
       <div>&#127968; <strong>購入者</strong>: 月<strong style="font-size:16px; color:var(--success)">5.5万円</strong>（管理費・修繕・固定資産税のみ）</div>
-      <div>&#127970; <strong>賃貸者</strong>: 月<strong style="font-size:16px; color:var(--danger)">11万円以上</strong>（家賃上昇・借家審査困難）</div>
+      <div>&#127970; <strong>賃貸者</strong>: 月<strong style="font-size:16px; color:var(--danger)">10万円（上昇想定）</strong>～11万円以上（家賃上昇・借家審査困難）</div>
     </div>
-    <div style="margin-top:8px; font-weight:700; color:var(--primary);">5年間の差額 約270万円 &#8594; さらに45年後ローン完済時の純資産が賃貸と同水準に到達</div>
+    <div style="margin-top:8px; font-weight:700; color:var(--primary);">5年間の差額 約270万円（保守試算） &#8594; 45年後ローン完済時の純資産は賃貸とほぼ同水準に到達</div>
   </div>
 
   <div class="breakeven-box">
@@ -1140,7 +1197,7 @@
       <tr style="background:#fff8e1;"><td>35年（69歳）<br><span style="font-size:10px; color:var(--warning);">※まだ返済中</span></td><td>931万</td><td>4,167万</td><td style="font-weight:700">3,236万</td><td style="color:var(--accent); font-weight:700">2,895万</td></tr>
       <tr style="background:#fff8e1;"><td>40年（74歳）<br><span style="font-size:10px; color:var(--warning);">※まだ返済中</span></td><td>473万</td><td>4,273万</td><td style="font-weight:700">3,800万</td><td>3,580万</td></tr>
       <tr style="background:#e8f5e9;"><td><strong>45年（79歳）&#x1F3E0;完済</strong></td><td><strong>0万</strong></td><td><strong>4,381万</strong></td><td style="color:var(--success); font-weight:700">4,381万</td><td style="color:var(--accent); font-weight:700">4,380万</td></tr>
-      <tr style="background:#fff8e1;"><td><strong>50年（84歳）</strong></td><td>—</td><td>4,492万</td><td style="color:var(--success); font-weight:700">4,492万</td><td style="color:var(--accent); font-weight:700">5,300万</td></tr>
+      <tr style="background:#fff8e1;"><td><strong>50年（84歳）</strong></td><td>—</td><td>4,492万</td><td style="color:var(--success); font-weight:700">4,492万</td><td style="color:var(--accent); font-weight:700">5,335万</td></tr>
     </tbody>
   </table>
   <div style="font-size:11px; color:#999; text-align:right; margin-top:4px;">※物件価値は年率+0.5%緩やかな上昇想定。賃貸投資は管理費等節約分3.5万/月を年3%複利運用の試算</div>
