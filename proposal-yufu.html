@@ -62,17 +62,30 @@
     color: #ffffff;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     text-align: center;
-    padding: 60px 50px;
+    padding: 60px 50px 70px;
+    min-height: 297mm;
+    box-sizing: border-box;
+  }
+  .cover-top-section {
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .cover-middle {
+    display: flex; flex-direction: column; align-items: center;
+    flex-grow: 1;
+    justify-content: center;
+  }
+  .cover-footer-section {
+    display: flex; flex-direction: column; align-items: center;
   }
 
   .cover-top-line {
     width: 60px;
     height: 3px;
     background: var(--accent);
-    margin-bottom: 50px;
+    margin-bottom: 24px;
   }
 
   .cover-label {
@@ -80,22 +93,22 @@
     letter-spacing: 6px;
     color: var(--accent);
     text-transform: uppercase;
-    margin-bottom: 30px;
+    margin-bottom: 0;
     font-weight: 500;
   }
 
   .cover h1 {
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 700;
     letter-spacing: 3px;
     line-height: 1.5;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
 
   .cover-subtitle {
     font-size: 16px;
     color: rgba(255,255,255,0.75);
-    margin-bottom: 60px;
+    margin-bottom: 50px;
     letter-spacing: 1px;
   }
 
@@ -103,24 +116,25 @@
     width: 200px;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    margin-bottom: 60px;
+    margin: 0 auto 50px;
   }
 
   .cover-client {
-    font-size: 22px;
+    font-size: 26px;
     font-weight: 700;
     letter-spacing: 4px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   .cover-client-label {
     font-size: 12px;
     color: rgba(255,255,255,0.5);
     letter-spacing: 3px;
-    margin-bottom: 80px;
+    margin-bottom: 0;
   }
 
-  .cover-footer {
+  .cover-footer,
+  .cover-footer-section {
     text-align: center;
   }
 
@@ -826,10 +840,14 @@
       break-after: auto;
     }
     .page.cover {
-      padding: 0 !important;
+      padding: 50px 50px 70px !important;
       page-break-before: avoid;
       background: #0a1628 !important;
       color: #ffffff !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      align-items: center !important;
     }
     .page.cover h1,
     .page.cover .cover-client,
@@ -913,18 +931,23 @@
 <!-- PAGE 1: COVER                                                 -->
 <!-- ============================================================ -->
 <div class="page cover">
-  <div class="cover-top-line"></div>
-  <div class="cover-label">LIFE DESIGN PROPOSAL</div>
-  <h1>住宅購入ライフプランニング<br>提案書</h1>
-  <div class="cover-subtitle">年収500万円 最低ライン設計 ／ 諸費用込みフルローン3,735万円</div>
-  <div class="cover-gold-line"></div>
-  <div class="cover-client">油布 智美 様</div>
-  <div class="cover-client-label">CLIENT</div>
-  <div class="cover-footer">
+  <div class="cover-top-section">
+    <div class="cover-top-line"></div>
+    <div class="cover-label">LIFE DESIGN PROPOSAL</div>
+  </div>
+
+  <div class="cover-middle">
+    <h1>住宅購入ライフプランニング<br>提案書</h1>
+    <div class="cover-subtitle">年収500万円 最低ライン設計 ／ 諸費用込みフルローン3,735万円</div>
+    <div class="cover-gold-line"></div>
+    <div class="cover-client">油布 智美 様</div>
+    <div class="cover-client-label">CLIENT</div>
+  </div>
+
+  <div class="cover-footer-section">
     <div class="cover-date">2026年4月16日</div>
     <div class="cover-brand-line">— LIFE DESIGN PARTNER —</div>
     <div class="cover-planner">KOKI TAKAHASHI</div>
-    <div class="cover-company">AFP / Financial Consultant</div>
   </div>
 </div>
 
@@ -2148,6 +2171,10 @@
     </div>
   </div>
 
+  <div style="background:#fff8e1; border-left:3px solid var(--accent); padding:6px 10px; margin:6px 0 4px; font-size:10.5px; line-height:1.55; color:#333;">
+    <strong style="color:var(--primary);">&#9888; 銀行選定時の前提補正：</strong>
+    本試算は<strong>年収500万円（最低保証ライン）</strong>で設計。<strong style="color:var(--accent);">実績年収800万円</strong>で審査時は、年収800万円ベースでの借入限度額・適用金利・優遇ルールに再検証要。一般的に年収800万帯では借入上限拡大（8,000万〜1億円）・金利優遇強化の傾向あり。
+  </div>
   <div style="font-size:10px; color:#aaa; line-height:1.6; border-top:1px solid var(--border); padding-top:6px;">
     ※ データ出典: LoanChecker 2026年4月版（全121金融機関）。月返済額は油布様の実際の借入条件（3,735万円・45年）で算出。金利は毎月変動します。借入可否・条件の詳細は各金融機関にお問い合わせください。
   </div>
@@ -2206,11 +2233,8 @@
     <div style="font-size:14px; color:var(--primary); font-weight:700; letter-spacing:2px; margin-bottom:6px;">
       KOKI TAKAHASHI
     </div>
-    <div style="font-size:11px; color:#888; letter-spacing:3px; margin-bottom:4px;">
+    <div style="font-size:11px; color:#888; letter-spacing:3px; margin-bottom:6px;">
       — LIFE DESIGN PARTNER —
-    </div>
-    <div style="font-size:11px; color:#aaa; letter-spacing:1px; margin-bottom:4px;">
-      AFP / Financial Consultant
     </div>
     <div style="font-size:11px; color:#bbb;">
       2026年4月16日 作成
