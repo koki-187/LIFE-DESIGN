@@ -228,6 +228,53 @@ var ReportGenerator = (function () {
     '.action-body { flex:1; padding-top:0.5mm; }',
     '.action-body strong { font-size:10pt; color:#222; display:block; margin-bottom:0.5mm; }',
     '.action-body span { font-size:8.5pt; color:#555; line-height:1.5; }',
+
+    /* ===== PEER COMPARISON ===== */
+    '.peer-table { width:100%; border-collapse:collapse; font-size:9pt; margin:3mm 0; }',
+    '.peer-table th { background:#1a237e; color:white; padding:2.5mm 3mm; text-align:center; font-weight:500; }',
+    '.peer-table td { padding:2.5mm 3mm; border-bottom:1px solid #e8e8e8; text-align:center; }',
+    '.peer-table tr:nth-child(even) td { background:#f8f9ff; }',
+    '.peer-badge { display:inline-block; padding:0.8mm 2.5mm; border-radius:1.5mm; font-size:7.5pt; font-weight:700; }',
+    '.peer-badge-safe { background:#e8f5e9; color:#2e7d32; }',
+    '.peer-badge-warning { background:#fff3e0; color:#e65100; }',
+    '.savings-compare { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4mm; margin:4mm 0; }',
+    '.savings-card { background:#f8f9ff; border:1px solid #e0e0e0; border-radius:2mm; padding:4mm; text-align:center; }',
+    '.savings-card-value { font-size:14pt; font-weight:700; color:#1a237e; }',
+    '.savings-card-label { font-size:8pt; color:#666; margin-top:1mm; }',
+
+    /* ===== INSURANCE PLAN ===== */
+    '.ins-table { width:100%; border-collapse:collapse; font-size:8.5pt; margin:3mm 0; }',
+    '.ins-table th { background:#1a237e; color:white; padding:2mm 2.5mm; text-align:center; font-weight:500; }',
+    '.ins-table td { padding:2mm 2.5mm; border-bottom:1px solid #e8e8e8; text-align:center; vertical-align:middle; }',
+    '.ins-table tr:nth-child(even) td { background:#f8f9ff; }',
+    '.ins-table td:first-child { text-align:left; font-weight:500; }',
+    '.ins-priority { display:inline-block; width:5mm; height:5mm; border-radius:50%; color:white; font-size:7pt; font-weight:700; line-height:5mm; text-align:center; }',
+    '.ins-priority-1 { background:#c62828; }',
+    '.ins-priority-2 { background:#e65100; }',
+    '.ins-priority-3 { background:#1565c0; }',
+    '.cf-scenario { display:flex; align-items:center; gap:3mm; padding:3mm; border-radius:2mm; margin:2mm 0; }',
+    '.cf-scenario-safe { background:#e8f5e9; border-left:3px solid #2e7d32; }',
+    '.cf-scenario-tight { background:#fff8e1; border-left:3px solid #f57f17; }',
+    '.cf-scenario-deficit { background:#ffebee; border-left:3px solid #c62828; }',
+
+    /* ===== PHASE ACTION PLAN ===== */
+    '.phase-card { border:1.5px solid #e0e0e0; border-radius:3mm; padding:4mm 5mm; margin:3mm 0; page-break-inside:avoid; }',
+    '.phase-header { display:flex; align-items:center; gap:3mm; margin-bottom:3mm; }',
+    '.phase-num { width:8mm; height:8mm; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:9pt; font-weight:700; flex-shrink:0; }',
+    '.phase-num-1 { background:#c62828; }',
+    '.phase-num-2 { background:#e65100; }',
+    '.phase-num-3 { background:#1565c0; }',
+    '.phase-title { font-size:11pt; font-weight:700; color:#1a237e; }',
+    '.phase-period { font-size:8pt; color:#888; margin-left:auto; }',
+    '.phase-actions { padding-left:4mm; margin:0; }',
+    '.phase-actions li { font-size:9pt; color:#333; line-height:1.7; margin:1mm 0; }',
+    '.ef-meter { display:flex; align-items:center; gap:4mm; margin:3mm 0; }',
+    '.ef-bar-track { flex:1; background:#e8e8e8; border-radius:2mm; height:6mm; overflow:hidden; position:relative; }',
+    '.ef-bar-fill { height:100%; border-radius:2mm; display:flex; align-items:center; justify-content:flex-end; padding-right:2mm; }',
+    '.ef-bar-safe { background:linear-gradient(90deg,#1b5e20,#43a047); }',
+    '.ef-bar-moderate { background:linear-gradient(90deg,#e65100,#ffa726); }',
+    '.ef-bar-risky { background:linear-gradient(90deg,#b71c1c,#ef5350); }',
+    '.ef-label { font-size:9pt; color:#333; white-space:nowrap; }',
   ].join('\n');
 
   /* ------------------------------------------------------------------ */
@@ -333,7 +380,7 @@ var ReportGenerator = (function () {
     });
     html += '</div>';
 
-    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate || '') + '</span><span>2 / 6</span></div>';
+    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate || '') + '</span><span>2 / 9</span></div>';
     html += '</div>';
     return html;
   }
@@ -413,7 +460,7 @@ var ReportGenerator = (function () {
       });
     }
 
-    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>3 / 6</span></div>';
+    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>3 / 9</span></div>';
     html += '</div>';
     return html;
   }
@@ -495,7 +542,7 @@ var ReportGenerator = (function () {
       html += '<div class="result-card gold-card" style="margin-bottom:2mm;"><p style="font-size:9pt;line-height:1.6;margin:0">' + _esc(tip) + '</p></div>';
     });
 
-    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>4 / 6</span></div>';
+    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>4 / 9</span></div>';
     html += '</div>';
     return html;
   }
@@ -584,7 +631,7 @@ var ReportGenerator = (function () {
       html += '</div>';
     }
 
-    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>5 / 6</span></div>';
+    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>5 / 9</span></div>';
     html += '</div>';
     return html;
   }
@@ -652,13 +699,205 @@ var ReportGenerator = (function () {
     html += '<tr><th>\u304a\u5ba2\u69d8\u78ba\u8a8d</th><td colspan="3" style="height:12mm;"></td></tr>';
     html += '</table>';
 
-    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>6 / 6</span></div>';
+    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>6 / 9</span></div>';
     html += '</div>';
     return html;
   }
 
   /* ------------------------------------------------------------------ */
-  /* _buildHtml: assemble all 6 pages                                     */
+  /* Page 7: 同世代比較                                                    */
+  /* ------------------------------------------------------------------ */
+  function _page7(d) {
+    var peer = d.peerComparison;
+    if (!peer) return '';
+
+    var html = '';
+    html += '<div class="page-break"></div>';
+    html += '<div class="a4-page">';
+    html += '<div class="page-header">';
+    html += '  <div class="logo-line">LIFE DESIGN PARTNER \u2014 AFP LIFE PLANNING</div>';
+    html += '  <div class="page-title">\u540c\u4e16\u4ee3\u6bd4\u8f03\u5206\u6790</div>';
+    html += '</div>';
+
+    html += '<div class="section-title">\u652f\u51fa\u9805\u76ee\u5225 \u540c\u4e16\u4ee3\u6bd4\u8f03</div>';
+    html += '<p style="font-size:8.5pt;color:#666;margin:0 0 2mm;">\u51fa\u5178: ' + _esc(peer.source || '') + '</p>';
+
+    html += '<table class="peer-table">';
+    html += '<tr><th>\u8cbb\u76ee</th><th>\u304a\u5ba2\u69d8</th><th>\u540c\u4e16\u4ee3\u7bc4\u56f2</th><th>\u5224\u5b9a</th></tr>';
+    (peer.comparisons || []).forEach(function (c) {
+      var badgeCls = c.status === 'safe' ? 'peer-badge-safe' : 'peer-badge-warning';
+      html += '<tr>';
+      html += '<td style="text-align:left;font-weight:500;">' + _esc(c.category) + '</td>';
+      html += '<td>' + _yen(c.clientValue) + '</td>';
+      html += '<td>' + _yen(c.peerMin) + ' \u301c ' + _yen(c.peerMax) + '</td>';
+      html += '<td><span class="peer-badge ' + badgeCls + '">' + _esc(c.badge) + '</span></td>';
+      html += '</tr>';
+    });
+    html += '</table>';
+
+    var sc = peer.savingsComparison || {};
+    html += '<div class="section-title">\u8caf\u84c4\u984d \u540c\u4e16\u4ee3\u6bd4\u8f03</div>';
+    html += '<div class="savings-compare">';
+    html += '<div class="savings-card"><div class="savings-card-value">' + _man(sc.clientSavings) + '</div><div class="savings-card-label">\u304a\u5ba2\u69d8</div></div>';
+    html += '<div class="savings-card"><div class="savings-card-value">' + _man(sc.peerMedian) + '</div><div class="savings-card-label">\u540c\u4e16\u4ee3\u4e2d\u592e\u5024</div></div>';
+    html += '<div class="savings-card"><div class="savings-card-value">' + _man(sc.peerAverage) + '</div><div class="savings-card-label">\u540c\u4e16\u4ee3\u5e73\u5747</div></div>';
+    html += '</div>';
+
+    var pctCls = (sc.percentile === '\u4e0a\u4f4d25%\u4ee5\u5185' || sc.percentile === '\u4e2d\u592e\u5024\u4ee5\u4e0a') ? 'risk-safe' : 'risk-moderate';
+    html += '<div class="result-card">';
+    html += '<strong>\u8caf\u84c4\u30dd\u30b8\u30b7\u30e7\u30f3: </strong>';
+    html += '<span class="' + pctCls + '">' + _esc(sc.percentile) + '</span>';
+    html += '</div>';
+
+    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>7 / 9</span></div>';
+    html += '</div>';
+    return html;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Page 8: 保険設計プラン                                                */
+  /* ------------------------------------------------------------------ */
+  function _page8(d) {
+    var ins = d.insurancePlan;
+    if (!ins) return '';
+
+    var html = '';
+    html += '<div class="page-break"></div>';
+    html += '<div class="a4-page">';
+    html += '<div class="page-header">';
+    html += '  <div class="logo-line">LIFE DESIGN PARTNER \u2014 AFP LIFE PLANNING</div>';
+    html += '  <div class="page-title">\u4fdd\u967a\u8a2d\u8a08\u30d7\u30e9\u30f3</div>';
+    html += '</div>';
+
+    html += '<div class="section-title">\u4f4f\u5b85\u8cfc\u5165\u524d\u5f8c\u306e\u4fdd\u969c\u898b\u76f4\u3057</div>';
+
+    if (ins.hasDanShin) {
+      html += '<div class="result-card success">';
+      html += '<strong>\u56e3\u4f53\u4fe1\u7528\u751f\u547d\u4fdd\u967a\uff08\u56e3\u4fe1\uff09</strong>';
+      html += '<div style="font-size:9pt;color:#555;margin-top:1mm;">\u4f4f\u5b85\u30ed\u30fc\u30f3\u52a0\u5165\u6642\u306b\u81ea\u52d5\u4ed8\u5e2f\u3002\u4e07\u4e00\u306e\u969b\u306f\u30ed\u30fc\u30f3\u6b8b\u50b5\u304c\u514d\u9664\u3055\u308c\u307e\u3059\u3002</div>';
+      html += '</div>';
+    }
+
+    html += '<table class="ins-table">';
+    html += '<tr><th>\u4fdd\u969c\u7a2e\u985e</th><th>\u73fe\u72b6</th><th>\u8cfc\u5165\u5f8c</th><th>\u76ee\u5b89\u4fdd\u967a\u6599</th><th>\u63a8\u5968\u5185\u5bb9</th></tr>';
+    (ins.plans || []).forEach(function (p) {
+      if (p.priority === 0) return;
+      html += '<tr>';
+      html += '<td>';
+      if (p.priority) html += '<span class="ins-priority ins-priority-' + Math.min(p.priority, 3) + '">' + p.priority + '</span> ';
+      html += _esc(p.type);
+      if (p.subtitle) html += '<br><span style="font-size:7.5pt;color:#888;">' + _esc(p.subtitle) + '</span>';
+      html += '</td>';
+      html += '<td>' + _esc(p.current) + '</td>';
+      html += '<td>' + _esc(p.postPurchase) + '</td>';
+      html += '<td>' + _esc(p.peerCost) + '</td>';
+      html += '<td style="font-size:8pt;">' + _esc(p.recommendation) + '</td>';
+      html += '</tr>';
+    });
+    html += '</table>';
+
+    var totalCost = ins.totalEstimatedCost || {};
+    html += '<div class="highlight-box" style="text-align:center;">';
+    html += '<div style="font-size:9pt;color:rgba(255,255,255,0.7);">\u6708\u984d\u4fdd\u967a\u6599\u306e\u76ee\u5b89</div>';
+    html += '<div class="amount">' + _fmt(totalCost.min || 0) + ' \u301c ' + _fmt(totalCost.max || 0) + '\u5186/\u6708</div>';
+    html += '</div>';
+
+    html += '<div class="result-card gold-card">';
+    html += '<strong>\u6226\u7565\u30e1\u30e2</strong>';
+    html += '<div style="font-size:9pt;color:#555;margin-top:1mm;">' + _esc(ins.strategyNote || '') + '</div>';
+    html += '</div>';
+
+    var cf = d.postInsuranceCashFlow;
+    if (cf && cf.scenarios) {
+      html += '<div class="section-title">\u4fdd\u967a\u52a0\u5165\u5f8c\u306e\u30ad\u30e3\u30c3\u30b7\u30e5\u30d5\u30ed\u30fc</div>';
+      cf.scenarios.forEach(function (s) {
+        var cls = 'cf-scenario-' + (s.riskLevel || 'safe');
+        html += '<div class="cf-scenario ' + cls + '">';
+        html += '<div style="flex:1;">';
+        html += '<div style="font-size:9pt;font-weight:700;">' + _esc(s.label) + '</div>';
+        html += '<div style="font-size:8pt;color:#666;">\u4fdd\u967a\u6599 ' + _yen(s.insuranceCost) + '/\u6708</div>';
+        html += '</div>';
+        html += '<div style="text-align:right;">';
+        html += '<div style="font-size:12pt;font-weight:700;color:' + (s.viable ? '#2e7d32' : '#c62828') + ';">' + _yen(s.surplus) + '/\u6708</div>';
+        html += '<div style="font-size:7.5pt;color:#888;">\u5e74\u9593 ' + _yen(s.annualSurplus) + '</div>';
+        html += '</div>';
+        html += '</div>';
+      });
+    }
+
+    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>8 / 9</span></div>';
+    html += '</div>';
+    return html;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Page 9: 3フェーズ・アクションプラン & 緊急予備資金                       */
+  /* ------------------------------------------------------------------ */
+  function _page9(d) {
+    var plan = d.phaseActionPlan;
+    var ef = d.emergencyFund;
+    if (!plan && !ef) return '';
+
+    var html = '';
+    html += '<div class="page-break"></div>';
+    html += '<div class="a4-page">';
+    html += '<div class="page-header">';
+    html += '  <div class="logo-line">LIFE DESIGN PARTNER \u2014 AFP LIFE PLANNING</div>';
+    html += '  <div class="page-title">3\u30d5\u30a7\u30fc\u30ba\u30fb\u30a2\u30af\u30b7\u30e7\u30f3\u30d7\u30e9\u30f3</div>';
+    html += '</div>';
+
+    if (plan && plan.phases) {
+      plan.phases.forEach(function (phase, i) {
+        var numCls = 'phase-num-' + Math.min(i + 1, 3);
+        html += '<div class="phase-card">';
+        html += '<div class="phase-header">';
+        html += '<div class="phase-num ' + numCls + '">' + (i + 1) + '</div>';
+        html += '<div class="phase-title">' + _esc(phase.title) + '</div>';
+        html += '<div class="phase-period">' + _esc(phase.period) + '</div>';
+        html += '</div>';
+        html += '<ul class="phase-actions">';
+        (phase.actions || []).forEach(function (action) {
+          html += '<li>' + _esc(action) + '</li>';
+        });
+        html += '</ul>';
+        html += '</div>';
+      });
+    }
+
+    if (ef) {
+      html += '<div class="section-title">\u8cfc\u5165\u5f8c\u7dca\u6025\u4e88\u5099\u8cc7\u91d1</div>';
+
+      var fillPct = Math.min(100, Math.round((ef.monthsCovered / 6) * 100));
+      var barCls = 'ef-bar-' + (ef.riskLevel || 'moderate');
+      html += '<div class="ef-meter">';
+      html += '<div class="ef-label">\u7dca\u6025\u4e88\u5099\u8cc7\u91d1</div>';
+      html += '<div class="ef-bar-track"><div class="ef-bar-fill ' + barCls + '" style="width:' + fillPct + '%;">';
+      html += '<span style="font-size:7pt;color:white;font-weight:700;">' + ef.monthsCovered + '\u30f6\u6708\u5206</span>';
+      html += '</div></div>';
+      html += '</div>';
+
+      html += '<div class="kpi-grid">';
+      html += '<div class="kpi-card"><div class="kpi-value">' + _man(ef.remainingFund) + '</div><div class="kpi-label">\u8cfc\u5165\u5f8c\u6b8b\u984d</div></div>';
+      html += '<div class="kpi-card"><div class="kpi-value">' + _man(ef.targetFund) + '</div><div class="kpi-label">\u76ee\u6a19\u984d(6\u30f6\u6708\u5206)</div></div>';
+      var shortfallColor = ef.shortfall > 0 ? '#c62828' : '#2e7d32';
+      html += '<div class="kpi-card"><div class="kpi-value" style="color:' + shortfallColor + ';">' + _man(ef.shortfall) + '</div><div class="kpi-label">\u4e0d\u8db3\u984d</div></div>';
+      html += '</div>';
+
+      if (ef.shortfall > 0 && ef.monthsToTarget < 999) {
+        html += '<div class="result-card">';
+        html += '<strong>\u76ee\u6a19\u9054\u6210\u307e\u3067\u7d04' + ef.monthsToTarget + '\u30f6\u6708</strong>';
+        html += '<div style="font-size:9pt;color:#555;">\u73fe\u5728\u306e\u4f59\u5270\u30da\u30fc\u30b9\u3067\u7a4d\u307f\u7acb\u3066\u305f\u5834\u5408\u306e\u898b\u8fbc\u307f\u3067\u3059\u3002</div>';
+        html += '</div>';
+      }
+    }
+
+    html += '<div class="page-footer"><span>LIFE DESIGN PARTNER</span><span>' + _esc(d.reportDate||'') + '</span><span>9 / 9</span></div>';
+    html += '</div>';
+    return html;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* _buildHtml: assemble all 9 pages                                     */
   /* ------------------------------------------------------------------ */
   RG._buildHtml = function (data) {
     var d = data || {};
@@ -679,6 +918,9 @@ var ReportGenerator = (function () {
       _page4(d),
       _page5(d),
       _page6(d),
+      _page7(d),
+      _page8(d),
+      _page9(d),
       '</div>',
       '</body></html>',
     ].join('');
