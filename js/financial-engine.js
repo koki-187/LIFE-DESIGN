@@ -1237,13 +1237,454 @@ var FinancialEngine = (function () {
       summaryText = '詳細なライフプランニングをご一緒に進めましょう。';
     }
 
+    /* ---- peerComparison (Page 7) ---- */
+    var peerComparison = null;
+    var familyType = (info.maritalStatus === 'married' || info.children > 0) ? 'family' : 'single';
+    var expensesForPeer = info.expenses || {};
+    if (!expensesForPeer.food && incomeExpenseSummary && incomeExpenseSummary.expenseBreakdown) {
+      expensesForPeer = incomeExpenseSummary.expenseBreakdown;
+    }
+    if (info.age || info.annualIncome) {
+      peerComparison = comparePeerExpenses({
+        age: info.age || 35,
+        annualIncome: info.annualIncome || 5000000,
+        familyType: familyType,
+        expenses: expensesForPeer,
+        totalSavings: info.savings || 0
+      });
+    }
+
+    /* ---- insurancePlan (Page 8) ---- */
+    var insurancePlan = null;
+    var hasInsurance = !!(info.monthlyInsurance && info.monthlyInsurance > 0);
+    insurancePlan = generateInsurancePlan({
+      hasInsurance: hasInsurance,
+      currentInsurance: (info.monthlyInsurance || 0) * 10000,
+      familyType: familyType,
+      willPurchaseHome: true,
+      age: info.age || 35
+    });
+
+    /* ---- postInsuranceCashFlow (Page 8) ---- */
+    var postInsuranceCashFlow = null;
+    var monthlySurplusVal = incomeExpenseSummary ? incomeExpenseSummary.monthlySurplus : 0;
+    if (insurancePlan && monthlySurplusVal > 0) {
+      postInsuranceCashFlow = calculatePostInsuranceCashFlow({
+        monthlySurplus: monthlySurplusVal,
+        insurancePlans: insurancePlan.totalEstimatedCost || { min: 12000, max: 18000 }
+      });
+    }
+
+    /* ---- phaseActionPlan (Page 9) ---- */
+    var phaseActionPlan = null;
+    var loanAmtForPlan = 35000000;
+    var interestRateForPlan = 0.007;
+    var termYearsForPlan = 35;
+    if (analysis.affordability) {
+      loanAmtForPlan = analysis.affordability.recommendedLoanAmount || loanAmtForPlan;
+    }
+    if (info.loanRate) interestRateForPlan = info.loanRate / 100;
+    if (info.loanTerm) termYearsForPlan = info.loanTerm;
+
+    var transactionCostsEst = Math.round(loanAmtForPlan * 0.07);
+    phaseActionPlan = generatePhaseActionPlan({
+      totalSavings: info.savings || 0,
+      transactionCosts: transactionCostsEst,
+      insurancePlan: insurancePlan || {},
+      loanAmount: loanAmtForPlan,
+      interestRate: interestRateForPlan,
+      termYears: termYearsForPlan,
+      age: info.age || 35,
+      monthlyNISA: (info.monthlyInvestment || 3) * 10000
+    });
+
+    /* ---- emergencyFund (Page 9) ---- */
+    var emergencyFund = null;
+    var monthlyExpenseVal = incomeExpenseSummary ? incomeExpenseSummary.monthlyExpense : 250000;
+    emergencyFund = calculateEmergencyFundPostPurchase({
+      totalSavings: info.savings || 0,
+      transactionCosts: transactionCostsEst,
+      monthlySurplus: monthlySurplusVal,
+      monthlyExpense: monthlyExpenseVal
+    });
+
     return {
-      clientSummary:        clientSummary,
-      incomeExpenseSummary: incomeExpenseSummary,
-      affordabilityResult:  affordabilityResult,
-      rentVsBuyResult:      rentVsBuyResult,
-      assetProjection:      assetProjection,
-      recommendations:      { actions: actions, summary: summaryText }
+      clientSummary:          clientSummary,
+      incomeExpenseSummary:   incomeExpenseSummary,
+      affordabilityResult:    affordabilityResult,
+      rentVsBuyResult:        rentVsBuyResult,
+      assetProjection:        assetProjection,
+      recommendations:        { actions: actions, summary: summaryText },
+      peerComparison:         peerComparison,
+      insurancePlan:          insurancePlan,
+      postInsuranceCashFlow:  postInsuranceCashFlow,
+      phaseActionPlan:        phaseActionPlan,
+      emergencyFund:          emergencyFund
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 12. 同世代比較（Peer Comparison）
+  // ---------------------------------------------------------------------------
+
+  function comparePeerExpenses(params) {
+    var age = params.age || 35;
+    var annualIncome = params.annualIncome || 5000000;
+    var familyType = params.familyType || 'single';
+    var expenses = params.expenses || {};
+    var savings = params.totalSavings || 0;
+
+    var peerData;
+    if (familyType === 'single') {
+      peerData = {
+        housing:   { min: 70000, max: 110000, label: '住居費' },
+        food:      { min: 40000, max: 60000, label: '食費' },
+        utilities: { min: 8000, max: 15000, label: '光熱費' },
+        communication: { min: 6000, max: 12000, label: '通信費' },
+        transportation: { min: 8000, max: 20000, label: '交通費' },
+        clothing:  { min: 10000, max: 25000, label: '被服・美容' },
+        entertainment: { min: 15000, max: 30000, label: '娯楽費' },
+        insurance: { min: 10000, max: 18000, label: '保険料' },
+        investment: { min: 20000, max: 50000, label: '積立投資' }
+      };
+    } else {
+      peerData = {
+        housing:   { min: 80000, max: 150000, label: '住居費' },
+        food:      { min: 60000, max: 100000, label: '食費' },
+        utilities: { min: 15000, max: 25000, label: '光熱費' },
+        communication: { min: 10000, max: 18000, label: '通信費' },
+        transportation: { min: 10000, max: 25000, label: '交通費' },
+        clothing:  { min: 15000, max: 35000, label: '被服・美容' },
+        entertainment: { min: 20000, max: 40000, label: '娯楽費' },
+        insurance: { min: 15000, max: 30000, label: '保険料' },
+        education: { min: 20000, max: 60000, label: '教育費' },
+        investment: { min: 15000, max: 40000, label: '積立投資' }
+      };
+    }
+
+    var savingsPeer;
+    if (age < 30) {
+      savingsPeer = { average: 1760000, median: 200000 };
+    } else if (age < 40) {
+      savingsPeer = { average: 4940000, median: 750000 };
+    } else if (age < 50) {
+      savingsPeer = { average: 6570000, median: 1000000 };
+    } else {
+      savingsPeer = { average: 9240000, median: 1600000 };
+    }
+    if (familyType !== 'single') {
+      savingsPeer.average = Math.round(savingsPeer.average * 1.2);
+      savingsPeer.median = Math.round(savingsPeer.median * 1.5);
+    }
+
+    var comparisons = [];
+    var keyMap = {
+      food: 'food', utilities: 'utilities', communication: 'communication',
+      transportation: 'transportation', insurance: 'insurance',
+      entertainment: 'entertainment', other: 'other'
+    };
+
+    Object.keys(peerData).forEach(function (key) {
+      var peer = peerData[key];
+      var clientValue = expenses[key] || 0;
+      var status, badge;
+      if (clientValue === 0 && (key === 'insurance' || key === 'clothing' || key === 'investment')) {
+        status = 'warning';
+        badge = '要確認';
+      } else if (clientValue < peer.min) {
+        status = 'safe';
+        badge = '節約';
+      } else if (clientValue <= peer.max) {
+        status = 'safe';
+        badge = '適正';
+      } else {
+        status = 'warning';
+        badge = '高め';
+      }
+      comparisons.push({
+        category: peer.label,
+        clientValue: clientValue,
+        peerMin: peer.min,
+        peerMax: peer.max,
+        status: status,
+        badge: badge
+      });
+    });
+
+    var savingsPercentile;
+    if (savings >= savingsPeer.average) {
+      savingsPercentile = '上位25%以内';
+    } else if (savings >= savingsPeer.median) {
+      savingsPercentile = '中央値以上';
+    } else if (savings >= savingsPeer.median * 0.5) {
+      savingsPercentile = '中央値付近';
+    } else {
+      savingsPercentile = '中央値以下';
+    }
+
+    return {
+      comparisons: comparisons,
+      savingsComparison: {
+        clientSavings: savings,
+        peerAverage: savingsPeer.average,
+        peerMedian: savingsPeer.median,
+        percentile: savingsPercentile
+      },
+      source: '総務省家計調査 / 金融広報中央委員会 2022-2023年データ'
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 13. 保険設計プラン（Insurance Planning）
+  // ---------------------------------------------------------------------------
+
+  function generateInsurancePlan(params) {
+    var hasInsurance = params.hasInsurance || false;
+    var currentInsurance = params.currentInsurance || 0;
+    var familyType = params.familyType || 'single';
+    var willPurchaseHome = params.willPurchaseHome !== false;
+    var age = params.age || 35;
+
+    var plans = [];
+
+    if (willPurchaseHome) {
+      plans.push({
+        type: '死亡・高度障害保障',
+        current: hasInsurance ? '加入中' : '未加入',
+        postPurchase: '団信で補完（ローン免除）',
+        peerCost: '2,000〜5,000円',
+        recommendation: '団信のみで十分。別途加入不要',
+        priority: 0
+      });
+    }
+
+    var isFemale30s = age >= 30 && age < 45;
+
+    plans.push({
+      type: '就業不能保険',
+      subtitle: '長期病欠・障害備え',
+      current: hasInsurance ? '加入中' : '未加入',
+      postPurchase: hasInsurance ? '継続' : '新規加入が必要',
+      peerCost: '3,000〜5,000円',
+      recommendation: '月収の60〜70%補償',
+      priority: 1,
+      estimatedCost: { min: 3000, max: 5000 }
+    });
+
+    plans.push({
+      type: '医療保険',
+      subtitle: '入院・手術保障',
+      current: hasInsurance ? '加入中' : '未加入',
+      postPurchase: hasInsurance ? '継続' : '新規加入が必要',
+      peerCost: '5,000〜8,000円',
+      recommendation: '日額5,000〜10,000円',
+      priority: 2,
+      estimatedCost: { min: 5000, max: 8000 }
+    });
+
+    if (isFemale30s || age >= 40) {
+      plans.push({
+        type: 'がん保険',
+        current: hasInsurance ? '加入中' : '未加入',
+        postPurchase: hasInsurance ? '継続' : '推奨加入',
+        peerCost: '2,000〜4,000円',
+        recommendation: '診断一時金100万円以上',
+        priority: 3,
+        estimatedCost: { min: 2000, max: 4000 }
+      });
+    }
+
+    var totalMin = 0, totalMax = 0;
+    plans.forEach(function (p) {
+      if (p.estimatedCost) {
+        totalMin += p.estimatedCost.min;
+        totalMax += p.estimatedCost.max;
+      }
+    });
+
+    return {
+      plans: plans,
+      totalEstimatedCost: { min: totalMin, max: totalMax },
+      hasDanShin: willPurchaseHome,
+      currentlyInsured: hasInsurance,
+      strategyNote: familyType === 'single'
+        ? '単身者は就業不能保険を最優先。収入ゼロ＋住居費の直撃を防ぎます。'
+        : '家族世帯は死亡保障（団信以外）と就業不能保険のバランスが重要です。'
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 14. 複数プラン比較（Multi-Plan Comparison）
+  // ---------------------------------------------------------------------------
+
+  function generateMultiPlanComparison(params) {
+    var annualIncome = params.annualIncome || 5000000;
+    var interestRate = params.interestRate || 0.007;
+    var termYears = params.termYears || 35;
+    var recommendedAmount = params.recommendedAmount || 35000000;
+    var monthlyRate = interestRate / 12;
+    var nper = termYears * 12;
+
+    var stressRate = 0.015;
+    var stressMonthly = stressRate / 12;
+    var stressNper = termYears * 12;
+
+    var plans = [
+      { label: 'A 超安全', amount: Math.round(recommendedAmount * 0.85 / 1000000) * 1000000 },
+      { label: 'B 推奨 ★', amount: recommendedAmount, recommended: true },
+      { label: 'C 上限',   amount: Math.round(recommendedAmount * 1.06 / 1000000) * 1000000 },
+      { label: 'D 危険',   amount: Math.round(recommendedAmount * 1.25 / 1000000) * 1000000 }
+    ];
+
+    var monthlyGross = annualIncome / 12;
+
+    return plans.map(function (plan) {
+      var monthly = pmt(monthlyRate, nper, plan.amount);
+      var ratio = (monthly * 12) / annualIncome * 100;
+      var stressMonthlyPmt = pmt(stressMonthly, stressNper, plan.amount);
+      var stressRatio = (stressMonthlyPmt * 12) / annualIncome * 100;
+
+      var judgment;
+      if (stressRatio <= 25) judgment = 'safe';
+      else if (stressRatio <= 28) judgment = 'ok';
+      else if (stressRatio <= 32) judgment = 'warning';
+      else judgment = 'danger';
+
+      return {
+        label: plan.label,
+        amount: plan.amount,
+        monthlyPayment: Math.round(monthly),
+        ratio: Math.round(ratio * 10) / 10,
+        stressRatio: Math.round(stressRatio * 10) / 10,
+        judgment: judgment,
+        recommended: plan.recommended || false
+      };
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // 15. 保険加入後キャッシュフロー（Post-Insurance Scenarios）
+  // ---------------------------------------------------------------------------
+
+  function calculatePostInsuranceCashFlow(params) {
+    var monthlySurplus = params.monthlySurplus || 0;
+    var insurancePlans = params.insurancePlans || { min: 10000, max: 17000 };
+
+    var scenarios = [
+      {
+        label: '最小保険プラン',
+        insuranceCost: insurancePlans.min,
+        surplus: monthlySurplus - insurancePlans.min,
+        annualSurplus: (monthlySurplus - insurancePlans.min) * 12
+      },
+      {
+        label: '推奨保険プラン',
+        insuranceCost: Math.round((insurancePlans.min + insurancePlans.max) / 2),
+        surplus: monthlySurplus - Math.round((insurancePlans.min + insurancePlans.max) / 2),
+        annualSurplus: (monthlySurplus - Math.round((insurancePlans.min + insurancePlans.max) / 2)) * 12
+      },
+      {
+        label: '充実保険プラン',
+        insuranceCost: insurancePlans.max,
+        surplus: monthlySurplus - insurancePlans.max,
+        annualSurplus: (monthlySurplus - insurancePlans.max) * 12
+      }
+    ];
+
+    scenarios.forEach(function (s) {
+      s.viable = s.surplus >= 0;
+      s.riskLevel = s.surplus >= 10000 ? 'safe' : s.surplus >= 0 ? 'tight' : 'deficit';
+    });
+
+    return { scenarios: scenarios };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 16. 3フェーズ・アクションプラン
+  // ---------------------------------------------------------------------------
+
+  function generatePhaseActionPlan(params) {
+    var totalSavings = params.totalSavings || 0;
+    var transactionCosts = params.transactionCosts || 0;
+    var remainingFund = totalSavings - transactionCosts;
+    var insurancePlan = params.insurancePlan || {};
+    var loanAmount = params.loanAmount || 35000000;
+    var interestRate = params.interestRate || 0.007;
+    var termYears = params.termYears || 35;
+    var age = params.age || 35;
+    var completionAge = age + termYears;
+    var monthlyNISA = params.monthlyNISA || 30000;
+
+    var phase1 = {
+      title: 'Phase 1: 購入前',
+      period: new Date().getFullYear() + '年中',
+      actions: []
+    };
+
+    if (insurancePlan.totalEstimatedCost) {
+      phase1.actions.push('医療保険・就業不能保険への新規加入（合計月' +
+        Math.round(insurancePlan.totalEstimatedCost.min / 1000) + ',000〜' +
+        Math.round(insurancePlan.totalEstimatedCost.max / 1000) + ',000円）');
+    }
+    phase1.actions.push('物件選定: ' + toManEn(loanAmount) + '以内の条件で絞り込み');
+    phase1.actions.push('住宅ローン事前審査 — 複数行比較で最有利条件を確保');
+    phase1.actions.push('諸費用（約' + toManEn(transactionCosts) + '）の資金計画確認');
+
+    var phase2 = {
+      title: 'Phase 2: 購入直後',
+      period: '1年以内',
+      actions: [
+        '初年度確定申告で住宅ローン控除申請（2年目以降は年末調整）',
+        '団信の保障内容を確認・記録',
+        'NISA月' + Math.round(monthlyNISA / 10000) + '万円を継続',
+        '緊急予備資金' + toManEn(Math.max(0, remainingFund)) + 'を保全'
+      ]
+    };
+
+    var phase3 = {
+      title: 'Phase 3: 中長期',
+      period: '〜10年',
+      actions: [
+        '高収入期間中は繰上返済を検討（NISA優先）',
+        '残債減少時に固定金利への借換検討',
+        '5年ごとに収支見直し',
+        completionAge + '歳ローン完済後の生活費計画策定'
+      ]
+    };
+
+    return { phases: [phase1, phase2, phase3] };
+  }
+
+  // ---------------------------------------------------------------------------
+  // 17. 購入後緊急予備資金計算
+  // ---------------------------------------------------------------------------
+
+  function calculateEmergencyFundPostPurchase(params) {
+    var totalSavings = params.totalSavings || 0;
+    var transactionCosts = params.transactionCosts || 0;
+    var monthlySurplus = params.monthlySurplus || 0;
+    var monthlyExpense = params.monthlyExpense || 250000;
+
+    var remaining = totalSavings - transactionCosts;
+    var monthsCovered = monthlyExpense > 0 ? Math.round(remaining / monthlyExpense * 10) / 10 : 0;
+    var targetFund = monthlyExpense * 6;
+    var shortfall = Math.max(0, targetFund - remaining);
+    var monthsToTarget = monthlySurplus > 0 ? Math.ceil(shortfall / monthlySurplus) : 999;
+
+    var riskLevel;
+    if (monthsCovered >= 6) riskLevel = 'safe';
+    else if (monthsCovered >= 3) riskLevel = 'moderate';
+    else riskLevel = 'risky';
+
+    return {
+      totalSavings: totalSavings,
+      transactionCosts: transactionCosts,
+      remainingFund: remaining,
+      monthsCovered: monthsCovered,
+      targetFund: targetFund,
+      shortfall: shortfall,
+      monthsToTarget: monthsToTarget,
+      riskLevel: riskLevel
     };
   }
 
@@ -1252,17 +1693,23 @@ var FinancialEngine = (function () {
   // ---------------------------------------------------------------------------
 
   return {
-    calculateMortgage:          calculateMortgage,
-    analyzeIncomeExpense:        analyzeIncomeExpense,
-    calculateAffordability:      calculateAffordability,
-    compareRentVsBuy:            compareRentVsBuy,
-    compareInsurance:            compareInsurance,
-    calculateTaxBenefits:        calculateTaxBenefits,
-    analyzeInterestRateImpact:   analyzeInterestRateImpact,
-    projectAssetFormation:       projectAssetFormation,
-    getHousingCostGuideline:     getHousingCostGuideline,
-    compareNewVsUsed:            compareNewVsUsed,
-    generateReportData:          generateReportData
+    calculateMortgage:              calculateMortgage,
+    analyzeIncomeExpense:           analyzeIncomeExpense,
+    calculateAffordability:         calculateAffordability,
+    compareRentVsBuy:               compareRentVsBuy,
+    compareInsurance:               compareInsurance,
+    calculateTaxBenefits:           calculateTaxBenefits,
+    analyzeInterestRateImpact:      analyzeInterestRateImpact,
+    projectAssetFormation:          projectAssetFormation,
+    getHousingCostGuideline:        getHousingCostGuideline,
+    compareNewVsUsed:               compareNewVsUsed,
+    generateReportData:             generateReportData,
+    comparePeerExpenses:            comparePeerExpenses,
+    generateInsurancePlan:          generateInsurancePlan,
+    generateMultiPlanComparison:    generateMultiPlanComparison,
+    calculatePostInsuranceCashFlow: calculatePostInsuranceCashFlow,
+    generatePhaseActionPlan:        generatePhaseActionPlan,
+    calculateEmergencyFundPostPurchase: calculateEmergencyFundPostPurchase
   };
 
 }());
